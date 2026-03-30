@@ -2122,18 +2122,17 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                     return
                 end
 
-                -- METHOD 2: Find gun shop ProximityPrompts
-                warn("[GangWars] Method 2: Searching for gun shop prompts...")
+                -- METHOD 2: Find gun shop ProximityPrompts (SPECIFIC TO GUN ONLY)
+                warn("[GangWars] Method 2: Searching for gun-specific shop prompts...")
                 local gunLower = gunName:lower()
                 for _, v in ipairs(workspace:GetDescendants()) do
                     if v:IsA("ProximityPrompt") then
                         local pName = v.Parent and v.Parent.Name:lower() or ""
                         local aText = v.ActionText:lower()
                         local oText = v.ObjectText:lower()
-                        if pName:find(gunLower) or aText:find(gunLower) or oText:find(gunLower)
-                            or pName:find("gun") or pName:find("weapon") or pName:find("shop")
-                            or aText:find("buy") or aText:find("purchase") or aText:find("grab") then
-                            warn("[GangWars] Found shop prompt: " .. (v.Parent and v.Parent.Name or "?") .. " | " .. v.ActionText)
+                        -- FIXED: Only match if the specific gun name appears — no more buying all guns!
+                        if pName:find(gunLower) or aText:find(gunLower) or oText:find(gunLower) then
+                            warn("[GangWars] Found gun-specific prompt: " .. (v.Parent and v.Parent.Name or "?") .. " | " .. v.ActionText)
                             local part = v.Parent
                             if part and part:IsA("BasePart") then
                                 Util.teleport(part.CFrame)
