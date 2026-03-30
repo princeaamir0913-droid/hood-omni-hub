@@ -183,6 +183,35 @@ local function safeCall(context, fn, ...)
 end
 
 -- ═══════════════════════════════════════════════════════════════
+-- // 5b. GUN SHOP EXCLUSION HELPER
+-- ═══════════════════════════════════════════════════════════════
+-- Returns true if a ProximityPrompt belongs to a gun shop (should NOT be fired by autofarms)
+local GUN_KEYWORDS = {
+    "glock","pistol","revolver","shotgun","rifle","smg","uzi","draco",
+    "ak","m4","ar","switch","gun","weapon","firearm","ammo","ammunition",
+    "carbine","sniper","p90","mac","tec","desert","eagle","beretta",
+    "xmas","ump","mp5","minigun","launcher","bazooka"
+}
+local function isGunShopPrompt(prompt)
+    local pName = (prompt.Parent and prompt.Parent.Name:lower()) or ""
+    local aText = prompt.ActionText:lower()
+    local oText = prompt.ObjectText:lower()
+    local fullName = (prompt.Parent and prompt.Parent:GetFullName():lower()) or ""
+    for _, kw in ipairs(GUN_KEYWORDS) do
+        if pName:find(kw) or oText:find(kw) or fullName:find(kw) then
+            return true
+        end
+    end
+    -- If action text is ONLY "buy"/"purchase" with no other context, and parent has gun keyword
+    if (aText == "buy" or aText == "purchase" or aText == "grab") then
+        for _, kw in ipairs(GUN_KEYWORDS) do
+            if fullName:find(kw) then return true end
+        end
+    end
+    return false
+end
+
+-- ═══════════════════════════════════════════════════════════════
 -- // 6. ANTI-DETECTION
 -- ═══════════════════════════════════════════════════════════════
 -- Randomize heartbeat delays, use pcall everywhere, minimize remote spam
@@ -1561,9 +1590,9 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                             local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                             local aText = v2.ActionText:lower()
                                             local oText = v2.ObjectText:lower()
-                                            if pName:find("bag") or pName:find("potato") or pName:find("trap")
+                                            if not isGunShopPrompt(v2) and (pName:find("bag") or pName:find("potato") or pName:find("trap")
                                                 or aText:find("grab") or aText:find("bag") or aText:find("buy")
-                                                or aText:find("potato") or oText:find("bag") or oText:find("potato") then
+                                                or aText:find("potato") or oText:find("bag") or oText:find("potato")) then
                                                 table.insert(potatoBags, v2)
                                             end
                                         end
@@ -1689,7 +1718,7 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                         local aText = v2.ActionText:lower()
                                         local oText = v2.ObjectText:lower()
                                         local fullName = v2.Parent and v2.Parent:GetFullName():lower() or ""
-                                        if pName:find("car") or pName:find("window") or pName:find("vehicle")
+                                        if not isGunShopPrompt(v2) and (pName:find("car") or pName:find("window") or pName:find("vehicle")
                                             or pName:find("door") or pName:find("kia") or pName:find("break")
                                             or pName:find("cash") or pName:find("grab") or pName:find("trunk")
                                             or pName:find("glass") or pName:find("loot")
@@ -1698,7 +1727,7 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                             or aText:find("door") or aText:find("window") or aText:find("cash")
                                             or oText:find("car") or oText:find("window") or oText:find("door")
                                             or oText:find("break") or oText:find("cash")
-                                            or fullName:find("car") or fullName:find("kia") then
+                                            or fullName:find("car") or fullName:find("kia")) then
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
                                                 Util.teleport(part.CFrame)
@@ -1759,11 +1788,11 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                         local aText = v2.ActionText:lower()
                                         local oText = v2.ObjectText:lower()
                                         local fullName = v2.Parent and v2.Parent:GetFullName():lower() or ""
-                                        if pName:find("blank") or pName:find("card") or pName:find("punch")
+                                        if not isGunShopPrompt(v2) and (pName:find("blank") or pName:find("card") or pName:find("punch")
                                             or pName:find("punchmade") or pName:find("seller")
                                             or aText:find("card") or aText:find("blank") or aText:find("grab") or aText:find("buy")
                                             or oText:find("card") or oText:find("blank") or oText:find("punch")
-                                            or fullName:find("punch") or fullName:find("blank") then
+                                            or fullName:find("punch") or fullName:find("blank")) then
                                             warn("[GangWars:Scam] Found card source: " .. (v2.Parent and v2.Parent.Name or "?"))
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
@@ -2980,9 +3009,9 @@ function loadPhillyStreetz(UI, Config, Util, safeCall, AntiDetect)
                                     if v2:IsA("ProximityPrompt") then
                                         local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                         local aText = v2.ActionText:lower()
-                                        if pName:find("gummy") or pName:find("candy") or pName:find("item")
+                                        if not isGunShopPrompt(v2) and (pName:find("gummy") or pName:find("candy") or pName:find("item")
                                             or pName:find("pickup") or pName:find("special")
-                                            or aText:find("gummy") or aText:find("take") or aText:find("grab") then
+                                            or aText:find("gummy") or aText:find("take") or aText:find("grab")) then
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
                                                 Util.teleport(part.CFrame)
