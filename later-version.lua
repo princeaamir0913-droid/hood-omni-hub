@@ -1566,132 +1566,234 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                     task.spawn(function()
                         while Config.Game.PotatoFarm do
                             safeCall("GangWars:PotatoFarm", function()
-                                -- STEP 1: Teleport to Potato Factory (in the sky)
-                                local factory = nil
-                                for _, v2 in ipairs(workspace:GetDescendants()) do
-                                    if v2:IsA("BasePart") then
-                                        local n = v2.Name:lower()
-                                        if n:find("potato") or n:find("factory") or n:find("trap") then
-                                            -- Prefer high-Y objects (factory is in the sky)
-                                            if v2.Position.Y > 50 or factory == nil then
-                                                factory = v2
+                                local lp = game.Players.LocalPlayer
+                                local char = lp.Character
+                                local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+                                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                                if not hrp or not humanoid then return end
+
+                                -- Hold-fire helper: bypasses HoldDuration instantly
+                                local function holdFire(prompt, times)
+                                    times = times or 1
+                                    for i = 1, times do
+                                        if not Config.Game.PotatoFarm then break end
+                                        if prompt and prompt.Parent then
+                                            if fireproximityprompt then
+                                                fireproximityprompt(prompt, 0)
+                                            else
+                                                prompt:InputHoldBegin()
+                                                task.wait((prompt.HoldDuration or 1) + 0.05)
+                                                prompt:InputHoldEnd()
                                             end
+                                            task.wait(0.12)
                                         end
                                     end
                                 end
-                                
-                                if factory then
-                                    Util.teleport(factory.CFrame + Vector3.new(0, 3, 0))
-                                    task.wait(1)
-                                    
-                                    -- STEP 2: Find and grab potato bags (broader matching)
-                                    local potatoBags = {}
+
+                                -- Get raw potatoes in backpack (not yet cooked)
+                                local function getRawPotatoes()
+                                    local list = {}
+                                    for _, tool in ipairs(lp.Backpack:GetChildren()) do
+                                        if tool:IsA("Tool") then
+                                            local n = tool.Name:lower()
+                                            if (n:find("potato") or n:find("trap") or n:find("raw") or n:find("bag"))
+                                               and not n:find("small") and not n:find("medium")
+                                               and not n:find("large") and not n:find("cook") then
+                                                table.insert(list, tool)
+                                            end
+                                        end
+                                    end
+                                    return list
+                                end
+
+                                -- Get cooked potatoes in backpack (small/medium/large)
+                                local function getCookedPotatoes()
+                                    local list = {}
+                                    for _, tool in ipairs(lp.Backpack:GetChildren()) do
+                                        if tool:IsA("Tool") then
+                                            local n = tool.Name:lower()
+                                            if n:find("small") or n:find("medium") or n:find("large") or n:find("cooked") then
+                                                table.insert(list, tool)
+                                            end
+                                        end
+                                    end
+                                    return list
+                                end
+
+                                -- STEP 1: Teleport to Potato Factory (sky platform, Y > 50)
+                                local factory = nil
+                                for _, v2 in ipairs(workspace:GetDescendants()) do
+                                    if v2:IsA("BasePart") and v2.Position.Y > 50 then
+                                        local n = v2.Name:lower()
+                                        if n:find("potato") or n:find("factory") or n:find("trap") then
+                                            factory = v2
+                                            break
+                                        end
+                                    end
+                                end
+                                if not factory then
+                                    warn("[GangWars:Potato] Can't find factory platform!")
+                                    return
+                                end
+                                Util.teleport(factory.CFrame + Vector3.new(0, 3, 0))
+                                task.wait(1.5)
+
+                                -- STEP 2: Find "Buy Potato" prompt (~$950)
+                                local buyPrompt = nil
+                                for _, v2 in ipairs(workspace:GetDescendants()) do
+                                    if v2:IsA("ProximityPrompt") then
+                                        local aText = v2.ActionText:lower()
+                                        local oText = v2.ObjectText:lower()
+                                        local pName = v2.Parent and v2.Parent.Name:lower() or ""
+                                        -- Must reference buying + potato/trap
+                                        local isBuy = aText:find("buy") or oText:find("buy") or oText:find("950") or aText:find("purchase")
+                                        local isPotato = aText:find("potato") or oText:find("potato") or pName:find("potato")
+                                                         or aText:find("trap") or oText:find("trap") or pName:find("trap")
+                                        if isBuy and isPotato then
+                                            buyPrompt = v2
+                                            break
+                                        end
+                                    end
+                                end
+                                -- Fallback: any potato-named prompt
+                                if not buyPrompt then
                                     for _, v2 in ipairs(workspace:GetDescendants()) do
                                         if v2:IsA("ProximityPrompt") then
                                             local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                             local aText = v2.ActionText:lower()
-                                            local oText = v2.ObjectText:lower()
-                                            if not isGunShopPrompt(v2) and (pName:find("bag") or pName:find("potato") or pName:find("trap")
-                                                or aText:find("grab") or aText:find("bag") or aText:find("buy")
-                                                or aText:find("potato") or oText:find("bag") or oText:find("potato")) then
-                                                table.insert(potatoBags, v2)
-                                            end
-                                        end
-                                    end
-                                    
-                                    -- STEP 3: Spam grab bags
-                                    if #potatoBags > 0 then
-                                        warn("[GangWars:Potato] Found " .. #potatoBags .. " bag prompts, grabbing...")
-                                        for i = 1, 5 do
-                                            if not Config.Game.PotatoFarm then break end
-                                            for _, bag in ipairs(potatoBags) do
-                                                if bag.Parent and bag.Parent:IsA("BasePart") then
-                                                    Util.teleport(bag.Parent.CFrame)
-                                                    task.wait(0.15)
-                                                end
-                                                Util.firePrompt(bag)
-                                                AntiDetect.randomWait(0.2, 0.4)
-                                            end
-                                        end
-                                    end
-                                    
-                                    -- STEP 4: Find pots and interact (broader matching)
-                                    for _, v2 in ipairs(workspace:GetDescendants()) do
-                                        if not Config.Game.PotatoFarm then break end
-                                        if v2:IsA("ProximityPrompt") then
-                                            local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                            local aText = v2.ActionText:lower()
-                                            if pName:find("pot") or pName:find("cook") or pName:find("stove")
-                                                or aText:find("cook") or aText:find("add") or aText:find("place")
-                                                or aText:find("put") or aText:find("pot") then
-                                                if v2.Parent and v2.Parent:IsA("BasePart") then
-                                                    Util.teleport(v2.Parent.CFrame)
-                                                    task.wait(0.2)
-                                                end
-                                                Util.firePrompt(v2)
-                                                AntiDetect.randomWait(0.3, 0.6)
-                                            end
-                                        end
-                                    end
-                                    
-                                    -- STEP 5: Wait for cooking
-                                    warn("[GangWars:Potato] Waiting for cooking...")
-                                    AntiDetect.randomWait(4, 7)
-                                    
-                                    -- STEP 6: Equip cooked potatoes from Backpack and sell
-                                    -- Find seller prompt first
-                                    local sellerPrompt = nil
-                                    local sellerPart = nil
-                                    for _, v2 in ipairs(workspace:GetDescendants()) do
-                                        if v2:IsA("ProximityPrompt") then
-                                            local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                            local aText = v2.ActionText:lower()
-                                            if pName:find("seller") or pName:find("sell") or pName:find("vendor")
-                                                or aText:find("sell") or aText:find("seller")
-                                                or (pName:find("potato") and (pName:find("sell") or pName:find("npc"))) then
-                                                sellerPrompt = v2
-                                                sellerPart = v2.Parent
+                                            if pName:find("potato") or aText:find("potato") or aText:find("trap") then
+                                                buyPrompt = v2
                                                 break
                                             end
                                         end
                                     end
-                                    
-                                    if sellerPrompt and sellerPart and sellerPart:IsA("BasePart") then
-                                        warn("[GangWars:Potato] Found seller: " .. sellerPart.Name)
-                                        Util.teleport(sellerPart.CFrame)
-                                        task.wait(0.3)
-                                        
-                                        -- Equip each cooked potato/trap from backpack and sell
-                                        local backpack = game.Players.LocalPlayer.Backpack
-                                        local char = game.Players.LocalPlayer.Character
-                                        local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-                                        
-                                        for _, tool in ipairs(backpack:GetChildren()) do
-                                            if not Config.Game.PotatoFarm then break end
-                                            if tool:IsA("Tool") then
-                                                local tName = tool.Name:lower()
-                                                if tName:find("potato") or tName:find("trap") or tName:find("cook")
-                                                    or tName:find("product") or tName:find("item") then
-                                                    warn("[GangWars:Potato] Equipping and selling: " .. tool.Name)
-                                                    if humanoid then
-                                                        humanoid:EquipTool(tool)
-                                                        task.wait(0.3)
+                                end
+                                if not buyPrompt then
+                                    warn("[GangWars:Potato] Can't find Buy Potato prompt!")
+                                    return
+                                end
+
+                                -- Teleport right next to buy prompt and buy 10 potatoes
+                                if buyPrompt.Parent and buyPrompt.Parent:IsA("BasePart") then
+                                    Util.teleport(buyPrompt.Parent.CFrame + Vector3.new(0, 2, 0))
+                                    task.wait(0.5)
+                                end
+                                warn("[GangWars:Potato] Buying potatoes x10...")
+                                holdFire(buyPrompt, 10)
+                                task.wait(0.5)
+
+                                -- STEP 3: Find all cooking pots/stoves
+                                local pots = {}
+                                for _, v2 in ipairs(workspace:GetDescendants()) do
+                                    if v2:IsA("ProximityPrompt") then
+                                        local pName = v2.Parent and v2.Parent.Name:lower() or ""
+                                        local aText = v2.ActionText:lower()
+                                        local oText = v2.ObjectText:lower()
+                                        if pName:find("pot") or pName:find("cook") or pName:find("stove")
+                                           or aText:find("cook") or aText:find("pot") or aText:find("add")
+                                           or oText:find("pot") or oText:find("stove") or oText:find("cook") then
+                                            table.insert(pots, v2)
+                                        end
+                                    end
+                                end
+                                warn("[GangWars:Potato] Found " .. #pots .. " pots")
+
+                                -- STEP 4: Load each raw potato into a pot
+                                local rawPotatoes = getRawPotatoes()
+                                warn("[GangWars:Potato] Raw potatoes bought: " .. #rawPotatoes)
+
+                                if #rawPotatoes > 0 and #pots > 0 then
+                                    local potIndex = 1
+                                    for _, rawTool in ipairs(rawPotatoes) do
+                                        if not Config.Game.PotatoFarm then break end
+                                        local pot = pots[potIndex]
+                                        if pot and pot.Parent and pot.Parent:IsA("BasePart") then
+                                            humanoid:EquipTool(rawTool)
+                                            task.wait(0.25)
+                                            Util.teleport(pot.Parent.CFrame + Vector3.new(0, 2, 0))
+                                            task.wait(0.3)
+                                            holdFire(pot, 1)
+                                            task.wait(0.2)
+                                            potIndex = (potIndex % #pots) + 1
+                                        end
+                                    end
+                                    humanoid:UnequipTools()
+                                end
+
+                                -- STEP 5: Wait for cooked potatoes (small/medium/large) in backpack (up to 45s)
+                                warn("[GangWars:Potato] Waiting for potatoes to cook...")
+                                local waited = 0
+                                while waited < 45 and Config.Game.PotatoFarm do
+                                    if #getCookedPotatoes() > 0 then
+                                        warn("[GangWars:Potato] Cooked potatoes ready!")
+                                        break
+                                    end
+                                    task.wait(2)
+                                    waited = waited + 2
+                                end
+
+                                local cookedList = getCookedPotatoes()
+                                if #cookedList == 0 then
+                                    warn("[GangWars:Potato] No cooked potatoes found after wait, retrying...")
+                                    return
+                                end
+
+                                -- STEP 6: Find potato seller/buyer NPC
+                                local sellerPrompt = nil
+                                for _, v2 in ipairs(workspace:GetDescendants()) do
+                                    if v2:IsA("ProximityPrompt") then
+                                        local pName = v2.Parent and v2.Parent.Name:lower() or ""
+                                        local aText = v2.ActionText:lower()
+                                        local oText = v2.ObjectText:lower()
+                                        local isSell = aText:find("sell") or oText:find("sell") or pName:find("sell") or pName:find("buyer") or pName:find("vendor")
+                                        local isPotato = pName:find("potato") or aText:find("potato") or oText:find("potato")
+                                                         or pName:find("trap") or aText:find("trap")
+                                        if isSell and isPotato then
+                                            sellerPrompt = v2
+                                            break
+                                        end
+                                    end
+                                end
+                                -- Fallback: nearest "sell" prompt on the factory platform
+                                if not sellerPrompt then
+                                    local bestDist = math.huge
+                                    for _, v2 in ipairs(workspace:GetDescendants()) do
+                                        if v2:IsA("ProximityPrompt") then
+                                            local aText = v2.ActionText:lower()
+                                            if aText:find("sell") then
+                                                local pp = v2.Parent
+                                                if pp and pp:IsA("BasePart") then
+                                                    local d = (pp.Position - hrp.Position).Magnitude
+                                                    if d < bestDist then
+                                                        bestDist = d
+                                                        sellerPrompt = v2
                                                     end
-                                                    Util.firePrompt(sellerPrompt)
-                                                    AntiDetect.randomWait(0.4, 0.8)
                                                 end
                                             end
                                         end
-                                        
-                                        -- Also fire prompt without tool equipped (some games just need proximity)
-                                        Util.firePrompt(sellerPrompt)
-                                        AntiDetect.randomWait(0.5, 1)
-                                    else
-                                        warn("[GangWars:Potato] Could not find seller NPC!")
                                     end
                                 end
+
+                                if sellerPrompt and sellerPrompt.Parent and sellerPrompt.Parent:IsA("BasePart") then
+                                    Util.teleport(sellerPrompt.Parent.CFrame + Vector3.new(0, 2, 0))
+                                    task.wait(0.5)
+                                    warn("[GangWars:Potato] Selling " .. #cookedList .. " cooked potatoes...")
+                                    for _, cookedTool in ipairs(cookedList) do
+                                        if not Config.Game.PotatoFarm then break end
+                                        if cookedTool and cookedTool.Parent then
+                                            humanoid:EquipTool(cookedTool)
+                                            task.wait(0.25)
+                                            holdFire(sellerPrompt, 1)
+                                            task.wait(0.3)
+                                        end
+                                    end
+                                    humanoid:UnequipTools()
+                                    warn("[GangWars:Potato] Sold! Restarting cycle...")
+                                else
+                                    warn("[GangWars:Potato] Could not find seller NPC!")
+                                end
                             end)
-                            AntiDetect.randomWait(2, 4)
+                            AntiDetect.randomWait(1, 2)
                         end
                     end)
                 end
@@ -1792,7 +1894,11 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                 if not hrp then return end
 
                                 -- BOX1 has a ClickDetector; Job object needs to be at player position
-                                local box = workspace:FindFirstChild("BOX1")
+                                -- Deep search for BOX1 (may be inside folders/models, not a direct workspace child)
+                                local box = nil
+                                for _, _bv in ipairs(workspace:GetDescendants()) do
+                                    if _bv.Name == "BOX1" then box = _bv; break end
+                                end
                                 local click = box and box:FindFirstChildOfClass("ClickDetector")
                                 local job = workspace:FindFirstChild("Job")
 
@@ -1849,6 +1955,7 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                             end
                                             Util.firePrompt(v2)
                                             AntiDetect.randomWait(0.5, 1)
+                                            break -- ✅ stop after FIRST match — don't fire every card seller
                                         end
                                     end
                                 end
@@ -1880,6 +1987,7 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                             end
                                             Util.firePrompt(v2)
                                             AntiDetect.randomWait(0.5, 1)
+                                            break -- ✅ stop after FIRST match
                                         end
                                     end
                                 end
@@ -1907,16 +2015,19 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                             end
                                             Util.firePrompt(v2)
                                             AntiDetect.randomWait(1, 2)
+                                            break -- ✅ stop after FIRST match
                                         end
                                     end
                                 end
 
                                 AntiDetect.randomWait(0.5, 1)
 
-                                -- Step 4: Swipe at ATM (look for one with light on)
-                                warn("[GangWars:Scam] Step 4: Looking for ATM...")
+                                -- Step 4: Swipe at NEAREST ATM only (not all ATMs in the map)
+                                warn("[GangWars:Scam] Step 4: Looking for nearest ATM...")
+                                local nearestATM = nil
+                                local nearestATMDist = math.huge
+                                local atmHRP = Util.getHRP()
                                 for _, v2 in ipairs(workspace:GetDescendants()) do
-                                    if not Config.Game.Scamming then break end
                                     if v2:IsA("ProximityPrompt") then
                                         local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                         local aText = v2.ActionText:lower()
@@ -1924,20 +2035,31 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                         if pName:find("atm") or pName:find("machine") or pName:find("swipe")
                                             or aText:find("swipe") or aText:find("atm") or aText:find("withdraw") or aText:find("insert")
                                             or oText:find("atm") or oText:find("swipe") then
-                                            warn("[GangWars:Scam] Found ATM: " .. (v2.Parent and v2.Parent.Name or "?"))
                                             local part = v2.Parent
-                                            if part and part:IsA("BasePart") then
-                                                Util.teleport(part.CFrame)
-                                                AntiDetect.randomWait(0.5, 1)
-                                            end
-                                            -- Try multiple times (wait for green light)
-                                            for attempt = 1, 10 do
-                                                if not Config.Game.Scamming then break end
-                                                Util.firePrompt(v2)
-                                                AntiDetect.randomWait(0.5, 1)
+                                            if part and part:IsA("BasePart") and atmHRP then
+                                                local dist = (atmHRP.Position - part.Position).Magnitude
+                                                if dist < nearestATMDist then
+                                                    nearestATMDist = dist
+                                                    nearestATM = v2
+                                                end
                                             end
                                         end
                                     end
+                                end
+                                if nearestATM then
+                                    local atmPart = nearestATM.Parent
+                                    warn("[GangWars:Scam] Found nearest ATM: " .. (atmPart and atmPart.Name or "?") .. " (" .. math.floor(nearestATMDist) .. " studs away)")
+                                    if atmPart and atmPart:IsA("BasePart") then
+                                        Util.teleport(atmPart.CFrame)
+                                        AntiDetect.randomWait(0.5, 1)
+                                    end
+                                    for attempt = 1, 10 do
+                                        if not Config.Game.Scamming then break end
+                                        Util.firePrompt(nearestATM)
+                                        AntiDetect.randomWait(0.5, 1)
+                                    end
+                                else
+                                    warn("[GangWars:Scam] ❌ No ATM found nearby!")
                                 end
                             end)
                             AntiDetect.randomWait(2, 4)
@@ -2185,7 +2307,14 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
         -- FREE SPAWN: Clone gun directly into backpack (no buying!)
         -- Priority: ReplicatedStorage.Items > ReplicatedStorage.weapons > workspace Tools
         -- ═══════════════════════════════════════════════════════
+        -- Prevents clicking the same gun button multiple times before the first clone lands
+        local spawnInProgress = {}
         local function freeSpawnGun(gunName)
+            if spawnInProgress[gunName] then
+                warn("[GangWars] ⏳ Already spawning " .. gunName .. ", please wait...")
+                return
+            end
+            spawnInProgress[gunName] = true
             safeCall("GangWars:FreeSpawn:" .. gunName, function()
                 warn("[GangWars] 🆓 FREE SPAWN: " .. gunName)
                 local RS = game:GetService("ReplicatedStorage")
@@ -2270,6 +2399,7 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
 
                 warn("[GangWars] ❌ Could not find " .. gunName .. " anywhere. It may be a gamepass-only gun.")
             end)
+            spawnInProgress[gunName] = nil  -- release lock after spawn attempt
         end
 
         -- ═══════════════════════════════════════════════════════
