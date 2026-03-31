@@ -1312,7 +1312,7 @@ function loadBronx3(UI, Config, Util, safeCall, AntiDetect)
                     end
                     -- Method 3: Search workspace for gun models
                     for _, v in ipairs(workspace:GetDescendants()) do
-                        if v:IsA("Tool") and v.Name:lower():find(gunName:lower()) then
+                        if v:IsA("Tool") and v.Name:lower() == gunName:lower() then
                             local clone = v:Clone()
                             clone.Parent = LocalPlayer.Backpack
                             return
