@@ -2126,42 +2126,60 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
     -- ── WEAPONS TAB ──────────────────────────────────────────
     UI.Tab("🔫", "Weapons", function(p)
         -- Spawn function used by both sections (multi-method)
+        -- Exact gun name matching: "Glock" must NOT match "Gold Glock"
+        local function gunMatchesExact(text, gunLower)
+            text = text:lower():gsub("[_%-]", " "):match("^%s*(.-)%s*$") or ""
+            if text == "" then return false end
+            -- Exact match: "glock" == "glock"
+            if text == gunLower then return true end
+            -- Starts with gun + separator: "glock shop" or "glock_stand"
+            if text:sub(1, #gunLower + 1) == gunLower .. " " then return true end
+            -- Ends with separator + gun: "buy glock"
+            if text:sub(-(#gunLower + 1)) == " " .. gunLower then return true end
+            return false
+        end
+
         local function spawnGun(gunName)
             safeCall("GangWars:SpawnGun:" .. gunName, function()
                 warn("[GangWars] Attempting to spawn: " .. gunName)
+                local gunLower = gunName:lower()
 
-                -- METHOD 1: Fire ALL remotes with multiple arg patterns
-                warn("[GangWars] Method 1: Trying all RemoteEvents...")
+                -- METHOD 1: Fire remotes that look gun/shop related (not ALL remotes)
+                warn("[GangWars] Method 1: Trying shop-related RemoteEvents...")
+                local shopKeywords = {"shop", "buy", "gun", "weapon", "purchase", "give", "equip", "store", "vend"}
                 local fired = 0
                 for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
                     if remote:IsA("RemoteEvent") then
-                        pcall(function() remote:FireServer(gunName) end)
-                        pcall(function() remote:FireServer("give", gunName) end)
-                        pcall(function() remote:FireServer("buy", gunName) end)
-                        pcall(function() remote:FireServer(gunName, true) end)
-                        fired = fired + 1
+                        local rName = remote.Name:lower()
+                        local isShopRemote = false
+                        for _, kw in ipairs(shopKeywords) do
+                            if rName:find(kw) then isShopRemote = true; break end
+                        end
+                        if isShopRemote then
+                            pcall(function() remote:FireServer(gunName) end)
+                            pcall(function() remote:FireServer("buy", gunName) end)
+                            pcall(function() remote:FireServer("give", gunName) end)
+                            fired = fired + 1
+                        end
                     end
                 end
-                warn("[GangWars] Fired " .. fired .. " remotes with 4 arg patterns each")
+                warn("[GangWars] Fired " .. fired .. " shop-related remotes")
                 task.wait(0.5)
 
-                -- Check if it worked (tool appeared in backpack)
                 if LocalPlayer.Backpack:FindFirstChild(gunName) then
                     warn("[GangWars] SUCCESS: " .. gunName .. " appeared in backpack via remotes!")
                     return
                 end
 
-                -- METHOD 2: Find gun shop ProximityPrompts (SPECIFIC TO GUN ONLY)
-                warn("[GangWars] Method 2: Searching for gun-specific shop prompts...")
-                local gunLower = gunName:lower()
+                -- METHOD 2: Find EXACT gun shop ProximityPrompt
+                warn("[GangWars] Method 2: Searching for EXACT gun prompt: '" .. gunName .. "'")
                 for _, v in ipairs(workspace:GetDescendants()) do
                     if v:IsA("ProximityPrompt") then
-                        local pName = v.Parent and v.Parent.Name:lower() or ""
-                        local aText = v.ActionText:lower()
-                        local oText = v.ObjectText:lower()
-                        -- FIXED: Only match if the specific gun name appears — no more buying all guns!
-                        if pName:find(gunLower) or aText:find(gunLower) or oText:find(gunLower) then
-                            warn("[GangWars] Found gun-specific prompt: " .. (v.Parent and v.Parent.Name or "?") .. " | " .. v.ActionText)
+                        local pName = v.Parent and v.Parent.Name or ""
+                        local aText = v.ActionText or ""
+                        local oText = v.ObjectText or ""
+                        if gunMatchesExact(pName, gunLower) or gunMatchesExact(aText, gunLower) or gunMatchesExact(oText, gunLower) then
+                            warn("[GangWars] EXACT match: " .. pName .. " | Action: " .. aText .. " | Object: " .. oText)
                             local part = v.Parent
                             if part and part:IsA("BasePart") then
                                 Util.teleport(part.CFrame)
@@ -2177,11 +2195,11 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                     end
                 end
 
-                -- METHOD 3: Pickup from ground (walk to dropped tools)
+                -- METHOD 3: Pickup EXACT gun from ground
                 warn("[GangWars] Method 3: Looking for dropped " .. gunName .. " in workspace...")
                 for _, v in ipairs(workspace:GetDescendants()) do
-                    if v:IsA("Tool") and v.Name:lower():find(gunLower) then
-                        warn("[GangWars] Found dropped tool: " .. v.Name .. " at " .. v:GetFullName())
+                    if v:IsA("Tool") and v.Name:lower() == gunLower then
+                        warn("[GangWars] Found exact dropped tool: " .. v.Name)
                         local handle = v:FindFirstChild("Handle")
                         if handle and handle:IsA("BasePart") then
                             Util.teleport(handle.CFrame)
@@ -2197,7 +2215,7 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                 -- METHOD 4: Clone from ReplicatedStorage as last resort
                 warn("[GangWars] Method 4: Clone from ReplicatedStorage (may not fully work)...")
                 local gun = game:GetService("ReplicatedStorage"):FindFirstChild(gunName, true)
-                if gun and gun:IsA("Tool") then
+                if gun and gun:IsA("Tool") and gun.Name:lower() == gunLower then
                     gun:Clone().Parent = LocalPlayer.Backpack
                     warn("[GangWars] Cloned " .. gunName .. " from ReplicatedStorage (client-side, may not fire)")
                     return
