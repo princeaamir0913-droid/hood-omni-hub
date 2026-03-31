@@ -1511,6 +1511,7 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
         CardingFarm = false,
         PotatoFarm = false,
         CarBreaking = false,
+        BoxJob = false,
         Scamming = false,
         StoreRobbery = false,
         TurfCapture = false,
@@ -1707,59 +1708,104 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                 local hrp = Util.getHRP()
                                 if not hrp then return end
 
-                                -- Find cars (Kia-like) with breakable windows/doors/cash
-                                -- Flow: break window → open door → grab cash (3 sequential prompts per car)
+                                -- GROUP all car-related prompts by their Model ancestor
+                                -- so we work ONE car completely instead of jumping all over the map
+                                local carModels = {}
                                 for _, v2 in ipairs(workspace:GetDescendants()) do
-                                    if not Config.Game.CarBreaking then break end
-
-                                    -- ProximityPrompts on car parts
-                                    if v2:IsA("ProximityPrompt") then
+                                    if v2:IsA("ProximityPrompt") or v2:IsA("ClickDetector") then
                                         local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                        local aText = v2.ActionText:lower()
-                                        local oText = v2.ObjectText:lower()
+                                        local aText = (v2:IsA("ProximityPrompt") and v2.ActionText:lower()) or ""
                                         local fullName = v2.Parent and v2.Parent:GetFullName():lower() or ""
-                                        if not isGunShopPrompt(v2) and (pName:find("car") or pName:find("window") or pName:find("vehicle")
-                                            or pName:find("door") or pName:find("kia") or pName:find("break")
-                                            or pName:find("cash") or pName:find("grab") or pName:find("trunk")
-                                            or pName:find("glass") or pName:find("loot")
-                                            or aText:find("break") or aText:find("smash") or aText:find("open")
-                                            or aText:find("steal") or aText:find("rob") or aText:find("grab")
-                                            or aText:find("door") or aText:find("window") or aText:find("cash")
-                                            or oText:find("car") or oText:find("window") or oText:find("door")
-                                            or oText:find("break") or oText:find("cash")
-                                            or fullName:find("car") or fullName:find("kia")) then
-                                            local part = v2.Parent
-                                            if part and part:IsA("BasePart") then
-                                                Util.teleport(part.CFrame)
-                                                AntiDetect.randomWait(0.3, 0.8)
-                                            end
-                                            Util.firePrompt(v2)
-                                            AntiDetect.randomWait(0.5, 1.2)
-                                        end
-                                    end
 
-                                    -- Also check ClickDetectors on car parts
-                                    if v2:IsA("ClickDetector") then
-                                        local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                        if pName:find("car") or pName:find("window") or pName:find("door")
-                                            or pName:find("vehicle") or pName:find("trunk") or pName:find("kia")
-                                            or pName:find("break") or pName:find("glass") or pName:find("cash")
-                                            or pName:find("grab") or pName:find("loot") then
-                                            local part = v2.Parent
-                                            if part and part:IsA("BasePart") then
-                                                local dist = (part.Position - hrp.Position).Magnitude
-                                                if dist < 200 then
-                                                    Util.teleport(part.CFrame)
-                                                    AntiDetect.randomWait(0.3, 0.6)
-                                                    pcall(function() fireclickdetector(v2) end)
-                                                    AntiDetect.randomWait(0.5, 1)
+                                        if not isGunShopPrompt(v2) and (
+                                            pName:find("window") or pName:find("kia") or pName:find("trunk")
+                                            or pName:find("glass") or pName:find("loot")
+                                            or fullName:find("kia") or fullName:find("car")
+                                            or aText:find("break") or aText:find("smash")
+                                            or aText:find("steal") or aText:find("door")
+                                        ) then
+                                            -- Walk up to find the Model ancestor
+                                            local model = v2.Parent
+                                            while model and not model:IsA("Model") and model.Parent ~= workspace do
+                                                model = model.Parent
+                                            end
+                                            if model and model:IsA("Model") then
+                                                if not carModels[model] then
+                                                    carModels[model] = {}
                                                 end
+                                                table.insert(carModels[model], v2)
                                             end
                                         end
                                     end
                                 end
+
+                                -- Find the NEAREST car model to avoid flying across the map
+                                local nearestModel = nil
+                                local nearestDist = math.huge
+                                for model, _ in pairs(carModels) do
+                                    local part = model.PrimaryPart or model:FindFirstChildOfClass("BasePart")
+                                    if part then
+                                        local dist = (part.Position - hrp.Position).Magnitude
+                                        if dist < nearestDist then
+                                            nearestDist = dist
+                                            nearestModel = model
+                                        end
+                                    end
+                                end
+
+                                -- Work through ALL prompts on the nearest car only
+                                if nearestModel and carModels[nearestModel] then
+                                    warn("[GangWars:CarBreaking] Working car: " .. nearestModel.Name)
+                                    for _, prompt in ipairs(carModels[nearestModel]) do
+                                        if not Config.Game.CarBreaking then break end
+                                        local part = prompt.Parent
+                                        if part and part:IsA("BasePart") then
+                                            Util.teleport(part.CFrame + Vector3.new(0, 0, 2))
+                                            AntiDetect.randomWait(0.4, 0.8)
+                                        end
+                                        if prompt:IsA("ProximityPrompt") then
+                                            Util.firePrompt(prompt)
+                                        else
+                                            pcall(function() fireclickdetector(prompt) end)
+                                        end
+                                        AntiDetect.randomWait(0.8, 1.5)
+                                    end
+                                else
+                                    warn("[GangWars:CarBreaking] No breakable car found nearby!")
+                                end
                             end)
-                            AntiDetect.randomWait(2, 4)
+                            AntiDetect.randomWait(3, 5)
+                        end
+                    end)
+                end
+            end)
+
+        UI.MakeToggle(p, "📦 Box Job Farm",
+            function() return Config.Game.BoxJob end,
+            function(v)
+                Config.Game.BoxJob = v
+                if v then
+                    task.spawn(function()
+                        while Config.Game.BoxJob do
+                            safeCall("GangWars:BoxJob", function()
+                                local hrp = Util.getHRP()
+                                if not hrp then return end
+
+                                -- BOX1 has a ClickDetector; Job object needs to be at player position
+                                local box = workspace:FindFirstChild("BOX1")
+                                local click = box and box:FindFirstChildOfClass("ClickDetector")
+                                local job = workspace:FindFirstChild("Job")
+
+                                if click and job then
+                                    pcall(function()
+                                        job.CFrame = hrp.CFrame
+                                        fireclickdetector(click)
+                                    end)
+                                else
+                                    warn("[GangWars:BoxJob] BOX1 or Job not found in workspace! Make sure you are in Gang Wars.")
+                                end
+                            end)
+                            task.wait(0.05) -- Fire every frame for max speed
                         end
                     end)
                 end
@@ -1843,9 +1889,9 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                         local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                         local aText = v2.ActionText:lower()
                                         local oText = v2.ObjectText:lower()
-                                        if pName:find("computer") or pName:find("pc") or pName:find("laptop") or pName:find("monitor")
-                                            or aText:find("upload") or aText:find("transfer") or aText:find("use") or aText:find("insert")
-                                            or aText:find("computer") or oText:find("computer") or oText:find("pc") then
+                                        if pName:find("computer") or pName:find("laptop") or pName:find("monitor") or pName:find("terminal")
+                                            or aText:find("upload") or aText:find("transfer") or aText:find("computer")
+                                            or oText:find("computer") or oText:find("laptop") or oText:find("terminal") then
                                             warn("[GangWars:Scam] Found computer: " .. (v2.Parent and v2.Parent.Name or "?"))
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
