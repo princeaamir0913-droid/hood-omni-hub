@@ -2124,155 +2124,200 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
     end)
 
     -- ── WEAPONS TAB ──────────────────────────────────────────
+    -- Fully rewritten: FREE clone spawn + categorized dropdowns
+    -- Gun names from debug scan 2026-03-30
     UI.Tab("🔫", "Weapons", function(p)
-        -- Spawn function used by both sections (multi-method)
-        -- Exact gun name matching: "Glock" must NOT match "Gold Glock"
-        local function gunMatchesExact(text, gunLower)
-            text = text:lower():gsub("[_%-]", " "):match("^%s*(.-)%s*$") or ""
-            if text == "" then return false end
-            -- Exact match: "glock" == "glock"
-            if text == gunLower then return true end
-            -- Starts with gun + separator: "glock shop" or "glock_stand"
-            if text:sub(1, #gunLower + 1) == gunLower .. " " then return true end
-            -- Ends with separator + gun: "buy glock"
-            if text:sub(-(#gunLower + 1)) == " " .. gunLower then return true end
-            return false
-        end
 
-        local function spawnGun(gunName)
-            safeCall("GangWars:SpawnGun:" .. gunName, function()
-                warn("[GangWars] Attempting to spawn: " .. gunName)
-                local gunLower = gunName:lower()
+        -- ═══════════════════════════════════════════════════════
+        -- FREE SPAWN: Clone gun directly into backpack (no buying!)
+        -- Priority: ReplicatedStorage.Items > ReplicatedStorage.weapons > workspace Tools
+        -- ═══════════════════════════════════════════════════════
+        local function freeSpawnGun(gunName)
+            safeCall("GangWars:FreeSpawn:" .. gunName, function()
+                warn("[GangWars] 🆓 FREE SPAWN: " .. gunName)
+                local RS = game:GetService("ReplicatedStorage")
 
-                -- METHOD 1: Fire remotes that look gun/shop related (not ALL remotes)
-                warn("[GangWars] Method 1: Trying shop-related RemoteEvents...")
-                local shopKeywords = {"shop", "buy", "gun", "weapon", "purchase", "give", "equip", "store", "vend"}
-                local fired = 0
-                for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                    if remote:IsA("RemoteEvent") then
-                        local rName = remote.Name:lower()
-                        local isShopRemote = false
-                        for _, kw in ipairs(shopKeywords) do
-                            if rName:find(kw) then isShopRemote = true; break end
-                        end
-                        if isShopRemote then
-                            pcall(function() remote:FireServer(gunName) end)
-                            pcall(function() remote:FireServer("buy", gunName) end)
-                            pcall(function() remote:FireServer("give", gunName) end)
-                            fired = fired + 1
-                        end
-                    end
-                end
-                warn("[GangWars] Fired " .. fired .. " shop-related remotes")
-                task.wait(0.5)
-
+                -- Already have it?
                 if LocalPlayer.Backpack:FindFirstChild(gunName) then
-                    warn("[GangWars] SUCCESS: " .. gunName .. " appeared in backpack via remotes!")
+                    warn("[GangWars] Already have " .. gunName .. " in backpack!")
+                    return
+                end
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild(gunName) then
+                    warn("[GangWars] Already holding " .. gunName .. "!")
                     return
                 end
 
-                -- METHOD 2: Find EXACT gun shop ProximityPrompt
-                warn("[GangWars] Method 2: Searching for EXACT gun prompt: '" .. gunName .. "'")
-                for _, v in ipairs(workspace:GetDescendants()) do
-                    if v:IsA("ProximityPrompt") then
-                        local pName = v.Parent and v.Parent.Name or ""
-                        local aText = v.ActionText or ""
-                        local oText = v.ObjectText or ""
-                        if gunMatchesExact(pName, gunLower) or gunMatchesExact(aText, gunLower) or gunMatchesExact(oText, gunLower) then
-                            warn("[GangWars] EXACT match: " .. pName .. " | Action: " .. aText .. " | Object: " .. oText)
-                            local part = v.Parent
-                            if part and part:IsA("BasePart") then
-                                Util.teleport(part.CFrame)
-                                task.wait(0.3)
-                            end
-                            Util.firePrompt(v)
-                            task.wait(0.5)
-                            if LocalPlayer.Backpack:FindFirstChild(gunName) then
-                                warn("[GangWars] SUCCESS: Got " .. gunName .. " from shop prompt!")
+                -- METHOD 1: Clone from ReplicatedStorage.Items.{GunName}
+                local items = RS:FindFirstChild("Items")
+                if items then
+                    local gunFolder = items:FindFirstChild(gunName)
+                    if gunFolder then
+                        -- The gun tool might be the folder itself or inside it
+                        if gunFolder:IsA("Tool") then
+                            gunFolder:Clone().Parent = LocalPlayer.Backpack
+                            warn("[GangWars] ✅ Cloned " .. gunName .. " from RS.Items (Tool)")
+                            return
+                        end
+                        -- Look for a Tool child inside the folder
+                        for _, child in ipairs(gunFolder:GetChildren()) do
+                            if child:IsA("Tool") then
+                                child:Clone().Parent = LocalPlayer.Backpack
+                                warn("[GangWars] ✅ Cloned " .. child.Name .. " from RS.Items." .. gunName)
                                 return
                             end
                         end
                     end
                 end
 
-                -- METHOD 3: Pickup EXACT gun from ground
-                warn("[GangWars] Method 3: Looking for dropped " .. gunName .. " in workspace...")
-                for _, v in ipairs(workspace:GetDescendants()) do
-                    if v:IsA("Tool") and v.Name:lower() == gunLower then
-                        warn("[GangWars] Found exact dropped tool: " .. v.Name)
-                        local handle = v:FindFirstChild("Handle")
+                -- METHOD 2: Clone from ReplicatedStorage.weapons.{GunName}
+                local weapons = RS:FindFirstChild("weapons")
+                if weapons then
+                    local gunTool = weapons:FindFirstChild(gunName)
+                    if gunTool then
+                        if gunTool:IsA("Tool") then
+                            gunTool:Clone().Parent = LocalPlayer.Backpack
+                            warn("[GangWars] ✅ Cloned " .. gunName .. " from RS.weapons")
+                            return
+                        end
+                        for _, child in ipairs(gunTool:GetChildren()) do
+                            if child:IsA("Tool") then
+                                child:Clone().Parent = LocalPlayer.Backpack
+                                warn("[GangWars] ✅ Cloned " .. child.Name .. " from RS.weapons." .. gunName)
+                                return
+                            end
+                        end
+                    end
+                end
+
+                -- METHOD 3: Deep search ReplicatedStorage for exact name match
+                warn("[GangWars] Searching all of ReplicatedStorage for " .. gunName .. "...")
+                for _, obj in ipairs(RS:GetDescendants()) do
+                    if obj:IsA("Tool") and obj.Name == gunName then
+                        obj:Clone().Parent = LocalPlayer.Backpack
+                        warn("[GangWars] ✅ Cloned " .. gunName .. " from " .. obj:GetFullName())
+                        return
+                    end
+                end
+
+                -- METHOD 4: Pickup from workspace (dropped guns)
+                warn("[GangWars] Looking for dropped " .. gunName .. " in workspace...")
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    if obj:IsA("Tool") and obj.Name == gunName then
+                        local handle = obj:FindFirstChild("Handle")
                         if handle and handle:IsA("BasePart") then
                             Util.teleport(handle.CFrame)
-                            task.wait(1)
+                            task.wait(0.5)
                             if LocalPlayer.Backpack:FindFirstChild(gunName) or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild(gunName)) then
-                                warn("[GangWars] SUCCESS: Picked up " .. gunName .. " from ground!")
+                                warn("[GangWars] ✅ Picked up " .. gunName .. " from ground!")
                                 return
                             end
                         end
                     end
                 end
 
-                -- METHOD 4: Clone from ReplicatedStorage as last resort
-                warn("[GangWars] Method 4: Clone from ReplicatedStorage (may not fully work)...")
-                local gun = game:GetService("ReplicatedStorage"):FindFirstChild(gunName, true)
-                if gun and gun:IsA("Tool") and gun.Name:lower() == gunLower then
-                    gun:Clone().Parent = LocalPlayer.Backpack
-                    warn("[GangWars] Cloned " .. gunName .. " from ReplicatedStorage (client-side, may not fire)")
-                    return
-                end
-
-                warn("[GangWars] FAILED: Could not obtain " .. gunName .. " via any method")
+                warn("[GangWars] ❌ Could not find " .. gunName .. " anywhere. It may be a gamepass-only gun.")
             end)
         end
 
-        -- ═══════════════════════════════════════
-        UI.Label(p, "  🔫 REGULAR GUNS")
-        -- ═══════════════════════════════════════
-        local regularGuns = {
-            "Glock", "Uzi", "Mac10", "AK47", "AR15", "Shotgun",
-            "Draco", "FN", "Deagle", "MP5", "Sniper", "RPG",
-            "Revolver", "Choppa", "SMG",
+        -- ═══════════════════════════════════════════════════════
+        -- CATEGORY SYSTEM: Toggle sections to show/hide guns
+        -- ═══════════════════════════════════════════════════════
+        local categoryOpen = {}  -- tracks which category is open
+        local categoryFrames = {} -- stores button frames per category
+
+        local gunCategories = {
+            {name = "🔫 Glocks", guns = {
+                "GlockS", "GlockSwitch", "GlockGoldSwitch", "Glock 17",
+                "Glock19X", "Glock19X EXT", "Glock19XSwitchVecMag",
+                "Glock20", "Glock20 Drum", "Glock20 Extended",
+                "Glock23 Gen5 Beam", "Glock23GreenSwitch", "Glock26EXT Switch",
+                "Glock 40 Drum", "Glock150Round", "Tactical Glock",
+                "Xmas GlockSwitch", "GoldSwitch",
+            }},
+            {name = "🔫 ARPs & Rifles", guns = {
+                "FullyARP", "FullyMicroArp", "GhostARP", "ValentinesFullyARP",
+                "Neon ARPFully 1 Tap", "M4Carbine", "M6Gun", "MK18",
+                "5.56", "Tan ArDrum",
+            }},
+            {name = "🔫 Uzis", guns = {
+                "Xmas UZI", "Halloween UZI", "MrBeast UZI", "GoldUZI",
+            }},
+            {name = "🔫 Dracos", guns = {
+                "Micro Draco", "Mini Draco", "Fully Draco", "GoldDraco",
+                "GoldDracoDrum", "SkullFullyDraco", "XmasDracoSwitch",
+                "BlackOut Micro Draco",
+            }},
+            {name = "🔫 Switches", guns = {
+                "P80Switch", "GoldP80Switch", "HeartSwitch", "IceSpiceSwitch",
+                "ValentineSwitch", "HalloweenSwitch", "100RoundSwitch",
+                "2025Switch", "2026Switch", "Neon Switch 1 Tap",
+                "SquidGamesSwitch", "YNS Switch", "DOASwitch",
+                "200RMoneySwitch", "200REasterSwitch",
+            }},
+            {name = "🔫 Fullys", guns = {
+                "GhostFully", "FullyBlu", "MrBeast Fully", "SkullDeagleFully",
+                "100RoundFully", "100RoundXmas", "Xmas 80RndFully",
+                "Halloween100Fully", "HalloweenTecFully", "XmasTecFully",
+                "July100RndFully", "Lucky 150RFully", "Lucky 85RSwitch",
+                "150REasterFully", "200RMoneyFully", "SquidGamesFully",
+            }},
+            {name = "🔫 SMGs & Pistols", guns = {
+                "Mac10", "MP5", "MP9", "MPX", "Tec-9", "Christmas Tec-9",
+                "FN57", "FiveSeven", "S&W", "Taurus G2C", "Taurus Drum",
+                "DeagleDrum", "Beretta", "StandardMag", "ExtendedMag",
+                "DrumMag", "100RNDFN",
+            }},
+            {name = "🔫 Shotguns & Heavy", guns = {
+                "Auto Shotgun", "2026 Shotgun", "MiniGun",
+                "MiniGun Ammo", "RayGun",
+            }},
+            {name = "🔫 Specials", guns = {
+                "Axe", "C4", "SpringfieldXD",
+            }},
         }
 
-        for _, gunName in ipairs(regularGuns) do
-            UI.MakeButton(p, "🔫 " .. gunName, function() spawnGun(gunName) end)
+        UI.Label(p, "  🆓 FREE GUN SPAWNER")
+        UI.Label(p, "  Tap a category to expand, then tap a gun to spawn it FREE!")
+        UI.Divider(p)
+
+        for catIdx, cat in ipairs(gunCategories) do
+            local catKey = "cat_" .. catIdx
+            categoryOpen[catKey] = false
+
+            -- Category header button (acts as dropdown toggle)
+            UI.MakeButton(p, cat.name .. "  ▶  (" .. #cat.guns .. " guns)", function()
+                categoryOpen[catKey] = not categoryOpen[catKey]
+                local isOpen = categoryOpen[catKey]
+
+                -- Toggle visibility of gun buttons in this category
+                if categoryFrames[catKey] then
+                    for _, btn in ipairs(categoryFrames[catKey]) do
+                        pcall(function() btn.Visible = isOpen end)
+                    end
+                end
+
+                warn("[GangWars] " .. cat.name .. (isOpen and " OPENED" or " CLOSED"))
+            end)
+
+            -- Create all gun buttons (hidden by default)
+            categoryFrames[catKey] = {}
+            for _, gunName in ipairs(cat.guns) do
+                local btn = UI.MakeButton(p, "    ├─ " .. gunName, function()
+                    freeSpawnGun(gunName)
+                end)
+                -- Hide by default (dropdown closed)
+                pcall(function()
+                    if btn and typeof(btn) == "Instance" then
+                        btn.Visible = false
+                        table.insert(categoryFrames[catKey], btn)
+                    end
+                end)
+            end
         end
 
         UI.Divider(p)
+        UI.Label(p, "  🛠️ TOOL MODS")
 
-        -- ═══════════════════════════════════════
-        UI.Label(p, "  💎 GAMEPASS GUNS")
-        -- ═══════════════════════════════════════
-        local gamepassGuns = {
-            -- Glock Variants
-            "Glock19X", "Glock19 Round", "Glock26 Switch", "Glock Gold Switch",
-            -- P80 Variants
-            "P80", "P80 Switch",
-            -- AR9
-            "AR9 Fully",
-            -- Easter Specials
-            "150R Easter Fully", "200R Easter Switch",
-            -- Shotguns
-            "XMAS Shotgun", "Auto Shotgun", "2026 Shotgun", "OP Shotgun",
-            -- Round Drums
-            "100 Round Switch", "100 Round Fully", "50 Round",
-            -- Heavy
-            "300 ARG", "Gold Draco Drum", "Mini Gun",
-            -- Mr Beast Collection
-            "Mr Beast Uzi", "Mr Beast Fully",
-            -- Special / Limited Edition
-            "Heart Switch", "Squid Games Switch",
-            "Valentines Switch", "Valentines Fully",
-            "DOA Switch", "200R Money Switch",
-            "Ghost Fully", "Yins Switch", "Skull",
-        }
-
-        for _, gunName in ipairs(gamepassGuns) do
-            UI.MakeButton(p, "💎 " .. gunName, function() spawnGun(gunName) end)
-        end
-
-        UI.Divider(p)
-        UI.Label(p, "  TOOL MODS")
         UI.MakeToggle(p, "♻️ Gun Dupe",
             function() return Config.Game.GunDupe end,
             function(v)
@@ -2292,6 +2337,53 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                     end)
                 end
             end)
+
+        UI.MakeButton(p, "🗑️ Drop All Guns", function()
+            safeCall("GangWars:DropAll", function()
+                for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+                    if tool:IsA("Tool") and tool.Name ~= "Fists" then
+                        tool.Parent = workspace
+                    end
+                end
+                if LocalPlayer.Character then
+                    for _, tool in ipairs(LocalPlayer.Character:GetChildren()) do
+                        if tool:IsA("Tool") and tool.Name ~= "Fists" then
+                            tool.Parent = workspace
+                        end
+                    end
+                end
+                warn("[GangWars] Dropped all guns!")
+            end)
+        end)
+
+        UI.MakeButton(p, "🔄 Spawn ALL Guns (Clone Everything)", function()
+            safeCall("GangWars:SpawnAll", function()
+                warn("[GangWars] Spawning ALL guns from ReplicatedStorage...")
+                local RS = game:GetService("ReplicatedStorage")
+                local count = 0
+                -- Try Items folder
+                local items = RS:FindFirstChild("Items")
+                if items then
+                    for _, obj in ipairs(items:GetChildren()) do
+                        if obj:IsA("Tool") and not LocalPlayer.Backpack:FindFirstChild(obj.Name) then
+                            obj:Clone().Parent = LocalPlayer.Backpack
+                            count = count + 1
+                        end
+                    end
+                end
+                -- Try weapons folder
+                local weapons = RS:FindFirstChild("weapons")
+                if weapons then
+                    for _, obj in ipairs(weapons:GetChildren()) do
+                        if obj:IsA("Tool") and not LocalPlayer.Backpack:FindFirstChild(obj.Name) then
+                            obj:Clone().Parent = LocalPlayer.Backpack
+                            count = count + 1
+                        end
+                    end
+                end
+                warn("[GangWars] ✅ Spawned " .. count .. " guns FREE!")
+            end)
+        end)
     end)
 
     -- ── TELEPORT TAB ─────────────────────────────────────────
