@@ -2572,33 +2572,118 @@ function loadCentralStreets(UI, Config, Util, safeCall, AntiDetect)
                 Config.Game.PrinterFarm = v
                 if v then
                     task.spawn(function()
+                        local player = game:GetService("Players").LocalPlayer
                         while Config.Game.PrinterFarm do
                             safeCall("CentralSt:PrinterFarm", function()
-                                local prompts = {}
-                                for _, v2 in ipairs(workspace:GetDescendants()) do
-                                    if v2:IsA("ProximityPrompt") then
-                                        local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                        local aText = v2.ActionText:lower()
-                                        if pName:find("printer") or pName:find("print") or pName:find("paper")
-                                            or pName:find("propad") or pName:find("money")
-                                            or aText:find("print") or aText:find("collect") or aText:find("paper") then
-                                            table.insert(prompts, v2)
+                                local allPrompts = workspace:GetDescendants()
+
+                                -- Helper: find a prompt matching keywords
+                                local function findPrompt(keywords, blockKeywords)
+                                    for _, v2 in ipairs(allPrompts) do
+                                        if v2:IsA("ProximityPrompt") then
+                                            local pName = v2.Parent and v2.Parent.Name:lower() or ""
+                                            local aText = v2.ActionText:lower()
+                                            local combined = pName .. " " .. aText
+                                            local blocked = false
+                                            if blockKeywords then
+                                                for _, bk in ipairs(blockKeywords) do
+                                                    if combined:find(bk) then blocked = true break end
+                                                end
+                                            end
+                                            if not blocked then
+                                                for _, kw in ipairs(keywords) do
+                                                    if combined:find(kw) then return v2 end
+                                                end
+                                            end
                                         end
                                     end
+                                    return nil
                                 end
-                                warn("[CentralSt:Printer] Found " .. #prompts .. " printer prompts")
-                                for _, v2 in ipairs(prompts) do
-                                    if not Config.Game.PrinterFarm then break end
-                                    local part = v2.Parent
+
+                                -- Helper: teleport to prompt and fire it
+                                local function goFire(prompt, waitAfter)
+                                    if not prompt then return false end
+                                    local part = prompt.Parent
                                     if part and part:IsA("BasePart") then
-                                        Util.teleport(part.CFrame)
+                                        Util.teleport(part.CFrame * CFrame.new(0, 0, -3))
                                         task.wait(1.5)
                                     end
-                                    Util.firePrompt(v2)
-                                    AntiDetect.randomWait(1.5, 2.5)
+                                    Util.firePrompt(prompt)
+                                    task.wait(waitAfter or 2)
+                                    return true
+                                end
+
+                                -- STEP 1: Buy printer
+                                local printerBuyPrompt = findPrompt(
+                                    {"buy printer", "get printer", "purchase printer", "grab printer"},
+                                    {"collect", "paper"}
+                                )
+                                if printerBuyPrompt then
+                                    warn("[CentralSt:Printer] Step 1: Buying printer...")
+                                    goFire(printerBuyPrompt, 2)
+                                else
+                                    warn("[CentralSt:Printer] Step 1: No buy printer prompt found — checking if already owned")
+                                end
+
+                                if not Config.Game.PrinterFarm then return end
+
+                                -- STEP 2: Buy substrate paper
+                                local paperPrompt = findPrompt(
+                                    {"substrate", "paper", "buy paper", "get paper", "purchase paper"},
+                                    {"collect", "printer money"}
+                                )
+                                if paperPrompt then
+                                    warn("[CentralSt:Printer] Step 2: Buying substrate paper...")
+                                    goFire(paperPrompt, 2)
+                                else
+                                    warn("[CentralSt:Printer] Step 2: No paper prompt found")
+                                end
+
+                                if not Config.Game.PrinterFarm then return end
+
+                                -- STEP 3: Place printer (equip tool from backpack and activate)
+                                local printerTool = player.Backpack:FindFirstChild("Printer")
+                                    or player.Backpack:FindFirstChildWhichIsA("Tool")
+                                    and (function()
+                                        for _, t in ipairs(player.Backpack:GetChildren()) do
+                                            if t:IsA("Tool") and t.Name:lower():find("printer") then return t end
+                                        end
+                                    end)()
+                                if printerTool then
+                                    warn("[CentralSt:Printer] Step 3: Placing printer tool...")
+                                    printerTool.Parent = player.Character
+                                    task.wait(0.5)
+                                    -- Try to activate the tool to place it
+                                    pcall(function() printerTool:Activate() end)
+                                    task.wait(2)
+                                else
+                                    warn("[CentralSt:Printer] Step 3: No printer tool in backpack")
+                                end
+
+                                if not Config.Game.PrinterFarm then return end
+
+                                -- STEP 4: Wait for printer to fill up with money
+                                warn("[CentralSt:Printer] Step 4: Waiting 30s for printer to fill...")
+                                for i = 1, 30 do
+                                    if not Config.Game.PrinterFarm then return end
+                                    task.wait(1)
+                                end
+
+                                -- STEP 5: Collect money from placed printer
+                                -- Refresh descendants to find placed printer
+                                allPrompts = workspace:GetDescendants()
+                                local collectPrompt = findPrompt(
+                                    {"collect", "collect money", "take money", "grab money"},
+                                    {"buy", "purchase"}
+                                )
+                                if collectPrompt then
+                                    warn("[CentralSt:Printer] Step 5: Collecting money!")
+                                    goFire(collectPrompt, 2)
+                                else
+                                    warn("[CentralSt:Printer] Step 5: No collect prompt found")
                                 end
                             end)
-                            AntiDetect.randomWait(4, 7)
+                            AntiDetect.randomWait(5, 8)
                         end
                     end)
                 end
