@@ -2084,7 +2084,7 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                         local aText = v2.ActionText:lower()
                                         if pName:find("rob") or pName:find("safe") or pName:find("register")
                                             or pName:find("vault") or pName:find("cash")
-                                            or aText:find("rob") or aText:find("steal") or aText:find("open") then
+                                            or aText:find("rob") or aText:find("steal") then
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
                                                 Util.teleport(part.CFrame)
@@ -2614,9 +2614,11 @@ function loadCentralStreets(UI, Config, Util, safeCall, AntiDetect)
                                 end
 
                                 -- STEP 1: Buy printer
+                                -- Use broad "printer" keyword since combined = pName + aText
+                                -- e.g. parent "Printer" + action "Buy" = "printer buy" (not "buy printer")
                                 local printerBuyPrompt = findPrompt(
-                                    {"buy printer", "get printer", "purchase printer", "grab printer"},
-                                    {"collect", "paper"}
+                                    {"printer"},
+                                    {"collect", "paper", "substrate"}
                                 )
                                 if printerBuyPrompt then
                                     warn("[CentralSt:Printer] Step 1: Buying printer...")
@@ -2642,13 +2644,14 @@ function loadCentralStreets(UI, Config, Util, safeCall, AntiDetect)
                                 if not Config.Game.PrinterFarm then return end
 
                                 -- STEP 3: Place printer (equip tool from backpack and activate)
-                                local printerTool = player.Backpack:FindFirstChild("Printer")
-                                    or player.Backpack:FindFirstChildWhichIsA("Tool")
-                                    and (function()
-                                        for _, t in ipairs(player.Backpack:GetChildren()) do
-                                            if t:IsA("Tool") and t.Name:lower():find("printer") then return t end
-                                        end
-                                    end)()
+                                -- Fixed: search backpack manually to avoid operator precedence bug
+                                local printerTool = nil
+                                for _, t in ipairs(player.Backpack:GetChildren()) do
+                                    if t:IsA("Tool") and t.Name:lower():find("printer") then
+                                        printerTool = t
+                                        break
+                                    end
+                                end
                                 if printerTool then
                                     warn("[CentralSt:Printer] Step 3: Placing printer tool...")
                                     printerTool.Parent = player.Character
@@ -3175,7 +3178,7 @@ function loadPhillyStreetz(UI, Config, Util, safeCall, AntiDetect)
                                         if pName:find("heist") or pName:find("vault") or pName:find("safe")
                                             or pName:find("drill") or pName:find("hack")
                                             or aText:find("heist") or aText:find("rob") or aText:find("crack")
-                                            or aText:find("drill") or aText:find("open") then
+                                            or aText:find("drill") then
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
                                                 Util.teleport(part.CFrame)
@@ -3279,7 +3282,7 @@ function loadPhillyStreetz(UI, Config, Util, safeCall, AntiDetect)
                                         if pName:find("loot") or pName:find("crate") or pName:find("box")
                                             or pName:find("bag") or pName:find("chest") or pName:find("stash")
                                             or aText:find("loot") or aText:find("pick up") or aText:find("search")
-                                            or aText:find("open") or aText:find("collect") then
+                                            or aText:find("collect") then
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
                                                 Util.teleport(part.CFrame)
