@@ -1834,11 +1834,13 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                         local aText = v2.ActionText:lower()
                                         local oText = v2.ObjectText:lower()
                                         local fullName = v2.Parent and v2.Parent:GetFullName():lower() or ""
-                                        if not isGunShopPrompt(v2) and (pName:find("blank") or pName:find("card") or pName:find("punch")
-                                            or pName:find("punchmade") or pName:find("seller")
-                                            or aText:find("card") or aText:find("blank") or aText:find("grab") or aText:find("buy")
-                                            or oText:find("card") or oText:find("blank") or oText:find("punch")
-                                            or fullName:find("punch") or fullName:find("blank")) then
+                                        -- Only match BLANK CARD specific prompts — NOT box job, NOT gun shops
+                                        if not isGunShopPrompt(v2)
+                                            and not pName:find("box") and not fullName:find("box1") and not fullName:find("boxjob")
+                                            and (pName:find("blank") or pName:find("card sell") or pName:find("punchmade") or pName:find("punch made")
+                                            or oText:find("blank card") or oText:find("card sell")
+                                            or aText:find("blank card") or aText:find("get card")
+                                            or fullName:find("blank") or fullName:find("cardsell")) then
                                             warn("[GangWars:Scam] Found card source: " .. (v2.Parent and v2.Parent.Name or "?"))
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
@@ -1862,11 +1864,14 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                         local aText = v2.ActionText:lower()
                                         local oText = v2.ObjectText:lower()
                                         local fullName = v2.Parent and v2.Parent:GetFullName():lower() or ""
-                                        if pName:find("data") or pName:find("skim") or pName:find("info")
-                                            or aText:find("data") or aText:find("skim") or aText:find("swipe") or aText:find("info")
-                                            or oText:find("data") or oText:find("info")
-                                            or (fullName:find("punch") and fullName:find("data"))
-                                            or (fullName:find("seller") and fullName:find("data")) then
+                                        -- NOT gun shops (they use "swipe" too!), NOT box job
+                                        if not isGunShopPrompt(v2)
+                                            and not pName:find("box") and not fullName:find("box1")
+                                            and (pName:find("data") or pName:find("skim") or pName:find("data sell")
+                                            or aText:find("steal data") or aText:find("get data") or aText:find("skim")
+                                            or oText:find("data sell") or oText:find("stolen data") or oText:find("card data")
+                                            or (fullName:find("punch") and (fullName:find("data") or fullName:find("skim")))
+                                            or (fullName:find("seller") and fullName:find("data"))) then
                                             warn("[GangWars:Scam] Found data source: " .. (v2.Parent and v2.Parent.Name or "?"))
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
@@ -1889,9 +1894,11 @@ function loadGangWars(UI, Config, Util, safeCall, AntiDetect)
                                         local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                         local aText = v2.ActionText:lower()
                                         local oText = v2.ObjectText:lower()
-                                        if pName:find("computer") or pName:find("laptop") or pName:find("monitor") or pName:find("terminal")
-                                            or aText:find("upload") or aText:find("transfer") or aText:find("computer")
-                                            or oText:find("computer") or oText:find("laptop") or oText:find("terminal") then
+                                        if not isGunShopPrompt(v2)
+                                            and not pName:find("box") and not fullName:find("box1")
+                                            and (pName:find("computer") or pName:find("laptop") or pName:find("monitor") or pName:find("terminal")
+                                            or aText:find("upload") or aText:find("transfer") or aText:find("encode")
+                                            or oText:find("computer") or oText:find("laptop") or oText:find("terminal")) then
                                             warn("[GangWars:Scam] Found computer: " .. (v2.Parent and v2.Parent.Name or "?"))
                                             local part = v2.Parent
                                             if part and part:IsA("BasePart") then
