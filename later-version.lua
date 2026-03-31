@@ -2574,26 +2574,31 @@ function loadCentralStreets(UI, Config, Util, safeCall, AntiDetect)
                     task.spawn(function()
                         while Config.Game.PrinterFarm do
                             safeCall("CentralSt:PrinterFarm", function()
+                                local prompts = {}
                                 for _, v2 in ipairs(workspace:GetDescendants()) do
-                                    if not Config.Game.PrinterFarm then break end
                                     if v2:IsA("ProximityPrompt") then
                                         local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                         local aText = v2.ActionText:lower()
                                         if pName:find("printer") or pName:find("print") or pName:find("paper")
                                             or pName:find("propad") or pName:find("money")
                                             or aText:find("print") or aText:find("collect") or aText:find("paper") then
-                                            local part = v2.Parent
-                                            if part and part:IsA("BasePart") then
-                                                Util.teleport(part.CFrame)
-                                                task.wait(0.3)
-                                            end
-                                            Util.firePrompt(v2)
-                                            AntiDetect.randomWait(0.5, 1.0)
+                                            table.insert(prompts, v2)
                                         end
                                     end
                                 end
+                                warn("[CentralSt:Printer] Found " .. #prompts .. " printer prompts")
+                                for _, v2 in ipairs(prompts) do
+                                    if not Config.Game.PrinterFarm then break end
+                                    local part = v2.Parent
+                                    if part and part:IsA("BasePart") then
+                                        Util.teleport(part.CFrame)
+                                        task.wait(1.5)
+                                    end
+                                    Util.firePrompt(v2)
+                                    AntiDetect.randomWait(1.5, 2.5)
+                                end
                             end)
-                            AntiDetect.randomWait(2, 4)
+                            AntiDetect.randomWait(4, 7)
                         end
                     end)
                 end
@@ -2608,8 +2613,8 @@ function loadCentralStreets(UI, Config, Util, safeCall, AntiDetect)
                     task.spawn(function()
                         while Config.Game.GrowFarm do
                             safeCall("CentralSt:GrowFarm", function()
+                                local prompts = {}
                                 for _, v2 in ipairs(workspace:GetDescendants()) do
-                                    if not Config.Game.GrowFarm then break end
                                     if v2:IsA("ProximityPrompt") then
                                         local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                         local aText = v2.ActionText:lower()
@@ -2617,18 +2622,23 @@ function loadCentralStreets(UI, Config, Util, safeCall, AntiDetect)
                                             or pName:find("weed") or pName:find("pot")
                                             or aText:find("plant") or aText:find("harvest") or aText:find("water")
                                             or aText:find("pick") or aText:find("grow") then
-                                            local part = v2.Parent
-                                            if part and part:IsA("BasePart") then
-                                                Util.teleport(part.CFrame)
-                                                task.wait(0.3)
-                                            end
-                                            Util.firePrompt(v2)
-                                            AntiDetect.randomWait(0.4, 0.8)
+                                            table.insert(prompts, v2)
                                         end
                                     end
                                 end
+                                warn("[CentralSt:Grow] Found " .. #prompts .. " grow prompts")
+                                for _, v2 in ipairs(prompts) do
+                                    if not Config.Game.GrowFarm then break end
+                                    local part = v2.Parent
+                                    if part and part:IsA("BasePart") then
+                                        Util.teleport(part.CFrame)
+                                        task.wait(1.5)
+                                    end
+                                    Util.firePrompt(v2)
+                                    AntiDetect.randomWait(1.5, 3.0)
+                                end
                             end)
-                            AntiDetect.randomWait(3, 6)
+                            AntiDetect.randomWait(5, 8)
                         end
                     end)
                 end
@@ -2643,31 +2653,36 @@ function loadCentralStreets(UI, Config, Util, safeCall, AntiDetect)
                     task.spawn(function()
                         while Config.Game.ChopShopFarm do
                             safeCall("CentralSt:ChopShop", function()
+                                local prompts = {}
                                 for _, v2 in ipairs(workspace:GetDescendants()) do
-                                    if not Config.Game.ChopShopFarm then break end
                                     if v2:IsA("ProximityPrompt") then
                                         local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                         local aText = v2.ActionText:lower()
                                         if pName:find("chop") or pName:find("strip") or pName:find("disassemble")
                                             or aText:find("chop") or aText:find("strip") or aText:find("dismantle") then
-                                            local part = v2.Parent
-                                            if part and part:IsA("BasePart") then
-                                                Util.teleport(part.CFrame)
-                                                task.wait(0.5)
-                                            end
-                                            Util.firePrompt(v2)
-                                            AntiDetect.randomWait(1, 2)
+                                            table.insert(prompts, v2)
                                         end
                                     end
                                 end
+                                warn("[CentralSt:ChopShop] Found " .. #prompts .. " chop prompts")
+                                for _, v2 in ipairs(prompts) do
+                                    if not Config.Game.ChopShopFarm then break end
+                                    local part = v2.Parent
+                                    if part and part:IsA("BasePart") then
+                                        Util.teleport(part.CFrame)
+                                        task.wait(1.5)
+                                    end
+                                    Util.firePrompt(v2)
+                                    AntiDetect.randomWait(2.0, 3.5)
+                                end
                             end)
-                            AntiDetect.randomWait(3, 5)
+                            AntiDetect.randomWait(5, 8)
                         end
                     end)
                 end
             end)
 
-        -- Card Swipe
+        -- Card Swipe (3-step: Blank Card → Load Data → ATM)
         UI.MakeToggle(p, "💳 Card Swipe Farm",
             function() return Config.Game.CardSwipeFarm end,
             function(v)
@@ -2676,25 +2691,99 @@ function loadCentralStreets(UI, Config, Util, safeCall, AntiDetect)
                     task.spawn(function()
                         while Config.Game.CardSwipeFarm do
                             safeCall("CentralSt:CardSwipe", function()
+                                local root = game.Players.LocalPlayer.Character
+                                    and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                                if not root then return end
+
+                                -- Step 1: Buy blank card from card seller
+                                warn("[CentralSt:Card] Step 1: Looking for blank card seller...")
+                                local cardPrompt = nil
                                 for _, v2 in ipairs(workspace:GetDescendants()) do
-                                    if not Config.Game.CardSwipeFarm then break end
                                     if v2:IsA("ProximityPrompt") then
                                         local pName = v2.Parent and v2.Parent.Name:lower() or ""
                                         local aText = v2.ActionText:lower()
-                                        if pName:find("card") or pName:find("swipe") or pName:find("atm")
-                                            or aText:find("swipe") or aText:find("card") or aText:find("scan") then
-                                            local part = v2.Parent
-                                            if part and part:IsA("BasePart") then
-                                                Util.teleport(part.CFrame)
-                                                task.wait(0.4)
-                                            end
-                                            Util.firePrompt(v2)
-                                            AntiDetect.randomWait(0.6, 1.5)
+                                        -- Only match card seller NPCs, NOT ATMs or loaders
+                                        if (pName:find("card seller") or pName:find("blank card") or pName:find("card shop")
+                                            or aText:find("buy card") or aText:find("blank card") or aText:find("get card"))
+                                            and not pName:find("atm") and not aText:find("swipe") and not aText:find("withdraw") then
+                                            cardPrompt = v2
+                                            break
                                         end
                                     end
                                 end
+                                if cardPrompt then
+                                    warn("[CentralSt:Card] Found card seller: " .. (cardPrompt.Parent and cardPrompt.Parent.Name or "?"))
+                                    local part = cardPrompt.Parent
+                                    if part and part:IsA("BasePart") then
+                                        Util.teleport(part.CFrame)
+                                        task.wait(2.0)
+                                    end
+                                    Util.firePrompt(cardPrompt)
+                                    task.wait(3.0) -- wait for card to appear in inventory
+                                else
+                                    warn("[CentralSt:Card] No card seller found — check prompt names!")
+                                end
+
+                                if not Config.Game.CardSwipeFarm then return end
+
+                                -- Step 2: Load data onto card (card reader/skimmer machine)
+                                warn("[CentralSt:Card] Step 2: Looking for card loader/skimmer...")
+                                local loaderPrompt = nil
+                                for _, v2 in ipairs(workspace:GetDescendants()) do
+                                    if v2:IsA("ProximityPrompt") then
+                                        local pName = v2.Parent and v2.Parent.Name:lower() or ""
+                                        local aText = v2.ActionText:lower()
+                                        if (pName:find("skim") or pName:find("loader") or pName:find("reader") or pName:find("encoder")
+                                            or aText:find("skim") or aText:find("load card") or aText:find("encode") or aText:find("write card"))
+                                            and not pName:find("atm") and not aText:find("withdraw") then
+                                            loaderPrompt = v2
+                                            break
+                                        end
+                                    end
+                                end
+                                if loaderPrompt then
+                                    warn("[CentralSt:Card] Found loader: " .. (loaderPrompt.Parent and loaderPrompt.Parent.Name or "?"))
+                                    local part = loaderPrompt.Parent
+                                    if part and part:IsA("BasePart") then
+                                        Util.teleport(part.CFrame)
+                                        task.wait(2.0)
+                                    end
+                                    Util.firePrompt(loaderPrompt)
+                                    task.wait(3.0) -- wait for card to be activated
+                                else
+                                    warn("[CentralSt:Card] No card loader found — check prompt names!")
+                                end
+
+                                if not Config.Game.CardSwipeFarm then return end
+
+                                -- Step 3: Swipe active card at ATM
+                                warn("[CentralSt:Card] Step 3: Looking for ATM...")
+                                local atmPrompt = nil
+                                for _, v2 in ipairs(workspace:GetDescendants()) do
+                                    if v2:IsA("ProximityPrompt") then
+                                        local pName = v2.Parent and v2.Parent.Name:lower() or ""
+                                        local aText = v2.ActionText:lower()
+                                        if pName:find("atm") or aText:find("withdraw") or aText:find("swipe card")
+                                            or aText:find("insert card") then
+                                            atmPrompt = v2
+                                            break
+                                        end
+                                    end
+                                end
+                                if atmPrompt then
+                                    warn("[CentralSt:Card] Found ATM: " .. (atmPrompt.Parent and atmPrompt.Parent.Name or "?"))
+                                    local part = atmPrompt.Parent
+                                    if part and part:IsA("BasePart") then
+                                        Util.teleport(part.CFrame)
+                                        task.wait(2.0)
+                                    end
+                                    Util.firePrompt(atmPrompt)
+                                    task.wait(3.0)
+                                else
+                                    warn("[CentralSt:Card] No ATM found — check prompt names!")
+                                end
                             end)
-                            AntiDetect.randomWait(2, 4)
+                            AntiDetect.randomWait(5, 8)
                         end
                     end)
                 end
