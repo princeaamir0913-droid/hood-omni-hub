@@ -1,4 +1,4 @@
---[[
+-- Fixed by Aamir--[[
     ╔══════════════════════════════════════════════════════════════╗
     ║          HOOD OMNI HUB v1.0 — Multi-Game Script Hub        ║
     ║       Optimized for Delta Mobile Executor (Android/iOS)     ║
