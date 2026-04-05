@@ -427,8 +427,163 @@ local GunTab     = Window:CreateTab("🔫 Guns")
 -- ===== Underground Wars =====
 if GAME_NAME == "Underground Wars" then
 
+    -- 💣 Nuke Button (bypass star requirement)
+    UtilityTab:CreateButton({
+        Name = "💣 Launch Nuke (Bypass Stars)",
+        Callback = function()
+            -- Try to fire nuke remote directly, bypassing star check
+            local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:FindFirstChild("Events") or ReplicatedStorage
+            local nukeRemote = nil
+            for _, v in ipairs(remotes:GetDescendants()) do
+                local n = v.Name:lower()
+                if n:find("nuke") or n:find("bomb") or n:find("launch") then
+                    nukeRemote = v
+                    break
+                end
+            end
+            if nukeRemote and nukeRemote:IsA("RemoteEvent") then
+                nukeRemote:FireServer()
+                Rayfield:Notify({Title = "💣 Nuke!", Content = "Nuke launched!", Duration = 3})
+            else
+                -- Try clicking the ingame nuke button directly
+                local nukeBtn = nil
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    local n = v.Name:lower()
+                    if (n:find("nuke") or n:find("launch")) and (v:IsA("ClickDetector") or v:IsA("ProximityPrompt")) then
+                        nukeBtn = v
+                        break
+                    end
+                end
+                if nukeBtn then
+                    pcall(function()
+                        if nukeBtn:IsA("ClickDetector") then
+                            fireclickdetector(nukeBtn)
+                        else
+                            fireproximityprompt(nukeBtn, 0)
+                        end
+                    end)
+                    Rayfield:Notify({Title = "💣 Nuke!", Content = "Nuke button pressed!", Duration = 3})
+                else
+                    Rayfield:Notify({Title = "❌ Nuke", Content = "Could not find nuke remote. Try standing near nuke button.", Duration = 4})
+                end
+            end
+        end
+    })
 
-    FarmTab:CreateLabel("No farms for this game")
+    -- 🚀 Free Rocket Launcher
+    UtilityTab:CreateButton({
+        Name = "🚀 Get Free Rocket Launcher",
+        Callback = function()
+            local char = player.Character
+            if not char then return end
+            -- Try ReplicatedStorage first
+            local function tryClone(parent)
+                for _, v in ipairs(parent:GetDescendants()) do
+                    local n = v.Name:lower()
+                    if n:find("rocket") or n:find("launcher") or n:find("bazooka") then
+                        if v:IsA("Tool") then
+                            local clone = v:Clone()
+                            clone.Parent = player.Backpack
+                            Rayfield:Notify({Title = "🚀 Got It!", Content = v.Name .. " added to backpack!", Duration = 3})
+                            return true
+                        end
+                    end
+                end
+                return false
+            end
+            if not tryClone(ReplicatedStorage) then
+                if not tryClone(workspace) then
+                    Rayfield:Notify({Title = "❌ Not Found", Content = "Rocket Launcher not found in storage.", Duration = 4})
+                end
+            end
+        end
+    })
+
+    -- ⚡ Increase Dig Speed
+    local UW_FastDig = false
+    local originalWalkSpeed = 16
+    FarmTab:CreateToggle({
+        Name = "⚡ Fast Dig Speed",
+        CurrentValue = false,
+        Flag = "UW_FastDig",
+        Callback = function(v)
+            UW_FastDig = v
+            local char = player.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if hum then
+                if v then
+                    originalWalkSpeed = hum.WalkSpeed
+                    hum.WalkSpeed = 100
+                    -- Also try to fire dig speed remote
+                    local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:FindFirstChild("Events") or ReplicatedStorage
+                    for _, r in ipairs(remotes:GetDescendants()) do
+                        local n = r.Name:lower()
+                        if n:find("dig") or n:find("speed") or n:find("mine") then
+                            pcall(function() r:FireServer(100) end)
+                        end
+                    end
+                else
+                    hum.WalkSpeed = originalWalkSpeed
+                end
+            end
+            -- Keep speed on respawn
+            if v then
+                task.spawn(function()
+                    while UW_FastDig do
+                        local c = player.Character
+                        local h = c and c:FindFirstChildOfClass("Humanoid")
+                        if h then h.WalkSpeed = 100 end
+                        task.wait(1)
+                    end
+                end)
+            end
+        end
+    })
+
+    -- 💰 Add 100k Money
+    UtilityTab:CreateButton({
+        Name = "💰 Add 100k Money",
+        Callback = function()
+            -- Try all common money remotes
+            local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:FindFirstChild("Events") or ReplicatedStorage
+            local fired = false
+            for _, v in ipairs(remotes:GetDescendants()) do
+                local n = v.Name:lower()
+                if n:find("money") or n:find("cash") or n:find("coin") or n:find("add") or n:find("give") then
+                    if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
+                        pcall(function()
+                            if v:IsA("RemoteEvent") then
+                                v:FireServer(100000)
+                            else
+                                v:InvokeServer(100000)
+                            end
+                        end)
+                        fired = true
+                    end
+                end
+            end
+            if fired then
+                Rayfield:Notify({Title = "💰 Money Sent!", Content = "Fired money remote — check your balance!", Duration = 3})
+            else
+                -- Try leaderstats
+                local ls = player:FindFirstChild("leaderstats")
+                if ls then
+                    for _, stat in ipairs(ls:GetChildren()) do
+                        local n = stat.Name:lower()
+                        if n:find("money") or n:find("cash") or n:find("coin") then
+                            pcall(function() stat.Value = stat.Value + 100000 end)
+                            fired = true
+                        end
+                    end
+                end
+                if fired then
+                    Rayfield:Notify({Title = "💰 Done!", Content = "+100k added to " .. (player.leaderstats and player.leaderstats:GetChildren()[1] and player.leaderstats:GetChildren()[1].Name or "balance"), Duration = 3})
+                else
+                    Rayfield:Notify({Title = "❌ Failed", Content = "Could not find money remote. Server-sided games block this.", Duration = 4})
+                end
+            end
+        end
+    })
 
     AddUndergroundWarsCombatFeatures(CombatTab, UtilityTab)
 
