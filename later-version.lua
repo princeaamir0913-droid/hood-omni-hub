@@ -290,6 +290,32 @@ local function AddSharedCombatFeatures(CombatTab, UtilityTab)
 end
 
 -- Full combat features for Underground Wars ONLY (includes Flag TP + Sword Reach)
+local HitboxSize = 10
+local HitboxEnabled = false
+local function StartHitbox()
+    task.spawn(function()
+        while HitboxEnabled do
+            for _, p in ipairs(game.Players:GetPlayers()) do
+                if p ~= player and p.Character then
+                    local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        hrp.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+                        hrp.Transparency = 0.8
+                    end
+                end
+            end
+            task.wait(0.1)
+        end
+        -- reset on disable
+        for _, p in ipairs(game.Players:GetPlayers()) do
+            if p ~= player and p.Character then
+                local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then hrp.Size = Vector3.new(2, 2, 1) end
+            end
+        end
+    end)
+end
+
 local function AddUndergroundWarsCombatFeatures(CombatTab, UtilityTab)
     CombatTab:CreateToggle({
         Name = "🎯 Aimbot",
@@ -318,6 +344,28 @@ local function AddUndergroundWarsCombatFeatures(CombatTab, UtilityTab)
         Callback = function(v)
             UW_FlagTP = v
             if v then StartFlagTP() end
+        end
+    })
+
+    CombatTab:CreateToggle({
+        Name = "📦 Hitbox Expander",
+        CurrentValue = false,
+        Flag = "UW_Hitbox",
+        Callback = function(v)
+            HitboxEnabled = v
+            if v then StartHitbox() end
+        end
+    })
+
+    CombatTab:CreateSlider({
+        Name = "📏 Hitbox Size",
+        Range = {5, 100},
+        Increment = 5,
+        Suffix = " studs",
+        CurrentValue = 10,
+        Flag = "UW_HitboxSize",
+        Callback = function(v)
+            HitboxSize = v
         end
     })
 
