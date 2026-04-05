@@ -1,11 +1,11 @@
 --[[
-    Hood Omni Hub v2.0 "Rayfield Edition"
+    Hood Omni Hub v2.1 "Rayfield Edition"
     by PrinceAamir + DeepSeek Coder V2
     SUPPORTED GAMES: Tha Bronx 3, Gang Wars, Central Streets, Philly Streetz 2,
-                     South Bronx, Da Streetz, Bronx Hood (FREE), Bronx Hood (UPD),
+                     South Bronx, Bronx Hood (FREE), Bronx Hood (UPD),
                      Underground War 2.0, The Underground War 2
     FEATURES: Auto Cash Farm, Kill Aura, Dupe, Godmode, Money Gen, Gun Spawner,
-              Aimbot, Auto Shoot, Flag TP, Sword Reach
+              Aimbot, Auto Shoot, Flag TP, Sword Reach (ALL GAMES)
 ]]
 
 -- Load Rayfield UI Library
@@ -87,7 +87,7 @@ local function SpawnGun(gunName)
     print("✅ SPAWNED:", gunName)
 end
 
--- ==================== UNDERGROUND WARS FEATURES ====================
+-- ==================== SHARED COMBAT FEATURES (ALL GAMES) ====================
 
 local UW_Aimbot     = false
 local UW_AutoShoot  = false
@@ -202,6 +202,80 @@ player.CharacterAdded:Connect(function(char)
     end)
 end)
 
+-- Shared function to add combat toggles to any CombatTab
+local function AddSharedCombatFeatures(CombatTab, UtilityTab)
+    CombatTab:CreateToggle({
+        Name = "🎯 Aimbot",
+        CurrentValue = false,
+        Flag = "Shared_Aimbot",
+        Callback = function(v)
+            UW_Aimbot = v
+            if v then StartAimbot() end
+        end
+    })
+
+    CombatTab:CreateToggle({
+        Name = "🔫 Auto Shoot",
+        CurrentValue = false,
+        Flag = "Shared_AutoShoot",
+        Callback = function(v)
+            UW_AutoShoot = v
+            if v then StartAutoShoot() end
+        end
+    })
+
+    CombatTab:CreateToggle({
+        Name = "🚩 Flag TP To Me",
+        CurrentValue = false,
+        Flag = "Shared_FlagTP",
+        Callback = function(v)
+            UW_FlagTP = v
+            if v then StartFlagTP() end
+        end
+    })
+
+    CombatTab:CreateToggle({
+        Name = "⚔️ Sword Reach",
+        CurrentValue = false,
+        Flag = "Shared_SwordReach",
+        Callback = function(v)
+            UW_SwordReach = v
+            ApplySwordReach(v)
+        end
+    })
+
+    UtilityTab:CreateButton({
+        Name = "🏃 Teleport to Enemy Base",
+        Callback = function()
+            local target = GetNearestEnemy()
+            if target and target:FindFirstChild("HumanoidRootPart") then
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+                end
+            else
+                Rayfield:Notify({Title = "No Target", Content = "No enemy found nearby.", Duration = 3})
+            end
+        end
+    })
+
+    UtilityTab:CreateButton({
+        Name = "💀 Kill Nearest Enemy",
+        Callback = function()
+            local target = GetNearestEnemy()
+            if target and target:FindFirstChild("HumanoidRootPart") then
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
+                    task.wait(0.05)
+                    local tool = char:FindFirstChildOfClass("Tool")
+                    if tool then tool:Activate() end
+                end
+            end
+        end
+    })
+end
+
 -- ==================== GAME-SPECIFIC FARMS ====================
 
 local function ThaBronx3CashFarm()
@@ -285,7 +359,7 @@ end
 -- ==================== RAYFIELD UI ====================
 
 local Window = Rayfield:CreateWindow({
-    Name = "Hood Omni Hub v2.0 - " .. GAME_NAME,
+    Name = "Hood Omni Hub v2.1 - " .. GAME_NAME,
     LoadingTitle = "Loading Hub...",
     LoadingSubtitle = "by PrinceAamir",
     Theme = "Default"
@@ -299,85 +373,12 @@ local GunTab     = Window:CreateTab("🔫 Guns")
 -- ===== Underground Wars =====
 if GAME_NAME == "Underground Wars" then
 
-    CombatTab:CreateSection("Combat Cheats")
+    FarmTab:CreateLabel("No farms for this game")
 
-    CombatTab:CreateToggle({
-        Name = "🎯 Aimbot",
-        CurrentValue = false,
-        Flag = "UW_Aimbot",
-        Callback = function(v)
-            UW_Aimbot = v
-            if v then StartAimbot() end
-        end
-    })
-
-    CombatTab:CreateToggle({
-        Name = "🔫 Auto Shoot",
-        CurrentValue = false,
-        Flag = "UW_AutoShoot",
-        Callback = function(v)
-            UW_AutoShoot = v
-            if v then StartAutoShoot() end
-        end
-    })
-
-    CombatTab:CreateToggle({
-        Name = "🚩 Flag TP To Me",
-        CurrentValue = false,
-        Flag = "UW_FlagTP",
-        Callback = function(v)
-            UW_FlagTP = v
-            if v then StartFlagTP() end
-        end
-    })
-
-    CombatTab:CreateToggle({
-        Name = "⚔️ Sword Reach",
-        CurrentValue = false,
-        Flag = "UW_SwordReach",
-        Callback = function(v)
-            UW_SwordReach = v
-            ApplySwordReach(v)
-        end
-    })
-
-    UtilityTab:CreateSection("Utility")
-
-    UtilityTab:CreateButton({
-        Name = "🏃 Teleport to Enemy Base",
-        Callback = function()
-            local target = GetNearestEnemy()
-            if target and target:FindFirstChild("HumanoidRootPart") then
-                local char = player.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
-                end
-            else
-                Rayfield:Notify({Title = "No Target", Content = "No enemy found nearby.", Duration = 3})
-            end
-        end
-    })
-
-    UtilityTab:CreateButton({
-        Name = "💀 Kill Nearest Enemy",
-        Callback = function()
-            local target = GetNearestEnemy()
-            if target and target:FindFirstChild("HumanoidRootPart") then
-                local char = player.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
-                    task.wait(0.05)
-                    local tool = char:FindFirstChildOfClass("Tool")
-                    if tool then tool:Activate() end
-                end
-            end
-        end
-    })
+    AddSharedCombatFeatures(CombatTab, UtilityTab)
 
 -- ===== Tha Bronx 3 =====
 elseif GAME_NAME == "Tha Bronx 3" then
-
-    FarmTab:CreateSection("Money & Dupe")
 
     local TB3_CashRunning = false
     FarmTab:CreateToggle({
@@ -415,8 +416,6 @@ elseif GAME_NAME == "Tha Bronx 3" then
         end
     })
 
-    CombatTab:CreateSection("Combat")
-
     local TB3_KillRunning = false
     CombatTab:CreateToggle({
         Name = "🔪 Kill Aura",
@@ -435,15 +434,14 @@ elseif GAME_NAME == "Tha Bronx 3" then
         end
     })
 
-    CombatTab:CreateToggle({ Name = "🎯 Silent Aim", CurrentValue = false, Flag = "TB3_SilentAim", Callback = function(v) end })
+    CombatTab:CreateToggle({ Name = "👁️ Silent Aim", CurrentValue = false, Flag = "TB3_SilentAim", Callback = function(v) end })
 
-    UtilityTab:CreateSection("Utility")
+    AddSharedCombatFeatures(CombatTab, UtilityTab)
+
     UtilityTab:CreateToggle({ Name = "🛡️ Anti-Police Mode", CurrentValue = false, Flag = "TB3_AntiPolice", Callback = function(v) end })
 
 -- ===== Bronx Hood =====
 elseif GAME_NAME == "Bronx Hood" then
-
-    FarmTab:CreateSection("Money")
 
     local BH_CashRunning = false
     FarmTab:CreateToggle({
@@ -463,8 +461,6 @@ elseif GAME_NAME == "Bronx Hood" then
         end
     })
 
-    CombatTab:CreateSection("Combat")
-
     local BH_KillRunning = false
     CombatTab:CreateToggle({
         Name = "🔪 Kill Aura",
@@ -483,15 +479,14 @@ elseif GAME_NAME == "Bronx Hood" then
         end
     })
 
-    CombatTab:CreateToggle({ Name = "🎯 Silent Aim", CurrentValue = false, Flag = "BH_SilentAim", Callback = function(v) end })
+    CombatTab:CreateToggle({ Name = "👁️ Silent Aim", CurrentValue = false, Flag = "BH_SilentAim", Callback = function(v) end })
 
-    UtilityTab:CreateSection("Utility")
+    AddSharedCombatFeatures(CombatTab, UtilityTab)
+
     UtilityTab:CreateToggle({ Name = "🛡️ Anti-Police Mode", CurrentValue = false, Flag = "BH_AntiPolice", Callback = function(v) end })
 
 -- ===== Philly Streetz 2 =====
 elseif GAME_NAME == "Philly Streetz 2" then
-
-    FarmTab:CreateSection("Money & Dupe")
 
     local PS2_MoneyRunning = false
     FarmTab:CreateToggle({
@@ -529,16 +524,14 @@ elseif GAME_NAME == "Philly Streetz 2" then
         end
     })
 
-    CombatTab:CreateSection("Combat")
     CombatTab:CreateToggle({ Name = "👁️ ESP", CurrentValue = false, Flag = "PS2_ESP", Callback = function(v) end })
 
-    UtilityTab:CreateSection("Utility")
+    AddSharedCombatFeatures(CombatTab, UtilityTab)
+
     UtilityTab:CreateToggle({ Name = "🛡️ Godmode", CurrentValue = false, Flag = "PS2_Godmode", Callback = function(v) end })
 
 -- ===== Gang Wars =====
 elseif GAME_NAME == "Gang Wars" then
-
-    FarmTab:CreateSection("Gang Wars Farms")
 
     local GW_PotatoRunning = false
     FarmTab:CreateToggle({
@@ -558,10 +551,10 @@ elseif GAME_NAME == "Gang Wars" then
         end
     })
 
+    AddSharedCombatFeatures(CombatTab, UtilityTab)
+
 -- ===== Central Streets =====
 elseif GAME_NAME == "Central Streets" then
-
-    FarmTab:CreateSection("Central Streets Farms")
 
     local CS_PrinterRunning = false
     FarmTab:CreateToggle({
@@ -581,16 +574,18 @@ elseif GAME_NAME == "Central Streets" then
         end
     })
 
+    AddSharedCombatFeatures(CombatTab, UtilityTab)
+
 -- ===== South Bronx =====
 elseif GAME_NAME == "South Bronx" then
 
-    FarmTab:CreateSection("South Bronx Farms")
     FarmTab:CreateToggle({ Name = "💰 Auto Farm (WIP)", CurrentValue = false, Flag = "SB_Farm", Callback = function(v) end })
+
+    AddSharedCombatFeatures(CombatTab, UtilityTab)
 
 -- ===== Unknown =====
 else
 
-    FarmTab:CreateSection("Unknown Game")
     FarmTab:CreateToggle({
         Name = "🤖 Auto Farm (Experimental)",
         CurrentValue = false,
@@ -604,13 +599,14 @@ else
         end
     })
 
+    AddSharedCombatFeatures(CombatTab, UtilityTab)
+
 end
 
 -- Gun Spawner (all games)
-GunTab:CreateSection("Spawn Guns")
 local gunList = {"Glock", "AK47", "Shotgun", "Mac10", "Uzi", "AR15"}
 for _, gun in ipairs(gunList) do
     GunTab:CreateButton({ Name = "🔫 " .. gun, Callback = function() SpawnGun(gun) end })
 end
 
-Rayfield:Notify({ Title = "Hood Omni Hub v2.0", Content = "Loaded for: " .. GAME_NAME, Duration = 4 })
+Rayfield:Notify({ Title = "Hood Omni Hub v2.1", Content = "Loaded for: " .. GAME_NAME, Duration = 4 })
