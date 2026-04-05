@@ -2,8 +2,10 @@
     Hood Omni Hub v2.0 "Rayfield Edition"
     by PrinceAamir + DeepSeek Coder V2
     SUPPORTED GAMES: Tha Bronx 3, Gang Wars, Central Streets, Philly Streetz 2,
-                     South Bronx, Da Streetz, Bronx Hood (FREE), Bronx Hood (UPD)
-    FEATURES: Auto Cash Farm, Kill Aura, Dupe, Godmode, Money Gen, Gun Spawner
+                     South Bronx, Da Streetz, Bronx Hood (FREE), Bronx Hood (UPD),
+                     Underground War 2.0, The Underground War 2
+    FEATURES: Auto Cash Farm, Kill Aura, Dupe, Godmode, Money Gen, Gun Spawner,
+              Aimbot, Auto Shoot, Flag TP, Sword Reach
 ]]
 
 -- Load Rayfield UI Library
@@ -13,6 +15,8 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 
 -- Game Detection (Place IDs)
@@ -24,6 +28,8 @@ local GAME_PLACE_IDS = {
     [10179538382]      = "South Bronx",
     [84866901748045]   = "Bronx Hood",   -- FREE 150k version
     [78423638997438]   = "Bronx Hood",   -- UPD version
+    [9791603388]       = "Underground Wars", -- Underground War 2.0
+    [4759640416]       = "Underground Wars", -- The Underground War 2
     -- Da Streetz: add Place ID when known
 }
 local GAME_NAME = GAME_PLACE_IDS[game.PlaceId] or "Unknown Game"
@@ -82,7 +88,135 @@ local function SpawnGun(gunName)
     print("✅ SPAWNED:", gunName)
 end
 
+-- ==================== UNDERGROUND WARS FEATURES ====================
+
+-- State flags
+local UW_Aimbot     = false
+local UW_AutoShoot  = false
+local UW_FlagTP     = false
+local UW_SwordReach = false
+
+-- Get nearest enemy player
+local function GetNearestEnemy()
+    local nearest, nearestDist = nil, math.huge
+    local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not myHRP then return nil end
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character then
+            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+            local hum = plr.Character:FindFirstChild("Humanoid")
+            if hrp and hum and hum.Health > 0 then
+                local dist = (hrp.Position - myHRP.Position).Magnitude
+                if dist < nearestDist then
+                    nearest = plr.Character
+                    nearestDist = dist
+                end
+            end
+        end
+    end
+    return nearest
+end
+
+-- Aimbot loop (locks camera onto nearest enemy head/HRP)
+local aimbotConn = nil
+local function StartAimbot()
+    if aimbotConn then aimbotConn:Disconnect() end
+    local cam = workspace.CurrentCamera
+    aimbotConn = RunService.RenderStepped:Connect(function()
+        if not UW_Aimbot then aimbotConn:Disconnect(); return end
+        local target = GetNearestEnemy()
+        if target then
+            local aimPart = target:FindFirstChild("Head") or target:FindFirstChild("HumanoidRootPart")
+            if aimPart then
+                cam.CFrame = CFrame.new(cam.CFrame.Position, aimPart.Position)
+            end
+        end
+    end)
+end
+
+-- Auto Shoot loop (fires equipped tool every 0.08s)
+local function StartAutoShoot()
+    task.spawn(function()
+        while UW_AutoShoot do
+            local char = player.Character
+            if char then
+                local tool = char:FindFirstChildOfClass("Tool")
+                if tool and tool:FindFirstChild("Handle") then
+                    local activateRemote = tool:FindFirstChild("RemoteEvent") or tool:FindFirstChild("Activate")
+                    if activateRemote and activateRemote:IsA("RemoteEvent") then
+                        activateRemote:FireServer()
+                    else
+                        tool:Activate()
+                    end
+                end
+            end
+            task.wait(0.08)
+        end
+    end)
+end
+
+-- Flag TP loop (pulls ALL flags to your HRP every 0.3s)
+local function StartFlagTP()
+    task.spawn(function()
+        while UW_FlagTP do
+            local char = player.Character
+            local myHRP = char and char:FindFirstChild("HumanoidRootPart")
+            if myHRP then
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    local name = obj.Name:lower()
+                    -- Catches: Flag, flag, RedFlag, BlueFlag, CaptureFlag, FlagPart, etc.
+                    if obj:IsA("BasePart") and (
+                        name:find("flag") or
+                        name:find("capture") or
+                        name:find("banner")
+                    ) then
+                        pcall(function()
+                            obj.CFrame = myHRP.CFrame * CFrame.new(0, 0, -2)
+                            obj.Velocity = Vector3.new(0, 0, 0)
+                            obj.RotVelocity = Vector3.new(0, 0, 0)
+                        end)
+                    end
+                end
+            end
+            task.wait(0.3)
+        end
+    end)
+end
+
+-- Sword Reach (expands Handle hitbox on equipped sword/melee tool)
+local swordReachOriginalSize = nil
+local function ApplySwordReach(enabled)
+    local char = player.Character
+    if not char then return end
+    for _, tool in ipairs(char:GetChildren()) do
+        if tool:IsA("Tool") then
+            local handle = tool:FindFirstChild("Handle")
+            if handle then
+                if enabled then
+                    swordReachOriginalSize = handle.Size
+                    pcall(function() handle.Size = Vector3.new(8, 8, 20) end)
+                else
+                    if swordReachOriginalSize then
+                        pcall(function() handle.Size = swordReachOriginalSize end)
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- Re-apply reach when new tool is equipped
+player.CharacterAdded:Connect(function(char)
+    char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") and UW_SwordReach then
+            task.wait(0.1)
+            ApplySwordReach(true)
+        end
+    end)
+end)
+
 -- ==================== GAME-SPECIFIC FARMS ====================
+
 -- Tha Bronx 3
 local function ThaBronx3CashFarm()
     for _, npc in ipairs(Workspace:GetDescendants()) do
@@ -179,12 +313,89 @@ local function LoadGameUI()
         LoadingSubtitle = "by PrinceAamir",
         Theme = "Default"
     })
-    local FarmTab = Window:CreateTab("🌾 Auto Farms")
-    local CombatTab = Window:CreateTab("⚔️ Combat")
+    local FarmTab    = Window:CreateTab("🌾 Auto Farms")
+    local CombatTab  = Window:CreateTab("⚔️ Combat")
     local UtilityTab = Window:CreateTab("🔧 Utility")
-    local GunTab = Window:CreateTab("🔫 Guns")
+    local GunTab     = Window:CreateTab("🔫 Guns")
 
-    if GAME_NAME == "Tha Bronx 3" then
+    -- ===== Underground Wars =====
+    if GAME_NAME == "Underground Wars" then
+        local combatSec = CombatTab:CreateSection("Combat Cheats")
+
+        combatSec:CreateToggle({
+            Name = "🎯 Aimbot",
+            CurrentValue = false,
+            Flag = "UW_Aimbot",
+            Callback = function(v)
+                UW_Aimbot = v
+                if v then StartAimbot() end
+            end
+        })
+
+        combatSec:CreateToggle({
+            Name = "🔫 Auto Shoot",
+            CurrentValue = false,
+            Flag = "UW_AutoShoot",
+            Callback = function(v)
+                UW_AutoShoot = v
+                if v then StartAutoShoot() end
+            end
+        })
+
+        combatSec:CreateToggle({
+            Name = "🚩 Flag TP To Me",
+            CurrentValue = false,
+            Flag = "UW_FlagTP",
+            Callback = function(v)
+                UW_FlagTP = v
+                if v then StartFlagTP() end
+            end
+        })
+
+        combatSec:CreateToggle({
+            Name = "⚔️ Sword Reach",
+            CurrentValue = false,
+            Flag = "UW_SwordReach",
+            Callback = function(v)
+                UW_SwordReach = v
+                ApplySwordReach(v)
+            end
+        })
+
+        local utilSec = UtilityTab:CreateSection("Utility")
+        utilSec:CreateButton({
+            Name = "🏃 Teleport to Enemy Base",
+            Callback = function()
+                local target = GetNearestEnemy()
+                if target and target:FindFirstChild("HumanoidRootPart") then
+                    local char = player.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+                    end
+                else
+                    Rayfield:Notify({Title = "No Target", Content = "No enemy found nearby.", Duration = 3})
+                end
+            end
+        })
+
+        utilSec:CreateButton({
+            Name = "💀 Kill Nearest Enemy",
+            Callback = function()
+                local target = GetNearestEnemy()
+                if target and target:FindFirstChild("HumanoidRootPart") then
+                    local char = player.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") then
+                        char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
+                        task.wait(0.05)
+                        local tool = char:FindFirstChildOfClass("Tool")
+                        if tool then tool:Activate() end
+                    end
+                end
+            end
+        })
+
+    -- ===== Tha Bronx 3 =====
+    elseif GAME_NAME == "Tha Bronx 3" then
         local farmSec = FarmTab:CreateSection("Money & Dupe")
         farmSec:CreateToggle({
             Name = "💰 Auto Cash Farm",
@@ -236,6 +447,7 @@ local function LoadGameUI()
         local utilSec = UtilityTab:CreateSection("Utility")
         utilSec:CreateToggle({ Name = "🛡️ Anti-Police Mode", CurrentValue = false, Flag = "TB3_AntiPolice", Callback = function(v) print("Anti-Police:", v) end })
 
+    -- ===== Bronx Hood =====
     elseif GAME_NAME == "Bronx Hood" then
         local farmSec = FarmTab:CreateSection("Money")
         farmSec:CreateToggle({
@@ -273,6 +485,7 @@ local function LoadGameUI()
         local utilSec = UtilityTab:CreateSection("Utility")
         utilSec:CreateToggle({ Name = "🛡️ Anti-Police Mode", CurrentValue = false, Flag = "BH_AntiPolice", Callback = function(v) print("Anti-Police:", v) end })
 
+    -- ===== Philly Streetz 2 =====
     elseif GAME_NAME == "Philly Streetz 2" then
         local farmSec = FarmTab:CreateSection("Money & Dupe")
         farmSec:CreateToggle({
@@ -310,6 +523,7 @@ local function LoadGameUI()
         local utilSec = UtilityTab:CreateSection("Utility")
         utilSec:CreateToggle({ Name = "🛡️ Godmode", CurrentValue = false, Flag = "PS2_Godmode", Callback = function(v) print("Godmode:", v) end })
 
+    -- ===== Gang Wars =====
     elseif GAME_NAME == "Gang Wars" then
         local farmSec = FarmTab:CreateSection("Gang Wars Farms")
         farmSec:CreateToggle({
@@ -328,6 +542,7 @@ local function LoadGameUI()
             end
         })
 
+    -- ===== Central Streets =====
     elseif GAME_NAME == "Central Streets" then
         local farmSec = FarmTab:CreateSection("Central Streets Farms")
         farmSec:CreateToggle({
@@ -346,6 +561,7 @@ local function LoadGameUI()
             end
         })
 
+    -- ===== Generic =====
     else
         local farmSec = FarmTab:CreateSection("Generic Auto Farm")
         farmSec:CreateToggle({
