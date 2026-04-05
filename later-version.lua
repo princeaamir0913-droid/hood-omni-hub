@@ -2,7 +2,7 @@
     Hood Omni Hub v2.0 "Rayfield Edition"
     by PrinceAamir + DeepSeek Coder V2
     SUPPORTED GAMES: Tha Bronx 3, Gang Wars, Central Streets, Philly Streetz 2,
-                     South Bronx, Da Streetz, Bronx Hood
+                     South Bronx, Da Streetz, Bronx Hood (FREE), Bronx Hood (UPD)
     FEATURES: Auto Cash Farm, Kill Aura, Dupe, Godmode, Money Gen, Gun Spawner
 ]]
 
@@ -15,13 +15,16 @@ local Workspace = game:GetService("Workspace")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 
--- Game Detection (Place IDs – replace unknowns with actual IDs)
+-- Game Detection (Place IDs)
 local GAME_PLACE_IDS = {
-    [16472538603] = "Tha Bronx 3",
-    [137020602493628] = "Gang Wars",
-    [121567535120062] = "Central Streets",
-    [130700367963690] = "Philly Streetz 2",
-    -- Add Place IDs for South Bronx, Da Streetz, Bronx Hood here
+    [16472538603]      = "Tha Bronx 3",
+    [137020602493628]  = "Gang Wars",
+    [121567535120062]  = "Central Streets",
+    [130700367963690]  = "Philly Streetz 2",
+    [10179538382]      = "South Bronx",
+    [84866901748045]   = "Bronx Hood",   -- FREE 150k version
+    [78423638997438]   = "Bronx Hood",   -- UPD version
+    -- Da Streetz: add Place ID when known
 }
 local GAME_NAME = GAME_PLACE_IDS[game.PlaceId] or "Unknown Game"
 
@@ -60,7 +63,7 @@ function FarmMutex:run(farmFunction, farmName)
     if #self.queue == 1 then task.spawn(self.queue[1]) end
 end
 
--- Ghost Gun Fix (Tha Bronx 3)
+-- Ghost Gun Fix
 local function SpawnGun(gunName)
     local backpack = player.Backpack
     if backpack:FindFirstChild(gunName) then print("⚠️ Already have:", gunName); return end
@@ -79,7 +82,7 @@ local function SpawnGun(gunName)
     print("✅ SPAWNED:", gunName)
 end
 
--- ==================== GAME‑SPECIFIC FARMS ====================
+-- ==================== GAME-SPECIFIC FARMS ====================
 -- Tha Bronx 3
 local function ThaBronx3CashFarm()
     for _, npc in ipairs(Workspace:GetDescendants()) do
@@ -94,6 +97,31 @@ local function ThaBronx3CashFarm()
 end
 
 local function ThaBronx3KillAura()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= player and plr.Character and plr.Character:FindFirstChild("Humanoid") then
+            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then player.Character.HumanoidRootPart.CFrame = hrp.CFrame end
+            task.wait()
+            local tool = player.Character:FindFirstChildOfClass("Tool")
+            if tool then tool:Activate() end
+        end
+    end
+end
+
+-- Bronx Hood (shared for both FREE and UPD versions)
+local function BronxHoodCashFarm()
+    for _, npc in ipairs(Workspace:GetDescendants()) do
+        if npc:IsA("Model") and npc:FindFirstChild("Humanoid") then
+            local hrp = npc:FindFirstChild("HumanoidRootPart")
+            if hrp then player.Character.HumanoidRootPart.CFrame = hrp.CFrame end
+            task.wait()
+            local drop = npc:FindFirstChild("Drop") or npc:FindFirstChild("Cash")
+            if drop then fireclickdetector(drop:FindFirstChildOfClass("ClickDetector")) end
+        end
+    end
+end
+
+local function BronxHoodKillAura()
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= player and plr.Character and plr.Character:FindFirstChild("Humanoid") then
             local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
@@ -138,7 +166,7 @@ local function PhillyStreetz2MoneyGen()
     end
 end
 
--- ==================== RAYFIELD UI (Dynamic by Game) ====================
+-- ==================== RAYFIELD UI ====================
 local function LoadGameUI()
     if GAME_NAME == "Unknown Game" then
         Rayfield:Notify({Title = "Game Not Supported", Content = "Please select manually.", Duration = 5})
@@ -207,6 +235,44 @@ local function LoadGameUI()
         combatSec:CreateToggle({ Name = "🎯 Silent Aim", CurrentValue = false, Flag = "TB3_SilentAim", Callback = function(v) print("Silent Aim:", v) end })
         local utilSec = UtilityTab:CreateSection("Utility")
         utilSec:CreateToggle({ Name = "🛡️ Anti-Police Mode", CurrentValue = false, Flag = "TB3_AntiPolice", Callback = function(v) print("Anti-Police:", v) end })
+
+    elseif GAME_NAME == "Bronx Hood" then
+        local farmSec = FarmTab:CreateSection("Money")
+        farmSec:CreateToggle({
+            Name = "💰 Auto Cash Farm",
+            CurrentValue = false,
+            Flag = "BH_CashFarm",
+            Callback = function(v)
+                if v then
+                    task.spawn(function()
+                        while Toggles["BH_CashFarm"].Value do
+                            FarmMutex:run(BronxHoodCashFarm, "Cash Farm")
+                            task.wait(10)
+                        end
+                    end)
+                end
+            end
+        })
+        local combatSec = CombatTab:CreateSection("Combat")
+        combatSec:CreateToggle({
+            Name = "🔪 Kill Aura",
+            CurrentValue = false,
+            Flag = "BH_KillAura",
+            Callback = function(v)
+                if v then
+                    task.spawn(function()
+                        while Toggles["BH_KillAura"].Value do
+                            FarmMutex:run(BronxHoodKillAura, "Kill Aura")
+                            task.wait(1)
+                        end
+                    end)
+                end
+            end
+        })
+        combatSec:CreateToggle({ Name = "🎯 Silent Aim", CurrentValue = false, Flag = "BH_SilentAim", Callback = function(v) print("Silent Aim:", v) end })
+        local utilSec = UtilityTab:CreateSection("Utility")
+        utilSec:CreateToggle({ Name = "🛡️ Anti-Police Mode", CurrentValue = false, Flag = "BH_AntiPolice", Callback = function(v) print("Anti-Police:", v) end })
+
     elseif GAME_NAME == "Philly Streetz 2" then
         local farmSec = FarmTab:CreateSection("Money & Dupe")
         farmSec:CreateToggle({
@@ -243,6 +309,7 @@ local function LoadGameUI()
         combatSec:CreateToggle({ Name = "👁️ ESP", CurrentValue = false, Flag = "PS2_ESP", Callback = function(v) print("ESP:", v) end })
         local utilSec = UtilityTab:CreateSection("Utility")
         utilSec:CreateToggle({ Name = "🛡️ Godmode", CurrentValue = false, Flag = "PS2_Godmode", Callback = function(v) print("Godmode:", v) end })
+
     elseif GAME_NAME == "Gang Wars" then
         local farmSec = FarmTab:CreateSection("Gang Wars Farms")
         farmSec:CreateToggle({
@@ -260,7 +327,7 @@ local function LoadGameUI()
                 end
             end
         })
-        -- Add more toggles for Box Job, Scam, ATM, Jewelry, Car, Printer as needed
+
     elseif GAME_NAME == "Central Streets" then
         local farmSec = FarmTab:CreateSection("Central Streets Farms")
         farmSec:CreateToggle({
@@ -278,6 +345,7 @@ local function LoadGameUI()
                 end
             end
         })
+
     else
         local farmSec = FarmTab:CreateSection("Generic Auto Farm")
         farmSec:CreateToggle({
