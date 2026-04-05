@@ -1,42 +1,50 @@
 --[[
-    Hood Omni Hub v2.1 "Rayfield Edition"
-    by PrinceAamir + DeepSeek Coder V2
-    SUPPORTED GAMES: Tha Bronx 3, Gang Wars, Central Streets, Philly Streetz 2,
-                     South Bronx, Bronx Hood (FREE), Bronx Hood (UPD),
-                     Underground War 2.0, The Underground War 2
-    FEATURES: Auto Cash Farm, Kill Aura, Dupe, Godmode, Money Gen, Gun Spawner,
-              Aimbot, Auto Shoot, Flag TP, Sword Reach (ALL GAMES)
+    Hood Omni Hub – Complete Edition
+    Based on DeepSeekMegaPrompt.txt
+    Games: Gang Wars, Central Streets, Tha Bronx 3, Philly Streetz 2
+    Features: Potato Farm, Box Job, Scam Farm, ATM Farm, Jewelry Farm, Car Farm, Printer Farm
+    Plus: Ghost gun fix, farm mutex, exact prompt matching, gun UI, toggle GUI
 ]]
 
--- Load Rayfield UI Library
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-
--- Services
-local Players = game:GetService("Players")
-local Workspace = game:GetService("Workspace")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local player = Players.LocalPlayer
-
--- Game Detection (Place IDs)
-local GAME_PLACE_IDS = {
-    [16472538603]      = "Tha Bronx 3",
-    [137020602493628]  = "Gang Wars",
-    [121567535120062]  = "Central Streets",
-    [130700367963690]  = "Philly Streetz 2",
-    [10179538382]      = "South Bronx",
-    [84866901748045]   = "Bronx Hood",   -- FREE 150k version
-    [78423638997438]   = "Bronx Hood",   -- UPD version
-    [9791603388]       = "Underground Wars", -- Underground War 2.0
-    [4759640416]       = "Underground Wars", -- The Underground War 2
+-- ========================= CONFIGURATION =========================
+local Config = {
+    -- Gang Wars / Central Streets
+    PotatoFarm = true,
+    BoxJobFarm = true,
+    ScamFarm = true,
+    ATMFarm = true,
+    JewelryFarm = true,
+    CarFarm = true,
+    PrinterFarm = true,
+    
+    -- Tha Bronx 3
+    ThaBronx3AutoFarm = true,
+    ThaBronx3Dupe = true,
+    
+    -- Philly Streetz 2
+    PhillyWarehouseFarm = true,
+    
+    -- Gun spawning
+    SpawnGunsOnLoad = true,
+    GunList = {"Glock", "AK47", "Shotgun", "Mac10", "Uzi", "AR15"},
+    
+    -- Other
+    AutoRejoin = false,
+    FarmDelayBetweenCycles = 1,
 }
-local GAME_NAME = GAME_PLACE_IDS[game.PlaceId] or "Unknown Game"
 
--- Safe Utilities
+-- ========================= SERVICES =========================
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+-- ========================= UTILITIES =========================
 local function safeCall(func, ...)
     local success, result = pcall(func, ...)
-    if not success then warn("Error:", result) end
+    if not success then warn("⚠️ Error:", result) end
     return success, result
 end
 
@@ -52,819 +60,747 @@ local function firePrompt(prompt)
     return false
 end
 
--- Farm Mutex
-local FarmMutex = { isRunning = false, queue = {} }
-function FarmMutex:run(farmFunction, farmName)
-    table.insert(self.queue, function()
-        while self.isRunning do task.wait(0.1) end
-        self.isRunning = true
-        print("🔒 Running:", farmName)
-        local success, err = pcall(farmFunction)
-        if not success then warn("❌ Error in " .. farmName .. ":", err) end
-        self.isRunning = false
-        print("🔓 Finished:", farmName)
-        if #self.queue > 0 then task.spawn(table.remove(self.queue, 1)) end
-    end)
-    if #self.queue == 1 then task.spawn(self.queue[1]) end
+local function getHRP()
+    local char = player.Character
+    return char and char:FindFirstChild("HumanoidRootPart")
 end
 
--- Ghost Gun Fix
+local function teleport(cframe)
+    local root = getHRP()
+    if root then root.CFrame = cframe end
+end
+
+-- ========================= GLOBAL FARM MUTEX =========================
+local FarmMutex = { currentFarm = nil, isRunning = false, queue = {} }
+
+function FarmMutex:lock(farmName)
+    while self.isRunning do task.wait(0.1) end
+    self.isRunning = true
+    self.currentFarm = farmName
+    print("🔒 Farm Mutex: " .. farmName .. " LOCKED")
+end
+
+function FarmMutex:unlock()
+    self.isRunning = false
+    self.currentFarm = nil
+    print("🔓 Farm Mutex UNLOCKED")
+    if #self.queue > 0 then
+        local nextFarm = table.remove(self.queue, 1)
+        task.spawn(nextFarm)
+    end
+end
+
+function FarmMutex:queueFarm(farmFunction, farmName)
+    if self.isRunning then
+        table.insert(self.queue, function()
+            self:lock(farmName)
+            farmFunction()
+            self:unlock()
+        end)
+        print("📋 Queued farm: " .. farmName)
+    else
+        self:lock(farmName)
+        task.spawn(function()
+            farmFunction()
+            self:unlock()
+        end)
+    end
+end
+
+local function RunFarm(farmFunc, farmName)
+    return function() FarmMutex:queueFarm(farmFunc, farmName) end
+end
+
+-- ========================= EXACT PROMPT MATCHING =========================
+local PROMPT_MATCHES = {
+    -- Gang Wars
+    potato_buy = {"Buy Potatoes", "Purchase Potatoes", "Buy Potato"},
+    potato_cook = {"Cook Potatoes", "Start Cooking", "Cook Potato"},
+    potato_sell = {"Sell Potatoes", "Sell Cooked Potato", "Sell Potato"},
+    box_take = {"Take Box", "Pick Up Box", "Grab Box"},
+    box_deliver = {"Deliver Box", "Drop Off", "Complete Delivery"},
+    scam_buy_card = {"Buy Card", "Purchase Card", "Buy Prepaid Card"},
+    scam_swipe = {"Swipe Card", "Use Card", "Pay with Card"},
+    atm_steal = {"Steal Cash", "Rob ATM", "Take Money"},
+    jewelry_steal = {"Steal Jewelry", "Take Jewelry", "Grab Jewelry"},
+    
+    -- Central Streets
+    printer_buy = {"Buy Printer", "Purchase Printer"},
+    printer_activate = {"Activate Printer", "Start Printer", "Print"},
+    printer_collect = {"Collect Money", "Take Money", "Retrieve Cash"},
+    car_steal = {"Steal Car", "Hotwire", "Take Car"},
+    car_sell = {"Sell Car", "Sell Vehicle"},
+    
+    -- Tha Bronx 3
+    tb3_dupe = {"Duplicate", "Dupe", "Clone Item"},
+    tb3_infinite_money = {"Collect Money", "Get Cash", "Infinite Cash"},
+    tb3_auto_farm = {"Auto Farm", "Start Farm", "Farm Job"},
+    
+    -- Philly Streetz 2
+    philly_buy = {"Buy Item", "Purchase", "Buy Warehouse Item"},
+    philly_place = {"Place Item", "Store Item", "Put in Warehouse"},
+    philly_sell = {"Sell Item", "Sell Warehouse", "Sell All"},
+}
+
+local function MatchPrompt(prompt, category)
+    local matches = PROMPT_MATCHES[category]
+    if not matches then return false end
+    local action = prompt.ActionText or prompt.Name or ""
+    for _, match in ipairs(matches) do
+        if action == match then return true end
+    end
+    return false
+end
+
+-- ========================= GHOST GUN FIX (COMPLETE REWRITE) =========================
 local function SpawnGun(gunName)
     local backpack = player.Backpack
-    if backpack:FindFirstChild(gunName) then print("⚠️ Already have:", gunName); return end
-    local tool = ReplicatedStorage:FindFirstChild("Items") and ReplicatedStorage.Items:FindFirstChild(gunName)
-    if not tool then tool = ReplicatedStorage:FindFirstChild("weapons") and ReplicatedStorage.weapons:FindFirstChild(gunName) end
-    if not tool then warn("Missing template:", gunName); return end
-    local gun = tool:Clone()
+    local char = player.Character
+    
+    -- Check if already owned
+    if backpack:FindFirstChild(gunName) or (char and char:FindFirstChild(gunName)) then
+        print("⚠️ Gun already owned: " .. gunName)
+        return false
+    end
+    
+    -- Locate gun template
+    local gunTemplate = ReplicatedStorage:FindFirstChild("Items") and ReplicatedStorage.Items:FindFirstChild(gunName)
+    if not gunTemplate then
+        gunTemplate = ReplicatedStorage:FindFirstChild("weapons") and ReplicatedStorage.weapons:FindFirstChild(gunName)
+    end
+    if not gunTemplate then
+        warn("❌ Gun template not found: " .. gunName)
+        return false
+    end
+    
+    -- Clone with ALL descendants
+    local gun = gunTemplate:Clone()
     task.wait(0.1)
-    local remotes = {"Fire", "Shoot", "DamageRemote", "OnHit", "BulletHit", "RemoteFire", "FireBullet"}
-    for _, rName in ipairs(remotes) do
-        local r = gun:FindFirstChild(rName)
-        if r and r:IsA("RemoteEvent") then safeCall(r.FireServer, r, player) end
+    
+    -- Fire any remote events that might initialize the gun
+    local remotes = {"Fire", "Shoot", "DamageRemote", "OnHit", "BulletHit", "RemoteFire", "FireBullet", "EquipGun", "InitGun", "SetupGun"}
+    for _, remoteName in ipairs(remotes) do
+        local remote = gun:FindFirstChild(remoteName)
+        if remote and remote:IsA("RemoteEvent") then
+            safeCall(function() remote:FireServer(player) end)
+        end
     end
-    gun.Enabled = true
+    
+    -- Force tool enabled
+    if gun:IsA("Tool") then
+        gun.Enabled = true
+        if gun:FindFirstChild("Handle") then
+            gun.Handle.Touched:Connect(function() end)
+        end
+    end
+    
+    -- Parent to backpack
     gun.Parent = backpack
-    print("✅ SPAWNED:", gunName)
+    task.wait(0.2)
+    
+    -- Verify
+    if char and char:FindFirstChild(gunName) then
+        print("✅ Gun equipped and functional: " .. gunName)
+        return true
+    elseif backpack:FindFirstChild(gunName) then
+        print("✅ Gun in backpack (equip to test): " .. gunName)
+        return true
+    else
+        warn("⚠️ Gun spawned but may not be functional: " .. gunName)
+        return false
+    end
 end
 
--- ==================== SHARED COMBAT FEATURES (ALL GAMES) ====================
+-- ========================= GANG WARS FARMS =========================
 
-local UW_Aimbot     = false
-local UW_AutoShoot  = false
-local UW_FlagTP     = false
-local UW_SwordReach = false
-
-local function GetNearestEnemy()
-    local nearest, nearestDist = nil, math.huge
-    local myHRP = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not myHRP then return nil end
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character then
-            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-            local hum = plr.Character:FindFirstChild("Humanoid")
-            if hrp and hum and hum.Health > 0 then
-                local dist = (hrp.Position - myHRP.Position).Magnitude
-                if dist < nearestDist then
-                    nearest = plr.Character
-                    nearestDist = dist
+-- Potato Farm
+local function PotatoFarm()
+    FarmMutex:lock("🥔 Potato Farm")
+    print("🥔 Starting Potato Farm...")
+    
+    -- Teleport to potato factory area
+    local factoryPos = Workspace:FindFirstChild("PotatoFactory") or Workspace:FindFirstChild("Factory")
+    if factoryPos then
+        teleport(factoryPos.CFrame + Vector3.new(0, 5, 0))
+        task.wait(1)
+    end
+    
+    -- Buy potatoes
+    local buyPrompt = nil
+    for _, prompt in ipairs(Workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, "potato_buy") then
+            buyPrompt = prompt
+            break
+        end
+    end
+    if buyPrompt then
+        for i = 1, 10 do
+            firePrompt(buyPrompt)
+            task.wait(0.2)
+        end
+        print("✅ Bought 10 potatoes")
+    else
+        warn("⚠️ Could not find potato buy prompt")
+    end
+    
+    -- Find cooking pots/stoves
+    local pots = {}
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:lower():find("pot") or obj.Name:lower():find("stove")) then
+            table.insert(pots, obj)
+        end
+    end
+    
+    -- Cook each potato
+    for i = 1, 10 do
+        local rawPotato = nil
+        for _, item in ipairs(player.Backpack:GetChildren()) do
+            if item:IsA("Tool") and (item.Name:lower():find("raw") or item.Name:lower():find("potato")) then
+                rawPotato = item
+                break
+            end
+        end
+        if rawPotato then
+            rawPotato.Parent = player.Character
+            task.wait(0.2)
+            for _, pot in ipairs(pots) do
+                teleport(pot.CFrame + Vector3.new(0, 2, 0))
+                task.wait(0.3)
+                local cookPrompt = nil
+                for _, prompt in ipairs(pot:GetDescendants()) do
+                    if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, "potato_cook") then
+                        cookPrompt = prompt
+                        break
+                    end
                 end
+                if cookPrompt then
+                    firePrompt(cookPrompt)
+                    task.wait(0.5)
+                    break
+                end
+            end
+        end
+        task.wait(1)
+    end
+    
+    -- Wait for and sell cooked potatoes
+    local startTime = tick()
+    while tick() - startTime < 45 do
+        local cookedPotato = nil
+        for _, item in ipairs(player.Backpack:GetChildren()) do
+            if item:IsA("Tool") and (item.Name:lower():find("cooked") or item.Name:lower():find("cook")) then
+                cookedPotato = item
+                break
+            end
+        end
+        if cookedPotato then
+            cookedPotato.Parent = player.Character
+            task.wait(0.2)
+            local sellPrompt = nil
+            for _, prompt in ipairs(Workspace:GetDescendants()) do
+                if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, "potato_sell") then
+                    sellPrompt = prompt
+                    break
+                end
+            end
+            if sellPrompt then
+                firePrompt(sellPrompt)
+                print("💰 Sold cooked potato")
+            end
+            break
+        end
+        task.wait(0.5)
+    end
+    
+    print("✅ Potato Farm finished")
+    FarmMutex:unlock()
+end
+
+-- Box Job Farm
+local function BoxJobFarm()
+    FarmMutex:lock("📦 Box Job")
+    print("📦 Starting Box Job...")
+    
+    local box = Workspace:FindFirstChild("BOX1")
+    local jobDest = Workspace:FindFirstChild("Job")
+    if not box or not jobDest then
+        warn("⚠️ Box or Job destination missing")
+        FarmMutex:unlock()
+        return
+    end
+    
+    local clickDetector = box:FindFirstChildOfClass("ClickDetector")
+    if not clickDetector then
+        warn("⚠️ No ClickDetector on box")
+        FarmMutex:unlock()
+        return
+    end
+    
+    for cycle = 1, 10 do
+        local root = getHRP()
+        if root then
+            jobDest.CFrame = root.CFrame
+            task.wait(0.1)
+            firePrompt(clickDetector)
+            task.wait(0.05)
+        end
+        task.wait(Config.FarmDelayBetweenCycles)
+    end
+    
+    print("✅ Box Job finished")
+    FarmMutex:unlock()
+end
+
+-- Scam Farm (4 steps)
+local function ScamFarm()
+    FarmMutex:lock("💳 Scam Farm")
+    print("💳 Starting Scam Farm...")
+    
+    local steps = {"scam_buy_card", "scam_swipe", "scam_swipe", "atm_steal"}
+    for _, stepCategory in ipairs(steps) do
+        for _, prompt in ipairs(Workspace:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, stepCategory) then
+                firePrompt(prompt)
+                task.wait(1)
+                break
+            end
+        end
+        task.wait(0.5)
+    end
+    
+    print("✅ Scam Farm finished")
+    FarmMutex:unlock()
+end
+
+-- ATM Farm (nearest ATM only)
+local function ATMFarm()
+    FarmMutex:lock("🏧 ATM Farm")
+    print("🏧 Starting ATM Farm...")
+    
+    local nearestATM = nil
+    local minDist = math.huge
+    local root = getHRP()
+    if not root then
+        FarmMutex:unlock()
+        return
+    end
+    
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:lower():find("atm") or obj.Name:lower():find("bank")) then
+            local dist = (obj.Position - root.Position).Magnitude
+            if dist < minDist then
+                minDist = dist
+                nearestATM = obj
             end
         end
     end
-    return nearest
+    
+    if nearestATM then
+        teleport(nearestATM.CFrame + Vector3.new(0, 3, 0))
+        task.wait(0.5)
+        for _, prompt in ipairs(nearestATM:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, "atm_steal") then
+                firePrompt(prompt)
+                break
+            end
+        end
+    else
+        warn("⚠️ No ATM found")
+    end
+    
+    print("✅ ATM Farm finished")
+    FarmMutex:unlock()
 end
 
-local aimbotConn = nil
-local function StartAimbot()
-    if aimbotConn then aimbotConn:Disconnect() end
-    local cam = workspace.CurrentCamera
-    aimbotConn = RunService.RenderStepped:Connect(function()
-        if not UW_Aimbot then aimbotConn:Disconnect(); return end
-        local target = GetNearestEnemy()
-        if target then
-            local aimPart = target:FindFirstChild("Head") or target:FindFirstChild("HumanoidRootPart")
-            if aimPart then
-                cam.CFrame = CFrame.new(cam.CFrame.Position, aimPart.Position)
+-- Jewelry Farm
+local function JewelryFarm()
+    FarmMutex:lock("💎 Jewelry Farm")
+    print("💎 Starting Jewelry Farm...")
+    
+    for _, prompt in ipairs(Workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, "jewelry_steal") then
+            firePrompt(prompt)
+            task.wait(0.3)
+        end
+    end
+    
+    print("✅ Jewelry Farm finished")
+    FarmMutex:unlock()
+end
+
+-- Car Farm (Central Streets)
+local function CarFarm()
+    FarmMutex:lock("🚗 Car Farm")
+    print("🚗 Starting Car Farm...")
+    
+    local cars = {}
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if obj:IsA("VehicleSeat") or (obj.Name:lower():find("car") and obj:IsA("BasePart")) then
+            table.insert(cars, obj)
+        end
+    end
+    
+    for _, car in ipairs(cars) do
+        teleport(car.CFrame + Vector3.new(0, 2, 0))
+        task.wait(0.5)
+        for _, prompt in ipairs(car:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") and (MatchPrompt(prompt, "car_steal") or prompt.ActionText:lower():find("steal")) then
+                firePrompt(prompt)
+                task.wait(1)
+                break
+            end
+        end
+    end
+    
+    print("✅ Car Farm finished")
+    FarmMutex:unlock()
+end
+
+-- Printer Farm (Central Streets)
+local function PrinterFarm()
+    FarmMutex:lock("🖨️ Printer Farm")
+    print("🖨️ Starting Printer Farm...")
+    
+    -- Buy printer and paper
+    for _, prompt in ipairs(Workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") then
+            if MatchPrompt(prompt, "printer_buy") then
+                firePrompt(prompt)
+                task.wait(0.5)
+            elseif prompt.ActionText:find("Paper") or prompt.ActionText:find("Substrate") then
+                firePrompt(prompt)
+                task.wait(0.5)
+            end
+        end
+    end
+    
+    -- Place printer
+    local printerTool = player.Backpack:FindFirstChild("Printer")
+    if printerTool then
+        printerTool.Parent = player.Character
+        task.wait(0.5)
+        for _, prompt in ipairs(Workspace:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") and prompt.ActionText:find("Place") then
+                firePrompt(prompt)
+                break
+            end
+        end
+        task.wait(1)
+    end
+    
+    -- Activate and collect cycle
+    for cycle = 1, 5 do
+        for _, prompt in ipairs(Workspace:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, "printer_activate") then
+                firePrompt(prompt)
+                break
+            end
+        end
+        task.wait(30)
+        for _, prompt in ipairs(Workspace:GetDescendants()) do
+            if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, "printer_collect") then
+                firePrompt(prompt)
+                break
+            end
+        end
+        task.wait(1)
+    end
+    
+    print("✅ Printer Farm finished")
+    FarmMutex:unlock()
+end
+
+-- ========================= THA BRONX 3 FARMS =========================
+local function ThaBronx3AutoFarm()
+    FarmMutex:lock("🔫 Tha Bronx 3 Auto")
+    print("🔫 Starting Tha Bronx 3 Auto Farm...")
+    
+    for _, prompt in ipairs(Workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, "tb3_auto_farm") then
+            firePrompt(prompt)
+            task.wait(1)
+        end
+    end
+    
+    print("✅ Tha Bronx 3 Auto Farm finished")
+    FarmMutex:unlock()
+end
+
+local function ThaBronx3Dupe()
+    FarmMutex:lock("🔄 Tha Bronx 3 Dupe")
+    print("🔄 Starting Tha Bronx 3 Dupe...")
+    
+    for _, prompt in ipairs(Workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") and MatchPrompt(prompt, "tb3_dupe") then
+            firePrompt(prompt)
+            task.wait(1)
+        end
+    end
+    
+    print("✅ Tha Bronx 3 Dupe finished")
+    FarmMutex:unlock()
+end
+
+-- ========================= PHILLY STREETZ 2 FARMS =========================
+local function PhillyWarehouseFarm()
+    FarmMutex:lock("🏭 Philly Warehouse")
+    print("🏭 Starting Philly Warehouse Farm...")
+    
+    for _, prompt in ipairs(Workspace:GetDescendants()) do
+        if prompt:IsA("ProximityPrompt") then
+            if MatchPrompt(prompt, "philly_buy") then
+                firePrompt(prompt)
+                task.wait(0.5)
+            elseif MatchPrompt(prompt, "philly_place") then
+                firePrompt(prompt)
+                task.wait(0.5)
+            elseif MatchPrompt(prompt, "philly_sell") then
+                firePrompt(prompt)
+            end
+        end
+    end
+    
+    print("✅ Philly Warehouse Farm finished")
+    FarmMutex:unlock()
+end
+
+-- ========================= GUN UI (ORGANIZED BY DROPDOWN CATEGORIES) =========================
+local function CreateGunUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "GunSpawner"
+    screenGui.Parent = player.PlayerGui
+    
+    local mainFrame = Instance.new("Frame")
+    mainFrame.Size = UDim2.new(0, 250, 0, 400)
+    mainFrame.Position = UDim2.new(0, 10, 0, 10)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    mainFrame.BorderSizePixel = 1
+    mainFrame.Parent = screenGui
+    
+    local title = Instance.new("TextLabel")
+    title.Text = "Gun Spawner"
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.Parent = mainFrame
+    
+    -- Dropdown for gun categories
+    local categories = {"Pistols", "Rifles", "Shotguns", "SMGs"}
+    local currentCategory = "Pistols"
+    
+    local categoryBtn = Instance.new("TextButton")
+    categoryBtn.Size = UDim2.new(0, 200, 0, 30)
+    categoryBtn.Position = UDim2.new(0.5, -100, 0, 35)
+    categoryBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    categoryBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    categoryBtn.Text = "Category: " .. currentCategory
+    categoryBtn.Parent = mainFrame
+    
+    local dropdownFrame = Instance.new("Frame")
+    dropdownFrame.Size = UDim2.new(0, 200, 0, 120)
+    dropdownFrame.Position = UDim2.new(0.5, -100, 0, 65)
+    dropdownFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    dropdownFrame.Visible = false
+    dropdownFrame.Parent = mainFrame
+    
+    local dropdownVisible = false
+    
+    for i, cat in ipairs(categories) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, -10, 0, 30)
+        btn.Position = UDim2.new(0, 5, 0, (i-1) * 30)
+        btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Text = cat
+        btn.Parent = dropdownFrame
+        btn.MouseButton1Click:Connect(function()
+            currentCategory = cat
+            categoryBtn.Text = "Category: " .. currentCategory
+            dropdownFrame.Visible = false
+            dropdownVisible = false
+        end)
+    end
+    
+    categoryBtn.MouseButton1Click:Connect(function()
+        dropdownVisible = not dropdownVisible
+        dropdownFrame.Visible = dropdownVisible
+    end)
+    
+    -- Gun spawn buttons
+    local gunListFrame = Instance.new("ScrollingFrame")
+    gunListFrame.Size = UDim2.new(1, -10, 0, 220)
+    gunListFrame.Position = UDim2.new(0, 5, 0, 170)
+    gunListFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    gunListFrame.ScrollBarThickness = 4
+    gunListFrame.Parent = mainFrame
+    
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 4)
+    layout.Parent = gunListFrame
+    
+    for _, gunName in ipairs(Config.GunList) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, -8, 0, 28)
+        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Text = "🔫 " .. gunName
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 13
+        btn.Parent = gunListFrame
+        btn.MouseButton1Click:Connect(function()
+            btn.BackgroundColor3 = Color3.fromRGB(0, 180, 80)
+            btn.Text = "Spawning..."
+            local ok = SpawnGun(gunName)
+            task.wait(0.5)
+            btn.BackgroundColor3 = ok and Color3.fromRGB(0, 120, 60) or Color3.fromRGB(180, 0, 0)
+            btn.Text = ok and ("✅ " .. gunName) or ("❌ " .. gunName)
+        end)
+    end
+    
+    gunListFrame.CanvasSize = UDim2.new(0, 0, 0, #Config.GunList * 32)
+end
+
+-- ========================= TOGGLE GUI =========================
+local function CreateToggleGUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "FarmToggleGUI"
+    screenGui.Parent = player.PlayerGui
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 220, 0, 380)
+    frame.Position = UDim2.new(1, -230, 0, 10)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    frame.BorderSizePixel = 1
+    frame.Parent = screenGui
+
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Text = "🏠 Hood Omni Hub"
+    titleLabel.Size = UDim2.new(1, 0, 0, 30)
+    titleLabel.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    titleLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextSize = 14
+    titleLabel.Parent = frame
+
+    local farms = {
+        {"🥔 Potato Farm",    PotatoFarm,         "PotatoFarm"},
+        {"📦 Box Job",        BoxJobFarm,         "BoxJobFarm"},
+        {"💳 Scam Farm",      ScamFarm,           "ScamFarm"},
+        {"🏧 ATM Farm",       ATMFarm,            "ATMFarm"},
+        {"💎 Jewelry Farm",   JewelryFarm,        "JewelryFarm"},
+        {"🚗 Car Farm",       CarFarm,            "CarFarm"},
+        {"🖨️ Printer Farm",   PrinterFarm,        "PrinterFarm"},
+        {"🔫 Bronx3 Auto",    ThaBronx3AutoFarm,  "ThaBronx3AutoFarm"},
+        {"🔄 Bronx3 Dupe",    ThaBronx3Dupe,      "ThaBronx3Dupe"},
+        {"🏭 Philly WH",      PhillyWarehouseFarm,"PhillyWarehouseFarm"},
+    }
+
+    for i, farmData in ipairs(farms) do
+        local label, farmFunc, configKey = farmData[1], farmData[2], farmData[3]
+
+        local row = Instance.new("Frame")
+        row.Size = UDim2.new(1, -10, 0, 28)
+        row.Position = UDim2.new(0, 5, 0, 30 + (i-1) * 32)
+        row.BackgroundTransparency = 1
+        row.Parent = frame
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(0.65, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        nameLabel.Font = Enum.Font.Gotham
+        nameLabel.TextSize = 12
+        nameLabel.Text = label
+        nameLabel.Parent = row
+
+        local toggleBtn = Instance.new("TextButton")
+        toggleBtn.Size = UDim2.new(0.33, 0, 0.85, 0)
+        toggleBtn.Position = UDim2.new(0.66, 0, 0.075, 0)
+        toggleBtn.Font = Enum.Font.GothamBold
+        toggleBtn.TextSize = 11
+        local enabled = Config[configKey]
+        toggleBtn.BackgroundColor3 = enabled and Color3.fromRGB(0, 160, 70) or Color3.fromRGB(160, 0, 0)
+        toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        toggleBtn.Text = enabled and "ON" or "OFF"
+        toggleBtn.Parent = row
+
+        toggleBtn.MouseButton1Click:Connect(function()
+            Config[configKey] = not Config[configKey]
+            local state = Config[configKey]
+            toggleBtn.BackgroundColor3 = state and Color3.fromRGB(0, 160, 70) or Color3.fromRGB(160, 0, 0)
+            toggleBtn.Text = state and "ON" or "OFF"
+            if state then
+                RunFarm(farmFunc, label)()
+            end
+        end)
+    end
+
+    -- Status bar
+    local statusLabel = Instance.new("TextLabel")
+    statusLabel.Size = UDim2.new(1, 0, 0, 20)
+    statusLabel.Position = UDim2.new(0, 0, 1, -22)
+    statusLabel.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+    statusLabel.Font = Enum.Font.Gotham
+    statusLabel.TextSize = 11
+    statusLabel.Text = "Status: Idle"
+    statusLabel.Parent = frame
+
+    -- Update status from mutex
+    task.spawn(function()
+        while task.wait(0.5) do
+            if FarmMutex.isRunning then
+                statusLabel.Text = "⚙️ " .. (FarmMutex.currentFarm or "Running...")
+                statusLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+            else
+                statusLabel.Text = "✅ Idle"
+                statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
             end
         end
     end)
 end
 
-local function StartAutoShoot()
-    task.spawn(function()
-        while UW_AutoShoot do
-            local char = player.Character
-            if char then
-                local tool = char:FindFirstChildOfClass("Tool")
-                if tool then
-                    local activateRemote = tool:FindFirstChild("RemoteEvent")
-                    if activateRemote and activateRemote:IsA("RemoteEvent") then
-                        activateRemote:FireServer()
-                    else
-                        tool:Activate()
-                    end
-                end
-            end
-            task.wait(0.08)
-        end
-    end)
-end
+-- ========================= INITIALIZATION =========================
+print("🏠 Hood Omni Hub – Complete Edition Loading...")
 
-local function StartFlagTP()
+-- Create UIs
+CreateGunUI()
+CreateToggleGUI()
+
+-- Spawn guns on load
+if Config.SpawnGunsOnLoad then
     task.spawn(function()
-        while UW_FlagTP do
-            local char = player.Character
-            local myHRP = char and char:FindFirstChild("HumanoidRootPart")
-            if myHRP then
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    local name = obj.Name:lower()
-                    if obj:IsA("BasePart") and (name:find("flag") or name:find("capture") or name:find("banner")) then
-                        pcall(function()
-                            obj.CFrame = myHRP.CFrame * CFrame.new(0, 0, -2)
-                            obj.Velocity = Vector3.new(0, 0, 0)
-                            obj.RotVelocity = Vector3.new(0, 0, 0)
-                        end)
-                    end
-                end
-            end
+        task.wait(2)
+        for _, gunName in ipairs(Config.GunList) do
+            SpawnGun(gunName)
             task.wait(0.3)
         end
     end)
 end
 
--- Kill Aura (customizable, replaces old broken sword reach)
-local KillAuraEnabled = false
-local KillAuraRange   = 20
-
-local function StartKillAura()
-    task.spawn(function()
-        while KillAuraEnabled do
-            local char = player.Character
-            local myHRP = char and char:FindFirstChild("HumanoidRootPart")
-            if myHRP then
-                for _, plr in ipairs(Players:GetPlayers()) do
-                    if not KillAuraEnabled then break end
-                    if plr ~= player and plr.Character then
-                        local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-                        local hum = plr.Character:FindFirstChild("Humanoid")
-                        if hrp and hum and hum.Health > 0 then
-                            local dist = (hrp.Position - myHRP.Position).Magnitude
-                            if dist <= KillAuraRange then
-                                pcall(function()
-                                    myHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -2)
-                                end)
-                                task.wait(0.05)
-                                local tool = char:FindFirstChildOfClass("Tool")
-                                if tool then
-                                    pcall(function() tool:Activate() end)
-                                    local dmgRemote = tool:FindFirstChild("DamageRemote") or tool:FindFirstChild("RemoteEvent")
-                                    if dmgRemote then
-                                        pcall(function() dmgRemote:FireServer(hrp.Position) end)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            task.wait(0.1)
-        end
-    end)
-end
-
--- Combat features for ALL games (Aimbot + Auto Shoot only)
-local function AddSharedCombatFeatures(CombatTab, UtilityTab)
-
-    CombatTab:CreateToggle({
-        Name = "🌀 Kill Aura",
-        CurrentValue = false,
-        Flag = "Shared_KillAura",
-        Callback = function(v)
-            KillAuraEnabled = v
-            if v then StartKillAura() end
-        end
-    })
-
-    CombatTab:CreateSlider({
-        Name = "🎯 Kill Aura Range",
-        Range = {5, 100},
-        Increment = 5,
-        Suffix = " studs",
-        CurrentValue = 20,
-        Flag = "Shared_KillAuraRange",
-        Callback = function(v)
-            KillAuraRange = v
-        end
-    })
-
-    CombatTab:CreateToggle({
-        Name = "🎯 Aimbot",
-        CurrentValue = false,
-        Flag = "Shared_Aimbot",
-        Callback = function(v)
-            UW_Aimbot = v
-            if v then StartAimbot() end
-        end
-    })
-
-    CombatTab:CreateToggle({
-        Name = "🔫 Auto Shoot",
-        CurrentValue = false,
-        Flag = "Shared_AutoShoot",
-        Callback = function(v)
-            UW_AutoShoot = v
-            if v then StartAutoShoot() end
-        end
-    })
-
-    UtilityTab:CreateButton({
-        Name = "🏃 Teleport to Enemy Base",
-        Callback = function()
-            local target = GetNearestEnemy()
-            if target and target:FindFirstChild("HumanoidRootPart") then
-                local char = player.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
-                end
-            else
-                Rayfield:Notify({Title = "No Target", Content = "No enemy found nearby.", Duration = 3})
-            end
-        end
-    })
-
-    UtilityTab:CreateButton({
-        Name = "💀 Kill Nearest Enemy",
-        Callback = function()
-            local target = GetNearestEnemy()
-            if target and target:FindFirstChild("HumanoidRootPart") then
-                local char = player.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
-                    task.wait(0.05)
-                    local tool = char:FindFirstChildOfClass("Tool")
-                    if tool then tool:Activate() end
-                end
-            end
-        end
-    })
-end
-
--- Full combat features for Underground Wars ONLY (includes Flag TP + Sword Reach)
-local HitboxSize = 10
-local HitboxEnabled = false
-local function StartHitbox()
-    task.spawn(function()
-        while HitboxEnabled do
-            for _, p in ipairs(game.Players:GetPlayers()) do
-                if p ~= player and p.Character then
-                    local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        hrp.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
-                        hrp.Transparency = 0.8
-                    end
-                end
-            end
-            task.wait(0.1)
-        end
-        -- reset on disable
-        for _, p in ipairs(game.Players:GetPlayers()) do
-            if p ~= player and p.Character then
-                local hrp = p.Character:FindFirstChild("HumanoidRootPart")
-                if hrp then hrp.Size = Vector3.new(2, 2, 1) end
-            end
-        end
-    end)
-end
-
-local function AddUndergroundWarsCombatFeatures(CombatTab, UtilityTab)
-    CombatTab:CreateToggle({
-        Name = "🎯 Aimbot",
-        CurrentValue = false,
-        Flag = "UW_Aimbot",
-        Callback = function(v)
-            UW_Aimbot = v
-            if v then StartAimbot() end
-        end
-    })
-
-    CombatTab:CreateToggle({
-        Name = "🔫 Auto Shoot",
-        CurrentValue = false,
-        Flag = "UW_AutoShoot",
-        Callback = function(v)
-            UW_AutoShoot = v
-            if v then StartAutoShoot() end
-        end
-    })
-
-    CombatTab:CreateToggle({
-        Name = "🚩 Flag TP To Me",
-        CurrentValue = false,
-        Flag = "UW_FlagTP",
-        Callback = function(v)
-            UW_FlagTP = v
-            if v then StartFlagTP() end
-        end
-    })
-
-    CombatTab:CreateToggle({
-        Name = "📦 Hitbox Expander",
-        CurrentValue = false,
-        Flag = "UW_Hitbox",
-        Callback = function(v)
-            HitboxEnabled = v
-            if v then StartHitbox() end
-        end
-    })
-
-    CombatTab:CreateSlider({
-        Name = "📏 Hitbox Size",
-        Range = {5, 100},
-        Increment = 5,
-        Suffix = " studs",
-        CurrentValue = 10,
-        Flag = "UW_HitboxSize",
-        Callback = function(v)
-            HitboxSize = v
-        end
-    })
-
-    CombatTab:CreateToggle({
-        Name = "🌀 Kill Aura",
-        CurrentValue = false,
-        Flag = "UW_KillAura",
-        Callback = function(v)
-            KillAuraEnabled = v
-            if v then StartKillAura() end
-        end
-    })
-
-    CombatTab:CreateSlider({
-        Name = "🎯 Kill Aura Range",
-        Range = {5, 100},
-        Increment = 5,
-        Suffix = " studs",
-        CurrentValue = 20,
-        Flag = "UW_KillAuraRange",
-        Callback = function(v)
-            KillAuraRange = v
-        end
-    })
-
-    UtilityTab:CreateButton({
-        Name = "🏃 Teleport to Enemy Base",
-        Callback = function()
-            local target = GetNearestEnemy()
-            if target and target:FindFirstChild("HumanoidRootPart") then
-                local char = player.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
-                end
-            else
-                Rayfield:Notify({Title = "No Target", Content = "No enemy found nearby.", Duration = 3})
-            end
-        end
-    })
-
-    UtilityTab:CreateButton({
-        Name = "💀 Kill Nearest Enemy",
-        Callback = function()
-            local target = GetNearestEnemy()
-            if target and target:FindFirstChild("HumanoidRootPart") then
-                local char = player.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
-                    task.wait(0.05)
-                    local tool = char:FindFirstChildOfClass("Tool")
-                    if tool then tool:Activate() end
-                end
-            end
-        end
-    })
-end
-
--- ==================== GAME-SPECIFIC FARMS ====================
-
-local function ThaBronx3CashFarm()
-    for _, npc in ipairs(Workspace:GetDescendants()) do
-        if npc:IsA("Model") and npc:FindFirstChild("Humanoid") then
-            local hrp = npc:FindFirstChild("HumanoidRootPart")
-            if hrp then player.Character.HumanoidRootPart.CFrame = hrp.CFrame end
-            task.wait()
-            local drop = npc:FindFirstChild("Drop") or npc:FindFirstChild("Cash")
-            if drop then fireclickdetector(drop:FindFirstChildOfClass("ClickDetector")) end
+-- Auto-start enabled farms
+task.spawn(function()
+    task.wait(3)
+    local farmMap = {
+        {Config.PotatoFarm,         PotatoFarm,         "🥔 Potato Farm"},
+        {Config.BoxJobFarm,         BoxJobFarm,         "📦 Box Job"},
+        {Config.ScamFarm,           ScamFarm,           "💳 Scam Farm"},
+        {Config.ATMFarm,            ATMFarm,            "🏧 ATM Farm"},
+        {Config.JewelryFarm,        JewelryFarm,        "💎 Jewelry Farm"},
+        {Config.CarFarm,            CarFarm,            "🚗 Car Farm"},
+        {Config.PrinterFarm,        PrinterFarm,        "🖨️ Printer Farm"},
+        {Config.ThaBronx3AutoFarm,  ThaBronx3AutoFarm,  "🔫 Bronx3 Auto"},
+        {Config.ThaBronx3Dupe,      ThaBronx3Dupe,      "🔄 Bronx3 Dupe"},
+        {Config.PhillyWarehouseFarm,PhillyWarehouseFarm,"🏭 Philly WH"},
+    }
+    for _, entry in ipairs(farmMap) do
+        if entry[1] then
+            RunFarm(entry[2], entry[3])()
+            task.wait(0.5)
         end
     end
-end
+end)
 
-local function ThaBronx3KillAura()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("Humanoid") then
-            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then player.Character.HumanoidRootPart.CFrame = hrp.CFrame end
-            task.wait()
-            local tool = player.Character:FindFirstChildOfClass("Tool")
-            if tool then tool:Activate() end
-        end
-    end
-end
-
-local function BronxHoodCashFarm()
-    for _, npc in ipairs(Workspace:GetDescendants()) do
-        if npc:IsA("Model") and npc:FindFirstChild("Humanoid") then
-            local hrp = npc:FindFirstChild("HumanoidRootPart")
-            if hrp then player.Character.HumanoidRootPart.CFrame = hrp.CFrame end
-            task.wait()
-            local drop = npc:FindFirstChild("Drop") or npc:FindFirstChild("Cash")
-            if drop then fireclickdetector(drop:FindFirstChildOfClass("ClickDetector")) end
-        end
-    end
-end
-
-local function BronxHoodKillAura()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("Humanoid") then
-            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then player.Character.HumanoidRootPart.CFrame = hrp.CFrame end
-            task.wait()
-            local tool = player.Character:FindFirstChildOfClass("Tool")
-            if tool then tool:Activate() end
-        end
-    end
-end
-
-local function GangWarsPotatoFarm()
-    local buyPrompt, cookPrompt, sellPrompt
-    for _, p in ipairs(Workspace:GetDescendants()) do
-        if p:IsA("ProximityPrompt") then
-            if p.ActionText and p.ActionText:find("Buy") and p.ActionText:find("Potato") then buyPrompt = p end
-            if p.ActionText and p.ActionText:find("Cook") then cookPrompt = p end
-            if p.ActionText and p.ActionText:find("Sell") then sellPrompt = p end
-        end
-    end
-    if buyPrompt then for i = 1, 10 do firePrompt(buyPrompt); task.wait(0.3) end end
-    if cookPrompt then firePrompt(cookPrompt); task.wait(10) end
-    if sellPrompt then firePrompt(sellPrompt) end
-end
-
-local function CentralStreetsPrinterFarm()
-    for _, p in ipairs(Workspace:GetDescendants()) do
-        if p:IsA("ProximityPrompt") and p.ActionText and p.ActionText:find("Printer") then
-            firePrompt(p); task.wait(30)
-        end
-    end
-end
-
-local function PhillyStreetz2MoneyGen()
-    for _, p in ipairs(Workspace:GetDescendants()) do
-        if p:IsA("ProximityPrompt") and p.ActionText and p.ActionText:find("Money") then
-            firePrompt(p); task.wait(2)
-        end
-    end
-end
-
--- ==================== RAYFIELD UI ====================
-
-local Window = Rayfield:CreateWindow({
-    Name = "Hood Omni Hub v2.1 - " .. GAME_NAME,
-    LoadingTitle = "Loading Hub...",
-    LoadingSubtitle = "by PrinceAamir",
-    Theme = "Default"
-})
-
-local FarmTab    = Window:CreateTab("🌾 Auto Farms")
-local CombatTab  = Window:CreateTab("⚔️ Combat")
-local UtilityTab = Window:CreateTab("🔧 Utility")
-local GunTab     = Window:CreateTab("🔫 Guns")
-
--- ===== Underground Wars =====
-if GAME_NAME == "Underground Wars" then
-
-    -- 💣 Nuke Button (bypass star requirement)
-    UtilityTab:CreateButton({
-        Name = "💣 Launch Nuke (Bypass Stars)",
-        Callback = function()
-            -- Try to fire nuke remote directly, bypassing star check
-            local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:FindFirstChild("Events") or ReplicatedStorage
-            local nukeRemote = nil
-            for _, v in ipairs(remotes:GetDescendants()) do
-                local n = v.Name:lower()
-                if n:find("nuke") or n:find("bomb") or n:find("launch") then
-                    nukeRemote = v
-                    break
-                end
-            end
-            if nukeRemote and nukeRemote:IsA("RemoteEvent") then
-                nukeRemote:FireServer()
-                Rayfield:Notify({Title = "💣 Nuke!", Content = "Nuke launched!", Duration = 3})
-            else
-                -- Try clicking the ingame nuke button directly
-                local nukeBtn = nil
-                for _, v in ipairs(workspace:GetDescendants()) do
-                    local n = v.Name:lower()
-                    if (n:find("nuke") or n:find("launch")) and (v:IsA("ClickDetector") or v:IsA("ProximityPrompt")) then
-                        nukeBtn = v
-                        break
-                    end
-                end
-                if nukeBtn then
-                    pcall(function()
-                        if nukeBtn:IsA("ClickDetector") then
-                            fireclickdetector(nukeBtn)
-                        else
-                            fireproximityprompt(nukeBtn, 0)
-                        end
-                    end)
-                    Rayfield:Notify({Title = "💣 Nuke!", Content = "Nuke button pressed!", Duration = 3})
-                else
-                    Rayfield:Notify({Title = "❌ Nuke", Content = "Could not find nuke remote. Try standing near nuke button.", Duration = 4})
-                end
-            end
-        end
-    })
-
-    -- 🚀 Free Rocket Launcher
-    UtilityTab:CreateButton({
-        Name = "🚀 Get Free Rocket Launcher",
-        Callback = function()
-            local char = player.Character
-            if not char then return end
-            -- Try ReplicatedStorage first
-            local function tryClone(parent)
-                for _, v in ipairs(parent:GetDescendants()) do
-                    local n = v.Name:lower()
-                    if n:find("rocket") or n:find("launcher") or n:find("bazooka") then
-                        if v:IsA("Tool") then
-                            local clone = v:Clone()
-                            clone.Parent = player.Backpack
-                            Rayfield:Notify({Title = "🚀 Got It!", Content = v.Name .. " added to backpack!", Duration = 3})
-                            return true
-                        end
-                    end
-                end
-                return false
-            end
-            if not tryClone(ReplicatedStorage) then
-                if not tryClone(workspace) then
-                    Rayfield:Notify({Title = "❌ Not Found", Content = "Rocket Launcher not found in storage.", Duration = 4})
-                end
-            end
-        end
-    })
-
-    -- ⚡ Increase Dig Speed
-    local UW_FastDig = false
-    local originalWalkSpeed = 16
-    FarmTab:CreateToggle({
-        Name = "⚡ Fast Dig Speed",
-        CurrentValue = false,
-        Flag = "UW_FastDig",
-        Callback = function(v)
-            UW_FastDig = v
-            local char = player.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            if hum then
-                if v then
-                    originalWalkSpeed = hum.WalkSpeed
-                    hum.WalkSpeed = 100
-                    -- Also try to fire dig speed remote
-                    local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:FindFirstChild("Events") or ReplicatedStorage
-                    for _, r in ipairs(remotes:GetDescendants()) do
-                        local n = r.Name:lower()
-                        if n:find("dig") or n:find("speed") or n:find("mine") then
-                            pcall(function() r:FireServer(100) end)
-                        end
-                    end
-                else
-                    hum.WalkSpeed = originalWalkSpeed
-                end
-            end
-            -- Keep speed on respawn
-            if v then
-                task.spawn(function()
-                    while UW_FastDig do
-                        local c = player.Character
-                        local h = c and c:FindFirstChildOfClass("Humanoid")
-                        if h then h.WalkSpeed = 100 end
-                        task.wait(1)
-                    end
-                end)
-            end
-        end
-    })
-
-    -- 💰 Add 100k Money
-    UtilityTab:CreateButton({
-        Name = "💰 Add 100k Money",
-        Callback = function()
-            -- Try all common money remotes
-            local remotes = ReplicatedStorage:FindFirstChild("Remotes") or ReplicatedStorage:FindFirstChild("Events") or ReplicatedStorage
-            local fired = false
-            for _, v in ipairs(remotes:GetDescendants()) do
-                local n = v.Name:lower()
-                if n:find("money") or n:find("cash") or n:find("coin") or n:find("add") or n:find("give") then
-                    if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-                        pcall(function()
-                            if v:IsA("RemoteEvent") then
-                                v:FireServer(100000)
-                            else
-                                v:InvokeServer(100000)
-                            end
-                        end)
-                        fired = true
-                    end
-                end
-            end
-            if fired then
-                Rayfield:Notify({Title = "💰 Money Sent!", Content = "Fired money remote — check your balance!", Duration = 3})
-            else
-                -- Try leaderstats
-                local ls = player:FindFirstChild("leaderstats")
-                if ls then
-                    for _, stat in ipairs(ls:GetChildren()) do
-                        local n = stat.Name:lower()
-                        if n:find("money") or n:find("cash") or n:find("coin") then
-                            pcall(function() stat.Value = stat.Value + 100000 end)
-                            fired = true
-                        end
-                    end
-                end
-                if fired then
-                    Rayfield:Notify({Title = "💰 Done!", Content = "+100k added to " .. (player.leaderstats and player.leaderstats:GetChildren()[1] and player.leaderstats:GetChildren()[1].Name or "balance"), Duration = 3})
-                else
-                    Rayfield:Notify({Title = "❌ Failed", Content = "Could not find money remote. Server-sided games block this.", Duration = 4})
-                end
-            end
-        end
-    })
-
-    AddUndergroundWarsCombatFeatures(CombatTab, UtilityTab)
-
--- ===== Tha Bronx 3 =====
-elseif GAME_NAME == "Tha Bronx 3" then
-
-    local TB3_CashRunning = false
-    FarmTab:CreateToggle({
-        Name = "💰 Auto Cash Farm",
-        CurrentValue = false,
-        Flag = "TB3_CashFarm",
-        Callback = function(v)
-            TB3_CashRunning = v
-            if v then
-                task.spawn(function()
-                    while TB3_CashRunning do
-                        FarmMutex:run(ThaBronx3CashFarm, "Cash Farm")
-                        task.wait(10)
-                    end
-                end)
-            end
-        end
-    })
-
-    local TB3_DupeRunning = false
-    FarmTab:CreateToggle({
-        Name = "🔄 Gun/Item Dupe",
-        CurrentValue = false,
-        Flag = "TB3_Dupe",
-        Callback = function(v)
-            TB3_DupeRunning = v
-            if v then
-                task.spawn(function()
-                    while TB3_DupeRunning do
-                        FarmMutex:run(ThaBronx3CashFarm, "Dupe Farm")
-                        task.wait(5)
-                    end
-                end)
-            end
-        end
-    })
-
-    local TB3_KillRunning = false
-    CombatTab:CreateToggle({
-        Name = "🔪 Kill Aura",
-        CurrentValue = false,
-        Flag = "TB3_KillAura",
-        Callback = function(v)
-            TB3_KillRunning = v
-            if v then
-                task.spawn(function()
-                    while TB3_KillRunning do
-                        FarmMutex:run(ThaBronx3KillAura, "Kill Aura")
-                        task.wait(1)
-                    end
-                end)
-            end
-        end
-    })
-
-    CombatTab:CreateToggle({ Name = "👁️ Silent Aim", CurrentValue = false, Flag = "TB3_SilentAim", Callback = function(v) end })
-
-    AddSharedCombatFeatures(CombatTab, UtilityTab)
-
-    UtilityTab:CreateToggle({ Name = "🛡️ Anti-Police Mode", CurrentValue = false, Flag = "TB3_AntiPolice", Callback = function(v) end })
-
--- ===== Philly Streetz 2 =====
-elseif GAME_NAME == "Philly Streetz 2" then
-
-    local PS2_MoneyRunning = false
-    FarmTab:CreateToggle({
-        Name = "💸 Money Gen",
-        CurrentValue = false,
-        Flag = "PS2_MoneyGen",
-        Callback = function(v)
-            PS2_MoneyRunning = v
-            if v then
-                task.spawn(function()
-                    while PS2_MoneyRunning do
-                        FarmMutex:run(PhillyStreetz2MoneyGen, "Money Gen")
-                        task.wait(5)
-                    end
-                end)
-            end
-        end
-    })
-
-    local PS2_DupeRunning = false
-    FarmTab:CreateToggle({
-        Name = "⌚ Accessory Dupe",
-        CurrentValue = false,
-        Flag = "PS2_AccDupe",
-        Callback = function(v)
-            PS2_DupeRunning = v
-            if v then
-                task.spawn(function()
-                    while PS2_DupeRunning do
-                        FarmMutex:run(PhillyStreetz2MoneyGen, "Dupe")
-                        task.wait(3)
-                    end
-                end)
-            end
-        end
-    })
-
-    CombatTab:CreateToggle({ Name = "👁️ ESP", CurrentValue = false, Flag = "PS2_ESP", Callback = function(v) end })
-
-    AddSharedCombatFeatures(CombatTab, UtilityTab)
-
-    UtilityTab:CreateToggle({ Name = "🛡️ Godmode", CurrentValue = false, Flag = "PS2_Godmode", Callback = function(v) end })
-
--- ===== Gang Wars / Bronx Hood (same game) =====
-elseif GAME_NAME == "Gang Wars" or GAME_NAME == "Bronx Hood" then
-
-    local GW_PotatoRunning = false
-    FarmTab:CreateToggle({
-        Name = "🥔 Potato Farm",
-        CurrentValue = false,
-        Flag = "GW_Potato",
-        Callback = function(v)
-            GW_PotatoRunning = v
-            if v then
-                task.spawn(function()
-                    while GW_PotatoRunning do
-                        FarmMutex:run(GangWarsPotatoFarm, "Potato Farm")
-                        task.wait(15)
-                    end
-                end)
-            end
-        end
-    })
-
-    AddSharedCombatFeatures(CombatTab, UtilityTab)
-
--- ===== Central Streets =====
-elseif GAME_NAME == "Central Streets" then
-
-    local CS_PrinterRunning = false
-    FarmTab:CreateToggle({
-        Name = "🖨️ Printer Farm",
-        CurrentValue = false,
-        Flag = "CS_Printer",
-        Callback = function(v)
-            CS_PrinterRunning = v
-            if v then
-                task.spawn(function()
-                    while CS_PrinterRunning do
-                        FarmMutex:run(CentralStreetsPrinterFarm, "Printer Farm")
-                        task.wait(35)
-                    end
-                end)
-            end
-        end
-    })
-
-    AddSharedCombatFeatures(CombatTab, UtilityTab)
-
--- ===== South Bronx =====
-elseif GAME_NAME == "South Bronx" then
-
-    FarmTab:CreateToggle({ Name = "💰 Auto Farm (WIP)", CurrentValue = false, Flag = "SB_Farm", Callback = function(v) end })
-
-    AddSharedCombatFeatures(CombatTab, UtilityTab)
-
--- ===== Unknown =====
-else
-
-    FarmTab:CreateToggle({
-        Name = "🤖 Auto Farm (Experimental)",
-        CurrentValue = false,
-        Flag = "Generic_Farm",
-        Callback = function(v)
-            if v then
-                task.spawn(function()
-                    print("Generic farm – customize for this game")
-                end)
-            end
-        end
-    })
-
-    AddSharedCombatFeatures(CombatTab, UtilityTab)
-
-end
-
--- Gun Spawner (all games)
-local gunList = {"Glock", "AK47", "Shotgun", "Mac10", "Uzi", "AR15"}
-for _, gun in ipairs(gunList) do
-    GunTab:CreateButton({ Name = "🔫 " .. gun, Callback = function() SpawnGun(gun) end })
-end
-
-Rayfield:Notify({ Title = "Hood Omni Hub v2.1", Content = "Loaded for: " .. GAME_NAME, Duration = 4 })
+print("✅ Hood Omni Hub Loaded! Use the GUI to toggle farms.")
