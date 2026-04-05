@@ -172,38 +172,71 @@ local function StartFlagTP()
     end)
 end
 
-local swordReachOriginalSize = nil
-local function ApplySwordReach(enabled)
-    local char = player.Character
-    if not char then return end
-    for _, tool in ipairs(char:GetChildren()) do
-        if tool:IsA("Tool") then
-            local handle = tool:FindFirstChild("Handle")
-            if handle then
-                if enabled then
-                    swordReachOriginalSize = handle.Size
-                    pcall(function() handle.Size = Vector3.new(8, 8, 20) end)
-                else
-                    if swordReachOriginalSize then
-                        pcall(function() handle.Size = swordReachOriginalSize end)
+-- Kill Aura (customizable, replaces old broken sword reach)
+local KillAuraEnabled = false
+local KillAuraRange   = 20
+
+local function StartKillAura()
+    task.spawn(function()
+        while KillAuraEnabled do
+            local char = player.Character
+            local myHRP = char and char:FindFirstChild("HumanoidRootPart")
+            if myHRP then
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if not KillAuraEnabled then break end
+                    if plr ~= player and plr.Character then
+                        local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+                        local hum = plr.Character:FindFirstChild("Humanoid")
+                        if hrp and hum and hum.Health > 0 then
+                            local dist = (hrp.Position - myHRP.Position).Magnitude
+                            if dist <= KillAuraRange then
+                                pcall(function()
+                                    myHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -2)
+                                end)
+                                task.wait(0.05)
+                                local tool = char:FindFirstChildOfClass("Tool")
+                                if tool then
+                                    pcall(function() tool:Activate() end)
+                                    local dmgRemote = tool:FindFirstChild("DamageRemote") or tool:FindFirstChild("RemoteEvent")
+                                    if dmgRemote then
+                                        pcall(function() dmgRemote:FireServer(hrp.Position) end)
+                                    end
+                                end
+                            end
+                        end
                     end
                 end
             end
-        end
-    end
-end
-
-player.CharacterAdded:Connect(function(char)
-    char.ChildAdded:Connect(function(child)
-        if child:IsA("Tool") and UW_SwordReach then
             task.wait(0.1)
-            ApplySwordReach(true)
         end
     end)
-end)
+end
 
 -- Combat features for ALL games (Aimbot + Auto Shoot only)
 local function AddSharedCombatFeatures(CombatTab, UtilityTab)
+
+    CombatTab:CreateToggle({
+        Name = "🌀 Kill Aura",
+        CurrentValue = false,
+        Flag = "Shared_KillAura",
+        Callback = function(v)
+            KillAuraEnabled = v
+            if v then StartKillAura() end
+        end
+    })
+
+    CombatTab:CreateSlider({
+        Name = "🎯 Kill Aura Range",
+        Range = {5, 100},
+        Increment = 5,
+        Suffix = " studs",
+        CurrentValue = 20,
+        Flag = "Shared_KillAuraRange",
+        Callback = function(v)
+            KillAuraRange = v
+        end
+    })
+
     CombatTab:CreateToggle({
         Name = "🎯 Aimbot",
         CurrentValue = false,
@@ -289,12 +322,24 @@ local function AddUndergroundWarsCombatFeatures(CombatTab, UtilityTab)
     })
 
     CombatTab:CreateToggle({
-        Name = "⚔️ Sword Reach",
+        Name = "🌀 Kill Aura",
         CurrentValue = false,
-        Flag = "UW_SwordReach",
+        Flag = "UW_KillAura",
         Callback = function(v)
-            UW_SwordReach = v
-            ApplySwordReach(v)
+            KillAuraEnabled = v
+            if v then StartKillAura() end
+        end
+    })
+
+    CombatTab:CreateSlider({
+        Name = "🎯 Kill Aura Range",
+        Range = {5, 100},
+        Increment = 5,
+        Suffix = " studs",
+        CurrentValue = 20,
+        Flag = "UW_KillAuraRange",
+        Callback = function(v)
+            KillAuraRange = v
         end
     })
 
@@ -650,51 +695,6 @@ elseif GAME_NAME == "Tha Bronx 3" then
 
     UtilityTab:CreateToggle({ Name = "🛡️ Anti-Police Mode", CurrentValue = false, Flag = "TB3_AntiPolice", Callback = function(v) end })
 
--- ===== Bronx Hood =====
-elseif GAME_NAME == "Bronx Hood" then
-
-    local BH_CashRunning = false
-    FarmTab:CreateToggle({
-        Name = "💰 Auto Cash Farm",
-        CurrentValue = false,
-        Flag = "BH_CashFarm",
-        Callback = function(v)
-            BH_CashRunning = v
-            if v then
-                task.spawn(function()
-                    while BH_CashRunning do
-                        FarmMutex:run(BronxHoodCashFarm, "Cash Farm")
-                        task.wait(10)
-                    end
-                end)
-            end
-        end
-    })
-
-    local BH_KillRunning = false
-    CombatTab:CreateToggle({
-        Name = "🔪 Kill Aura",
-        CurrentValue = false,
-        Flag = "BH_KillAura",
-        Callback = function(v)
-            BH_KillRunning = v
-            if v then
-                task.spawn(function()
-                    while BH_KillRunning do
-                        FarmMutex:run(BronxHoodKillAura, "Kill Aura")
-                        task.wait(1)
-                    end
-                end)
-            end
-        end
-    })
-
-    CombatTab:CreateToggle({ Name = "👁️ Silent Aim", CurrentValue = false, Flag = "BH_SilentAim", Callback = function(v) end })
-
-    AddSharedCombatFeatures(CombatTab, UtilityTab)
-
-    UtilityTab:CreateToggle({ Name = "🛡️ Anti-Police Mode", CurrentValue = false, Flag = "BH_AntiPolice", Callback = function(v) end })
-
 -- ===== Philly Streetz 2 =====
 elseif GAME_NAME == "Philly Streetz 2" then
 
@@ -740,8 +740,8 @@ elseif GAME_NAME == "Philly Streetz 2" then
 
     UtilityTab:CreateToggle({ Name = "🛡️ Godmode", CurrentValue = false, Flag = "PS2_Godmode", Callback = function(v) end })
 
--- ===== Gang Wars =====
-elseif GAME_NAME == "Gang Wars" then
+-- ===== Gang Wars / Bronx Hood (same game) =====
+elseif GAME_NAME == "Gang Wars" or GAME_NAME == "Bronx Hood" then
 
     local GW_PotatoRunning = false
     FarmTab:CreateToggle({
