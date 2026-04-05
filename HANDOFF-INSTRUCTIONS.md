@@ -33,12 +33,70 @@
 - Knockout, Westbound, Fantasma PvP — minimal features
 - Many games only have 1-2 unique features; premium hubs have 8-15 per game
 
-#### Current Feature Counts for 4 Main Games:
-- Tha Bronx 3: 7 unique (Auto Farm Cash/XP, Auto Rob Store/NPC, Anti Lock, TP ATM, TP Gun Store)
-- Da Hood: 6 unique (Stomp Aura, Lock Victim, Auto Block, Reach Extend, Auto Pickup/Equip)
-- Philly Streetz 2: 3 unique (Money Gen, Auto Rob, TP ATM)
-- Central Streets: 0 unique ❌ NEEDS FIXING
-- Underground War 2: Separate file (Auto Dig, Auto Upgrade, Sword Reach, Auto Shoot)
+#### ⚠️ MAJOR ISSUE: The 4 main games have PLACEHOLDER features, NOT real farming methods!
+The current script only has generic toggles like "Auto Farm Cash" — NOT the actual game-specific farming mechanics. The original spec (see DeepSeekMegaPrompt below) has detailed methods that MUST be implemented.
+
+#### ORIGINAL SPEC — What the 4 Main Games SHOULD Have:
+
+**GANG WARS** (most detailed — had working farms before):
+- ✅ Potato Farm (buy potatoes → cook in pots → sell cooked)
+- ✅ Box Job (pick up BOX1 ClickDetector → teleport to workspace.Job CFrame → deliver)
+- ✅ Scam Farm (buy cards → swipe cards for money, 4-step process)
+- ✅ ATM Farm (teleport to nearest ATM → steal cash)
+- ✅ Jewelry Farm (steal jewelry → sell)
+- ❌ Car Farm (steal vehicles → sell) — lines 1699-1780 in old script
+- ❌ Printer Farm (buy printer → place → collect money) — lines 2551+ in old script
+- Gun UI organized by category dropdowns
+- Free gun spawning (clone from ReplicatedStorage)
+- Guns path: Workspace.GUNS.{GunName}.Prompt (ProximityPrompts)
+- Gun tools: ReplicatedStorage.Items.{GunName} and ReplicatedStorage.weapons
+
+**PHILLY STREETZ 2:**
+- Warehouse Setup + Cookies Method
+- Flow: Buy items → Place in warehouse → Organize → Sell
+- Money per cycle: Millions possible
+- Needs in-game prompt verification
+
+**THA BRONX 3:**
+- Auto farm + dupe (money cloning exploit)
+- Vehicle mods
+- Infinite money dupe exploit
+- Auto-buying supplies
+- Item duplication / money stacking mechanics
+
+**CENTRAL STREETS:**
+- Printer Farming (most profitable verified method — YouTube confirmed)
+- Flow: Buy printer → Buy substrate paper → Equip printer tool → Activate prompt → Wait 30s → Collect money prompt
+- Repeatable infinite cycles
+- Equipment system (equip printer tool → activation prompt → wait → collect)
+
+#### CRITICAL BUGS FROM ORIGINAL SPEC (must fix in rewrite):
+
+🐛 **BUG #1: GHOST GUNS** — Guns spawn in backpack but are NON-FUNCTIONAL (no shoot button, no damage)
+- Root cause: Incomplete tool clone from ReplicatedStorage — internal scripts/events not fired
+- Fix: Clone entire gun with ALL descendants → find init function (setup/init/initialize/onEquipped) → check for RemoteEvents (Fire, Shoot, DamageRemote, OnHit, BulletHit) → call init → THEN parent to backpack
+
+🐛 **BUG #2: MULTIPLE FARMS RUN SIMULTANEOUSLY** — All farms fire at once via task.spawn()
+- Fix: Implement global FarmMutex (lock/unlock pattern, one farm at a time)
+
+🐛 **BUG #3: PROMPT MATCHING TOO BROAD** — string:find("Buy") matches wrong prompts
+- Fix: Use exact string matching (prompt.ActionText == "Buy Potatoes" not :find("Buy"))
+
+#### Features That WERE Working (don't break):
+- Gun duplication protection (checks backpack before spawn)
+- Scam farm (breaks after first prompt per step)
+- ATM farm (uses nearest ATM only)
+- Potato farm (buys 10, fills all pots, cooks, sells)
+- Box job (teleports Job CFrame, not player)
+- Gun UI (organized by category dropdowns)
+- Free gun spawning (no ProximityPrompt needed)
+
+#### Technical Requirements:
+- fireproximityprompt(prompt, 0) to bypass hold timers
+- safeCall() wrapper for error handling on remote fires
+- task.spawn() for async, task.wait() for delays
+- print() with emoji prefixes (✅ 🐛 ⚠️ 🔒) for logging
+- All functions handle nil objects gracefully
 
 #### UI Libraries Premium Hubs Use:
 Rayfield (most popular), Fluent (Win11 style), Orion, Linoria, Kavo — or custom-built. Current hub uses custom UI which is fine but needs animations + blur + notifications to match premium quality.
