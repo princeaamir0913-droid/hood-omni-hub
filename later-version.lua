@@ -202,7 +202,7 @@ player.CharacterAdded:Connect(function(char)
     end)
 end)
 
--- Shared function to add combat toggles to any CombatTab
+-- Combat features for ALL games (Aimbot + Auto Shoot only)
 local function AddSharedCombatFeatures(CombatTab, UtilityTab)
     CombatTab:CreateToggle({
         Name = "🎯 Aimbot",
@@ -224,10 +224,64 @@ local function AddSharedCombatFeatures(CombatTab, UtilityTab)
         end
     })
 
+    UtilityTab:CreateButton({
+        Name = "🏃 Teleport to Enemy Base",
+        Callback = function()
+            local target = GetNearestEnemy()
+            if target and target:FindFirstChild("HumanoidRootPart") then
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
+                end
+            else
+                Rayfield:Notify({Title = "No Target", Content = "No enemy found nearby.", Duration = 3})
+            end
+        end
+    })
+
+    UtilityTab:CreateButton({
+        Name = "💀 Kill Nearest Enemy",
+        Callback = function()
+            local target = GetNearestEnemy()
+            if target and target:FindFirstChild("HumanoidRootPart") then
+                local char = player.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame
+                    task.wait(0.05)
+                    local tool = char:FindFirstChildOfClass("Tool")
+                    if tool then tool:Activate() end
+                end
+            end
+        end
+    })
+end
+
+-- Full combat features for Underground Wars ONLY (includes Flag TP + Sword Reach)
+local function AddUndergroundWarsCombatFeatures(CombatTab, UtilityTab)
+    CombatTab:CreateToggle({
+        Name = "🎯 Aimbot",
+        CurrentValue = false,
+        Flag = "UW_Aimbot",
+        Callback = function(v)
+            UW_Aimbot = v
+            if v then StartAimbot() end
+        end
+    })
+
+    CombatTab:CreateToggle({
+        Name = "🔫 Auto Shoot",
+        CurrentValue = false,
+        Flag = "UW_AutoShoot",
+        Callback = function(v)
+            UW_AutoShoot = v
+            if v then StartAutoShoot() end
+        end
+    })
+
     CombatTab:CreateToggle({
         Name = "🚩 Flag TP To Me",
         CurrentValue = false,
-        Flag = "Shared_FlagTP",
+        Flag = "UW_FlagTP",
         Callback = function(v)
             UW_FlagTP = v
             if v then StartFlagTP() end
@@ -237,7 +291,7 @@ local function AddSharedCombatFeatures(CombatTab, UtilityTab)
     CombatTab:CreateToggle({
         Name = "⚔️ Sword Reach",
         CurrentValue = false,
-        Flag = "Shared_SwordReach",
+        Flag = "UW_SwordReach",
         Callback = function(v)
             UW_SwordReach = v
             ApplySwordReach(v)
@@ -373,9 +427,10 @@ local GunTab     = Window:CreateTab("🔫 Guns")
 -- ===== Underground Wars =====
 if GAME_NAME == "Underground Wars" then
 
+
     FarmTab:CreateLabel("No farms for this game")
 
-    AddSharedCombatFeatures(CombatTab, UtilityTab)
+    AddUndergroundWarsCombatFeatures(CombatTab, UtilityTab)
 
 -- ===== Tha Bronx 3 =====
 elseif GAME_NAME == "Tha Bronx 3" then
