@@ -1,0 +1,25 @@
+Script: HoodOmniHub_Clean.lua
+
+WHAT NEEDS FIXING:
+
+1. Rename "Da Hood" tab to "Gangwars"
+   - Just a label fix, features inside already work
+
+2. 80+ fake game tabs
+   - Most just run a remote scanner, not real automation
+   - Should be removed or replaced with real loadstring loaders pointing to tested community scripts
+
+WHAT ALREADY WORKS:
+- Universal features (ESP, Fly, Speed, Noclip, Aimbot, etc.)
+- Scripts tab (Infinite Yield, Dex Explorer, SimpleSpy, etc.)
+- UI framework (Rayfield, toggles, keybinds)
+- Gangwars tab features (just mislabeled as "Da Hood")
+
+RECOMMENDED FIX:
+- Rename Da Hood to Gangwars
+- Strip fake game tabs or replace with real loadstring loaders pointing to trusted community scripts (ScriptBlox, V3rmillion)
+
+NOTE FOR AI:
+- Do NOT fabricate RemoteEvent names for game-specific features
+- If you don't know exact remotes for a game, use a real loadstring loader instead or skip that game
+- Real working script loaders are better than fake automation code
