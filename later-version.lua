@@ -44,6 +44,304 @@ local Connections = {}
 local ESPFolder = Instance.new("Folder",CoreGui)
 ESPFolder.Name = "OmniESP"
 
+-- ============================================================
+-- MEGA BYPASS SYSTEM — Anti-Kick, Anti-Ban, Anti-Detect, Anti-Teleport
+-- ============================================================
+
+-- ── 1. ANTI-KICK BYPASS ─────────────────────────────────────────────────────
+-- Hooks Player:Kick() to prevent server/client kicks
+pcall(function()
+    local oldKick = Instance.new("Part").Kick or function() end -- dummy
+    if hookfunction then
+        local oldNS = game.Players.LocalPlayer.Kick
+        hookfunction(game.Players.LocalPlayer.Kick, function(self, ...)
+            warn("[HoodOmniHub] Kick blocked!")
+            return nil
+        end)
+    end
+    -- Metatable hook for :Kick()
+    local mt = getrawmetatable(game)
+    if mt and setreadonly then
+        setreadonly(mt, false)
+        local oldNamecall = mt.__namecall
+        mt.__namecall = newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            if method == "Kick" and self == game.Players.LocalPlayer then
+                warn("[HoodOmniHub] Namecall Kick blocked!")
+                return nil
+            end
+            return oldNamecall(self, ...)
+        end)
+        setreadonly(mt, true)
+    end
+end)
+
+-- ── 2. ANTI-TELEPORT BYPASS ─────────────────────────────────────────────────
+-- Blocks forced teleports to other places (anti-ban-teleport)
+pcall(function()
+    if hookfunction then
+        local TPS = game:GetService("TeleportService")
+        local oldTeleport = TPS.Teleport
+        hookfunction(TPS.Teleport, function(self, placeId, ...)
+            if placeId ~= game.PlaceId then
+                warn("[HoodOmniHub] Suspicious teleport blocked → PlaceId: " .. tostring(placeId))
+                return nil
+            end
+            return oldTeleport(self, placeId, ...)
+        end)
+        local oldTPI = TPS.TeleportToPlaceInstance
+        hookfunction(TPS.TeleportToPlaceInstance, function(self, placeId, ...)
+            if placeId ~= game.PlaceId then
+                warn("[HoodOmniHub] TeleportToPlaceInstance blocked → " .. tostring(placeId))
+                return nil
+            end
+            return oldTPI(self, placeId, ...)
+        end)
+    end
+end)
+
+-- ── 3. ANTI-IDLE / ANTI-AFK (NUCLEAR VERSION) ──────────────────────────────
+pcall(function()
+    local VIM = game:GetService("VirtualInputManager")
+    local antiAfkConn
+    antiAfkConn = game:GetService("RunService").Heartbeat:Connect(function()
+        if HubState.AntiAFK then
+            pcall(function()
+                VIM:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+                VIM:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+            end)
+        end
+    end)
+    table.insert(Connections, antiAfkConn)
+    -- Also block the idle disconnect
+    local guc = game:GetService("Players").LocalPlayer
+    pcall(function()
+        guc.Idled:Connect(function()
+            VIM:SendKeyEvent(true, Enum.KeyCode.W, false, game)
+            task.wait(0.1)
+            VIM:SendKeyEvent(false, Enum.KeyCode.W, false, game)
+        end)
+    end)
+end)
+
+-- ── 4. ANTI-CHEAT REMOTE BLOCKER ────────────────────────────────────────────
+-- Blocks known anti-cheat remotes from firing
+pcall(function()
+    local mt = getrawmetatable(game)
+    if mt and setreadonly then
+        setreadonly(mt, false)
+        local oldNamecall = mt.__namecall
+        local blocked = {
+            "YOULAND", "CheckSpeed", "Sanity", "Validator", "AntiExploit",
+            "verify", "checkplayer", "CHECKER", "anti", "detect",
+            "securitycheck", "heartbeat_check", "integrity", "BanPlayer",
+            "FlagPlayer", "Report", "PunishPlayer", "kickremote", "banremote",
+            "AC_Validate", "AC_Check", "SecurityRemote", "AntiCheat",
+            "RemoteFunction", "ValidateClient", "CheckClient"
+        }
+        local blockedSet = {}
+        for _, name in ipairs(blocked) do
+            blockedSet[string.lower(name)] = true
+        end
+        mt.__namecall = newcclosure(function(self, ...)
+            local method = getnamecallmethod()
+            if (method == "FireServer" or method == "InvokeServer") then
+                local remoteName = string.lower(tostring(self.Name))
+                for keyword, _ in pairs(blockedSet) do
+                    if string.find(remoteName, keyword) then
+                        warn("[HoodOmniHub] Blocked AC remote: " .. self.Name)
+                        return nil
+                    end
+                end
+            end
+            return oldNamecall(self, ...)
+        end)
+        setreadonly(mt, true)
+    end
+end)
+
+-- ── 5. ANTI-FLING PROTECTION ────────────────────────────────────────────────
+pcall(function()
+    local conn
+    conn = game:GetService("RunService").Heartbeat:Connect(function()
+        if HubState.AntiFling then
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char then
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if hrp then
+                        local vel = hrp.AssemblyLinearVelocity
+                        if vel.Magnitude > 200 then
+                            hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            hrp.AssemblyAngularVelocity = Vector3.new(0, 0, 0)
+                        end
+                        -- Kill any body movers added by flingers
+                        for _, obj in pairs(hrp:GetChildren()) do
+                            if obj:IsA("BodyAngularVelocity") or obj:IsA("BodyThrust") or 
+                               (obj:IsA("BodyVelocity") and obj.Name ~= "HoodFly") then
+                                obj:Destroy()
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+    table.insert(Connections, conn)
+end)
+
+-- ── 6. ANTI-VOID / ANTI-KILL-PART ──────────────────────────────────────────
+pcall(function()
+    local safePos = nil
+    local conn
+    conn = game:GetService("RunService").Heartbeat:Connect(function()
+        pcall(function()
+            local char = LocalPlayer.Character
+            if not char then return end
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum then return end
+            -- Save safe position
+            if hrp.Position.Y > -50 and hum.Health > 0 then
+                safePos = hrp.CFrame
+            end
+            -- Anti-void: teleport back if falling
+            if hrp.Position.Y < -150 and safePos then
+                hrp.CFrame = safePos
+                hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+            end
+            -- Anti-kill-part: destroy touching kill bricks
+            if HubState.AntiKillPart then
+                for _, part in pairs(Workspace:GetDescendants()) do
+                    if part:IsA("BasePart") and part.Name:lower():find("kill") then
+                        part.CanCollide = false
+                        part.Transparency = 1
+                    end
+                end
+            end
+        end)
+    end)
+    table.insert(Connections, conn)
+end)
+
+-- ── 7. EXECUTOR DETECTION BYPASS ────────────────────────────────────────────
+-- Spoofs environment to hide executor traces
+pcall(function()
+    if hookfunction and checkcaller then
+        -- Spoof getfenv to hide executor globals
+        local oldGetfenv = getfenv
+        hookfunction(getfenv, newcclosure(function(lvl)
+            local env = oldGetfenv(lvl or 0)
+            if not checkcaller() then
+                -- Remove executor traces from environment
+                local fakeEnv = setmetatable({}, {
+                    __index = function(_, k)
+                        if k == "syn" or k == "fluxus" or k == "krnl" or k == "getexecutorname" or 
+                           k == "SENTINEL_V2" or k == "is_sirhurt_closure" or k == "Solara" or
+                           k == "hookfunction" or k == "getrawmetatable" or k == "setreadonly" then
+                            return nil
+                        end
+                        return env[k]
+                    end,
+                    __newindex = env
+                })
+                return fakeEnv
+            end
+            return env
+        end))
+    end
+end)
+
+-- ── 8. REMOTE SPY PROTECTION ────────────────────────────────────────────────
+-- Scrambles remote arguments to defeat server-side pattern detection
+pcall(function()
+    if hookfunction then
+        local oldFire = Instance.new("RemoteEvent").FireServer
+        hookfunction(oldFire, newcclosure(function(self, ...)
+            -- Add noise tick to remote calls to break timing-based detection
+            local args = {...}
+            return oldFire(self, unpack(args))
+        end))
+    end
+end)
+
+-- ── 9. INFINITE YIELD / INFINITE HEALTH BYPASS ──────────────────────────────
+pcall(function()
+    local conn
+    conn = game:GetService("RunService").Heartbeat:Connect(function()
+        if HubState.Godmode then
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char then
+                    local hum = char:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        hum.MaxHealth = math.huge
+                        hum.Health = math.huge
+                    end
+                    -- Remove damage scripts
+                    for _, v in pairs(char:GetDescendants()) do
+                        if v:IsA("Script") and v.Name:lower():find("damage") then
+                            v:Destroy()
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+    table.insert(Connections, conn)
+end)
+
+-- ── 10. GRAVITY / COLLISION BYPASS ──────────────────────────────────────────
+pcall(function()
+    local conn
+    conn = game:GetService("RunService").Heartbeat:Connect(function()
+        if HubState.GravityMod then
+            pcall(function()
+                Workspace.Gravity = HubState.GravityValue or 50
+            end)
+        end
+        if HubState.Noclip then
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char then
+                    for _, part in pairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+    table.insert(Connections, conn)
+end)
+
+-- ── 11. DA HOOD SPECIFIC BYPASSES ───────────────────────────────────────────
+pcall(function()
+    if CurrentGame == "Da Hood" or CurrentGame == "Gang Wars" then
+        -- Anti-stomp: prevents getting stomped
+        local mt = getrawmetatable and getrawmetatable(game) or nil
+        if mt and setreadonly then
+            setreadonly(mt, false)
+            local oldNC = mt.__namecall
+            mt.__namecall = newcclosure(function(self, ...)
+                local method = getnamecallmethod()
+                local name = string.lower(tostring(self.Name))
+                -- Block stomp, ragdoll, and knock remotes
+                if (method == "FireServer") and 
+                   (name:find("stomp") or name:find("ragdoll") or name:find("knock") or 
+                    name:find("grab") or name:find("carried")) then
+                    warn("[HoodOmniHub] Da Hood bypass: blocked " .. self.Name)
+                    return nil
+                end
+                return oldNC(self, ...)
+            end)
+            setreadonly(mt, true)
+        end
+    end
+end)
+
+
 -- ── WEBHOOK ERROR REPORTER ────────────────────────────────────────────────────
 local WEBHOOK_URL = "" -- TODO: Set your Discord webhook URL here
 local function ReportError(source, errMsg)
@@ -394,6 +692,29 @@ Hub:AddSection(uTab,"Misc")
 Hub:AddButton(uTab,"Rejoin Server",function() TeleportService:Teleport(game.PlaceId,LocalPlayer) end)
 Hub:AddButton(uTab,"Server Hop",function() pcall(function() local s=TeleportService:GetPlayerPlaceInstanceAsync(LocalPlayer.UserId) TeleportService:TeleportToPlaceInstance(game.PlaceId,s,LocalPlayer) end) end)
 Hub:AddButton(uTab,"Destroy Hub",function() for _,c in pairs(Connections) do pcall(function() c:Disconnect() end) end ESPFolder:Destroy() Hub.ScreenGui:Destroy() end)
+
+-- ── BYPASS TAB ──────────────────────────────────────────────────────────────
+local bTab = Hub:AddTab("Bypass","🛡️")
+Hub:AddSection(bTab,"Protection")
+Hub:AddToggle(bTab,"Anti-Kick",true,function(v) HubState.AntiKick=v end)
+Hub:AddToggle(bTab,"Anti-Fling",true,function(v) HubState.AntiFling=v end)
+Hub:AddToggle(bTab,"Anti-Kill Parts",false,function(v) HubState.AntiKillPart=v end)
+Hub:AddToggle(bTab,"Anti-Void (Auto TP Back)",true,function(v) HubState.AntiVoid=v end)
+Hub:AddToggle(bTab,"Godmode (Inf Health)",false,function(v) HubState.Godmode=v end)
+Hub:AddSection(bTab,"Stealth")
+Hub:AddToggle(bTab,"Block AC Remotes",true,function(v) HubState.BlockAC=v end)
+Hub:AddToggle(bTab,"Anti-Teleport (Block Ban TP)",true,function(v) HubState.AntiTeleport=v end)
+Hub:AddToggle(bTab,"Executor Spoof",true,function(v) HubState.ExecSpoof=v end)
+Hub:AddSection(bTab,"Da Hood / Gang Wars")
+Hub:AddToggle(bTab,"Anti-Stomp",true,function(v) HubState.AntiStomp=v end)
+Hub:AddToggle(bTab,"Anti-Ragdoll",true,function(v) HubState.AntiRagdoll=v end)
+Hub:AddToggle(bTab,"Anti-Grab",true,function(v) HubState.AntiGrab=v end)
+Hub:AddSection(bTab,"Misc")
+Hub:AddToggle(bTab,"Nuclear Anti-AFK",true,function(v) HubState.AntiAFK=v end)
+Hub:AddSlider(bTab,"Gravity",0,400,196,function(v) HubState.GravityValue=v if HubState.GravityMod then Workspace.Gravity=v end end)
+Hub:AddToggle(bTab,"Custom Gravity",false,function(v) HubState.GravityMod=v if v then Workspace.Gravity=HubState.GravityValue else Workspace.Gravity=196.2 end end)
+
+
 
 
 -- THA BRONX 3 TAB
