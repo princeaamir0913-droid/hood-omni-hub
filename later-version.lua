@@ -38,7 +38,14 @@ local HubState = {
     AntiFling=false,AntiKillPart=false,AutoClick=false,
     ESPEnabled=false,XRay=false,FullBright=false,
     NoShadows=false,NoFog=false,Freecam=false,
-    AntiAFK=true,GameSpecific={}
+    AntiAFK=true,GameSpecific={},
+    AutoFarm=false,AutoFarmCash=false,AutoFarmKills=false,AutoFarmXP=false,
+    AutoParry=false,AutoHatch=false,AutoRob=false,
+    SpeedHack=false,SpeedValue=100,KillAura=false,SilentAim=false,
+    InfAmmo=false,NoRecoil=false,NoSpread=false,RapidFire=false,
+    AntiKick=false,AntiFling=false,AntiKillPart=false,AntiVoid=true,
+    Godmode=false,BlockAC=true,AntiTeleport=true,ExecSpoof=true,
+    AntiStomp=true,AntiRagdoll=true,AntiGrab=true,GravityMod=false
 }
 local Connections = {}
 local ESPFolder = Instance.new("Folder",CoreGui)
@@ -206,7 +213,7 @@ pcall(function()
                 safePos = hrp.CFrame
             end
             -- Anti-void: teleport back if falling
-            if hrp.Position.Y < -150 and safePos then
+            if HubState.AntiVoid and hrp.Position.Y < -150 and safePos then
                 hrp.CFrame = safePos
                 hrp.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
             end
@@ -665,7 +672,7 @@ local Hub = OmniUI:Create()
 -- UNIVERSAL TAB (always available)
 local uTab = Hub:AddTab("Universal","🌍")
 Hub:AddSection(uTab,"Movement")
-Hub:AddToggle(uTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+Hub:AddToggle(uTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
 Hub:AddSlider(uTab,"Speed Value",16,500,100,function(v) HubState.SpeedValue=v if HubState.SpeedHack then pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v end) end end)
 Hub:AddToggle(uTab,"Fly (RShift toggle GUI)",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
 Hub:AddSlider(uTab,"Fly Speed",50,1000,200,function(v) HubState.FlySpeed=v end)
@@ -737,7 +744,7 @@ if CurrentGame == "Tha Bronx 3" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Tha_Bronx_3,"No Spread",false,function(v) HubState.NoSpread=v end)
     Hub:AddToggle(t_Tha_Bronx_3,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Tha_Bronx_3,"Movement")
-    Hub:AddToggle(t_Tha_Bronx_3,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Tha_Bronx_3,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Tha_Bronx_3,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Tha_Bronx_3,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddToggle(t_Tha_Bronx_3,"God Mode",false,function(v) HubState.GodMode=v end)
@@ -769,7 +776,7 @@ if CurrentGame == "Gang Wars" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Gang_Wars,"No Spread",false,function(v) HubState.NoSpread=v end)
     Hub:AddToggle(t_Gang_Wars,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Gang_Wars,"Movement")
-    Hub:AddToggle(t_Gang_Wars,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Gang_Wars,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Gang_Wars,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Gang_Wars,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddToggle(t_Gang_Wars,"God Mode",false,function(v) HubState.GodMode=v end)
@@ -777,7 +784,7 @@ if CurrentGame == "Gang Wars" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Gang_Wars,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
     Hub:AddToggle(t_Gang_Wars,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
     Hub:AddSection(t_Gang_Wars,"Teleports")
-    Hub:AddButton(t_Gang_Wars,"Teleport to Safe Zone",function() HubState.TpSafeZone=v end)
+    Hub:AddButton(t_Gang_Wars,"Teleport to Safe Zone",function() pcall(function() for _,obj in pairs(workspace:GetDescendants()) do if obj.Name:lower():find("safe") and obj:IsA("BasePart") then LocalPlayer.Character.HumanoidRootPart.CFrame=obj.CFrame+Vector3.new(0,3,0) break end end end) end)
 
     -- ════════════════════════════════════════════════════
     -- GANG WARS EXTENDED FEATURES (Merged from HoodOmniHub v2)
@@ -1237,7 +1244,7 @@ if CurrentGame == "Da Hood" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Da_Hood,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddToggle(t_Da_Hood,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Da_Hood,"Movement")
-    Hub:AddToggle(t_Da_Hood,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Da_Hood,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Da_Hood,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Da_Hood,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Da_Hood,"Visual & Misc")
@@ -1265,7 +1272,7 @@ if CurrentGame == "Philly Streetz 2" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Philly_Streetz_2,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddToggle(t_Philly_Streetz_2,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Philly_Streetz_2,"Movement")
-    Hub:AddToggle(t_Philly_Streetz_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Philly_Streetz_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Philly_Streetz_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Philly_Streetz_2,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Philly_Streetz_2,"Visual & Misc")
@@ -1290,7 +1297,7 @@ if CurrentGame == "Central Streets" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Central_Streets,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
     Hub:AddToggle(t_Central_Streets,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddSection(t_Central_Streets,"Movement")
-    Hub:AddToggle(t_Central_Streets,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Central_Streets,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Central_Streets,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Central_Streets,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Central_Streets,"Visual & Misc")
@@ -1312,7 +1319,7 @@ if CurrentGame == "South London Remastered" or CurrentGame == "Unknown" then
     Hub:AddSection(t_South_London_Remastered,"Weapon")
     Hub:AddToggle(t_South_London_Remastered,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddSection(t_South_London_Remastered,"Movement")
-    Hub:AddToggle(t_South_London_Remastered,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_South_London_Remastered,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_South_London_Remastered,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_South_London_Remastered,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_South_London_Remastered,"Visual & Misc")
@@ -1336,7 +1343,7 @@ if CurrentGame == "Cali Shootout" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Cali_Shootout,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddToggle(t_Cali_Shootout,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Cali_Shootout,"Movement")
-    Hub:AddToggle(t_Cali_Shootout,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Cali_Shootout,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Cali_Shootout,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Cali_Shootout,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Cali_Shootout,"Visual & Misc")
@@ -1359,7 +1366,7 @@ if CurrentGame == "Streetz War 2" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Streetz_War_2,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
     Hub:AddToggle(t_Streetz_War_2,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddSection(t_Streetz_War_2,"Movement")
-    Hub:AddToggle(t_Streetz_War_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Streetz_War_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Streetz_War_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Streetz_War_2,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Streetz_War_2,"Visual & Misc")
@@ -1380,7 +1387,7 @@ if CurrentGame == "South Bronx" or CurrentGame == "Unknown" then
     Hub:AddSection(t_South_Bronx,"Weapon")
     Hub:AddToggle(t_South_Bronx,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddSection(t_South_Bronx,"Movement")
-    Hub:AddToggle(t_South_Bronx,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_South_Bronx,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_South_Bronx,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_South_Bronx,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_South_Bronx,"Visual & Misc")
@@ -1401,7 +1408,7 @@ if CurrentGame == "No Mercy" or CurrentGame == "Unknown" then
     Hub:AddSection(t_No_Mercy,"Weapon")
     Hub:AddToggle(t_No_Mercy,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddSection(t_No_Mercy,"Movement")
-    Hub:AddToggle(t_No_Mercy,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_No_Mercy,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_No_Mercy,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_No_Mercy,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_No_Mercy,"Visual & Misc")
@@ -1424,7 +1431,7 @@ if CurrentGame == "Underground War 2" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Underground_War_2,"Weapon")
     Hub:AddToggle(t_Underground_War_2,"Auto Shoot",false,function(v) HubState.AutoShoot=v end)
     Hub:AddSection(t_Underground_War_2,"Movement")
-    Hub:AddToggle(t_Underground_War_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Underground_War_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Underground_War_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Underground_War_2,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Underground_War_2,"Visual & Misc")
@@ -1447,7 +1454,7 @@ if CurrentGame == "Rivals" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Rivals,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Rivals,"Movement")
     Hub:AddToggle(t_Rivals,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Rivals,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Rivals,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Rivals,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Rivals,"Visual & Misc")
     Hub:AddToggle(t_Rivals,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
@@ -1468,7 +1475,7 @@ if CurrentGame == "Phantom Forces" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Phantom_Forces,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Phantom_Forces,"Movement")
     Hub:AddToggle(t_Phantom_Forces,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Phantom_Forces,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Phantom_Forces,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Phantom_Forces,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Phantom_Forces,"Visual & Misc")
     Hub:AddToggle(t_Phantom_Forces,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
@@ -1489,7 +1496,7 @@ if CurrentGame == "Arsenal" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Arsenal,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Arsenal,"Movement")
     Hub:AddToggle(t_Arsenal,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Arsenal,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Arsenal,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Arsenal,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Arsenal,"Visual & Misc")
     Hub:AddToggle(t_Arsenal,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
@@ -1510,7 +1517,7 @@ if CurrentGame == "Counter Blox" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Counter_Blox,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Counter_Blox,"Movement")
     Hub:AddToggle(t_Counter_Blox,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Counter_Blox,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Counter_Blox,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Counter_Blox,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Counter_Blox,"Visual & Misc")
     Hub:AddToggle(t_Counter_Blox,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
@@ -1529,7 +1536,7 @@ if CurrentGame == "Bad Business" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Bad_Business,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Bad_Business,"Movement")
     Hub:AddToggle(t_Bad_Business,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Bad_Business,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Bad_Business,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Bad_Business,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Bad_Business,"Visual & Misc")
     Hub:AddToggle(t_Bad_Business,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
@@ -1549,7 +1556,7 @@ if CurrentGame == "Blox Fruits" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Blox_Fruits,"Combat")
     Hub:AddToggle(t_Blox_Fruits,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Blox_Fruits,"Movement")
-    Hub:AddToggle(t_Blox_Fruits,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Blox_Fruits,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Blox_Fruits,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Blox_Fruits,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Blox_Fruits,"Visual & Misc")
@@ -1573,7 +1580,7 @@ if CurrentGame == "Jailbreak" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Jailbreak,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddToggle(t_Jailbreak,"Kill Aura",false,function(v) HubState.KillAura=v end)
     Hub:AddSection(t_Jailbreak,"Movement")
-    Hub:AddToggle(t_Jailbreak,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Jailbreak,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Jailbreak,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Jailbreak,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Jailbreak,"Visual & Misc")
@@ -1591,7 +1598,7 @@ if CurrentGame == "Murder Mystery 2" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Murder_Mystery_2,"Silent Aim",false,function(v) HubState.SilentAim=v end)
     Hub:AddToggle(t_Murder_Mystery_2,"Aimbot",false,function(v) HubState.Aimbot=v end)
     Hub:AddSection(t_Murder_Mystery_2,"Movement")
-    Hub:AddToggle(t_Murder_Mystery_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Murder_Mystery_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Murder_Mystery_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Murder_Mystery_2,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Murder_Mystery_2,"Visual & Misc")
@@ -1612,7 +1619,7 @@ if CurrentGame == "BedWars" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_BedWars,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddToggle(t_BedWars,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
     Hub:AddSection(t_BedWars,"Movement")
-    Hub:AddToggle(t_BedWars,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_BedWars,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_BedWars,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_BedWars,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddToggle(t_BedWars,"Inf Jump",false,function(v) HubState.InfJump=v end)
@@ -1630,7 +1637,7 @@ if CurrentGame == "Blade Ball" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Blade_Ball,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddToggle(t_Blade_Ball,"Perfect Parry",false,function(v) HubState.PerfectParry=v end)
     Hub:AddSection(t_Blade_Ball,"Movement")
-    Hub:AddToggle(t_Blade_Ball,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Blade_Ball,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Blade_Ball,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Blade_Ball,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Blade_Ball,"Visual & Misc")
@@ -1644,7 +1651,7 @@ if CurrentGame == "Doors" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Doors,"Farming")
     Hub:AddToggle(t_Doors,"Auto Open",false,function(v) HubState.AutoOpen=v end)
     Hub:AddSection(t_Doors,"Movement")
-    Hub:AddToggle(t_Doors,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Doors,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Doors,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Doors,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddToggle(t_Doors,"God Mode",false,function(v) HubState.GodMode=v end)
@@ -1666,7 +1673,7 @@ if CurrentGame == "Shindo Life" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Shindo_Life,"Combat")
     Hub:AddToggle(t_Shindo_Life,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Shindo_Life,"Movement")
-    Hub:AddToggle(t_Shindo_Life,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Shindo_Life,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Shindo_Life,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Shindo_Life,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Shindo_Life,"Visual & Misc")
@@ -1685,7 +1692,7 @@ if CurrentGame == "Pet Simulator 99" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Pet_Simulator_99,"Combat")
     Hub:AddToggle(t_Pet_Simulator_99,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Pet_Simulator_99,"Movement")
-    Hub:AddToggle(t_Pet_Simulator_99,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Pet_Simulator_99,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Pet_Simulator_99,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Pet_Simulator_99,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Pet_Simulator_99,"Visual & Misc")
@@ -1702,7 +1709,7 @@ if CurrentGame == "King Legacy" or CurrentGame == "Unknown" then
     Hub:AddSection(t_King_Legacy,"Combat")
     Hub:AddToggle(t_King_Legacy,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_King_Legacy,"Movement")
-    Hub:AddToggle(t_King_Legacy,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_King_Legacy,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_King_Legacy,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_King_Legacy,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_King_Legacy,"Visual & Misc")
@@ -1724,7 +1731,7 @@ if CurrentGame == "Bee Swarm Simulator" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Bee_Swarm_Simulator,"Combat")
     Hub:AddToggle(t_Bee_Swarm_Simulator,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Bee_Swarm_Simulator,"Movement")
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Bee_Swarm_Simulator,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Bee_Swarm_Simulator,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Bee_Swarm_Simulator,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Bee_Swarm_Simulator,"Visual & Misc")
@@ -1742,7 +1749,7 @@ if CurrentGame == "Grand Piece Online" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Grand_Piece_Online,"Combat")
     Hub:AddToggle(t_Grand_Piece_Online,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Grand_Piece_Online,"Movement")
-    Hub:AddToggle(t_Grand_Piece_Online,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Grand_Piece_Online,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Grand_Piece_Online,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Grand_Piece_Online,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Grand_Piece_Online,"Visual & Misc")
@@ -1761,7 +1768,7 @@ if CurrentGame == "Tower Defense Simulator" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Tower_Defense_Simulator,"Combat")
     Hub:AddToggle(t_Tower_Defense_Simulator,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Tower_Defense_Simulator,"Movement")
-    Hub:AddToggle(t_Tower_Defense_Simulator,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Tower_Defense_Simulator,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Tower_Defense_Simulator,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Tower_Defense_Simulator,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Tower_Defense_Simulator,"Visual & Misc")
@@ -1780,7 +1787,7 @@ if CurrentGame == "Fisch" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Fisch,"Combat")
     Hub:AddToggle(t_Fisch,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Fisch,"Movement")
-    Hub:AddToggle(t_Fisch,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Fisch,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Fisch,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Fisch,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Fisch,"Visual & Misc")
@@ -1799,7 +1806,7 @@ if CurrentGame == "Deepwoken" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Deepwoken,"Auto Parry",false,function(v) HubState.AutoParry=v end)
     Hub:AddToggle(t_Deepwoken,"Auto Dodge",false,function(v) HubState.AutoDodge=v end)
     Hub:AddSection(t_Deepwoken,"Movement")
-    Hub:AddToggle(t_Deepwoken,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Deepwoken,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Deepwoken,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Deepwoken,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Deepwoken,"Visual & Misc")
@@ -1818,7 +1825,7 @@ if CurrentGame == "Boxing Beta" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Boxing_Beta,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddToggle(t_Boxing_Beta,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
     Hub:AddSection(t_Boxing_Beta,"Movement")
-    Hub:AddToggle(t_Boxing_Beta,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Boxing_Beta,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Boxing_Beta,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Boxing_Beta,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Boxing_Beta,"Visual & Misc")
@@ -1834,7 +1841,7 @@ if CurrentGame == "Basketball Legends" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Basketball_Legends,"Combat")
     Hub:AddToggle(t_Basketball_Legends,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Basketball_Legends,"Movement")
-    Hub:AddToggle(t_Basketball_Legends,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Basketball_Legends,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Basketball_Legends,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Basketball_Legends,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Basketball_Legends,"Visual & Misc")
@@ -1852,7 +1859,7 @@ if CurrentGame == "Playground Basketball" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Playground_Basketball,"Combat")
     Hub:AddToggle(t_Playground_Basketball,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Playground_Basketball,"Movement")
-    Hub:AddToggle(t_Playground_Basketball,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Playground_Basketball,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Playground_Basketball,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Playground_Basketball,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Playground_Basketball,"Visual & Misc")
@@ -1869,7 +1876,7 @@ if CurrentGame == "Blue Lock Rivals" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Blue_Lock_Rivals,"Combat")
     Hub:AddToggle(t_Blue_Lock_Rivals,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Blue_Lock_Rivals,"Movement")
-    Hub:AddToggle(t_Blue_Lock_Rivals,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Blue_Lock_Rivals,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Blue_Lock_Rivals,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Blue_Lock_Rivals,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Blue_Lock_Rivals,"Visual & Misc")
@@ -1888,7 +1895,7 @@ if CurrentGame == "The Strongest Battlegrounds" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_The_Strongest_Battlegrounds,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
     Hub:AddToggle(t_The_Strongest_Battlegrounds,"Auto Block",false,function(v) HubState.AutoBlock=v end)
     Hub:AddSection(t_The_Strongest_Battlegrounds,"Movement")
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_The_Strongest_Battlegrounds,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_The_Strongest_Battlegrounds,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_The_Strongest_Battlegrounds,"Visual & Misc")
@@ -1906,7 +1913,7 @@ if CurrentGame == "Jujutsu Shenanigans" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Jujutsu_Shenanigans,"Kill Aura",false,function(v) HubState.KillAura=v end)
     Hub:AddToggle(t_Jujutsu_Shenanigans,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Jujutsu_Shenanigans,"Movement")
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Jujutsu_Shenanigans,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Jujutsu_Shenanigans,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Jujutsu_Shenanigans,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Jujutsu_Shenanigans,"Visual & Misc")
@@ -1923,7 +1930,7 @@ if CurrentGame == "Knockout" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Knockout,"Kill Aura",false,function(v) HubState.KillAura=v end)
     Hub:AddToggle(t_Knockout,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Knockout,"Movement")
-    Hub:AddToggle(t_Knockout,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Knockout,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Knockout,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Knockout,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Knockout,"Visual & Misc")
@@ -1942,7 +1949,7 @@ if CurrentGame == "Dead Rails" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Dead_Rails,"Weapon")
     Hub:AddToggle(t_Dead_Rails,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
     Hub:AddSection(t_Dead_Rails,"Movement")
-    Hub:AddToggle(t_Dead_Rails,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Dead_Rails,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Dead_Rails,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Dead_Rails,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Dead_Rails,"Visual & Misc")
@@ -1958,7 +1965,7 @@ if CurrentGame == "Pressure" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Pressure,"Combat")
     Hub:AddToggle(t_Pressure,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Pressure,"Movement")
-    Hub:AddToggle(t_Pressure,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Pressure,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Pressure,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Pressure,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddToggle(t_Pressure,"God Mode",false,function(v) HubState.GodMode=v end)
@@ -1977,7 +1984,7 @@ if CurrentGame == "Sols RNG" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Sols_RNG,"Combat")
     Hub:AddToggle(t_Sols_RNG,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Sols_RNG,"Movement")
-    Hub:AddToggle(t_Sols_RNG,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Sols_RNG,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Sols_RNG,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Sols_RNG,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Sols_RNG,"Visual & Misc")
@@ -1995,7 +2002,7 @@ if CurrentGame == "Anime Defenders" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Anime_Defenders,"Combat")
     Hub:AddToggle(t_Anime_Defenders,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Anime_Defenders,"Movement")
-    Hub:AddToggle(t_Anime_Defenders,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Anime_Defenders,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Anime_Defenders,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Anime_Defenders,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Anime_Defenders,"Visual & Misc")
@@ -2013,7 +2020,7 @@ if CurrentGame == "Grow A Garden" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Grow_A_Garden,"Combat")
     Hub:AddToggle(t_Grow_A_Garden,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Grow_A_Garden,"Movement")
-    Hub:AddToggle(t_Grow_A_Garden,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Grow_A_Garden,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Grow_A_Garden,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Grow_A_Garden,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Grow_A_Garden,"Visual & Misc")
@@ -2031,7 +2038,7 @@ if CurrentGame == "Peroxide" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Peroxide,"Silent Aim",false,function(v) HubState.SilentAim=v end)
     Hub:AddToggle(t_Peroxide,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Peroxide,"Movement")
-    Hub:AddToggle(t_Peroxide,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Peroxide,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Peroxide,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Peroxide,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Peroxide,"Visual & Misc")
@@ -2048,7 +2055,7 @@ if CurrentGame == "Iron Man Reimagined" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Iron_Man_Reimagined,"Combat")
     Hub:AddToggle(t_Iron_Man_Reimagined,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Iron_Man_Reimagined,"Movement")
-    Hub:AddToggle(t_Iron_Man_Reimagined,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Iron_Man_Reimagined,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Iron_Man_Reimagined,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Iron_Man_Reimagined,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Iron_Man_Reimagined,"Visual & Misc")
@@ -2064,7 +2071,7 @@ if CurrentGame == "Adopt Me" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Adopt_Me,"Combat")
     Hub:AddToggle(t_Adopt_Me,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Adopt_Me,"Movement")
-    Hub:AddToggle(t_Adopt_Me,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Adopt_Me,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Adopt_Me,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Adopt_Me,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Adopt_Me,"Visual & Misc")
@@ -2081,7 +2088,7 @@ if CurrentGame == "Fantasma PvP" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Fantasma_PvP,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddToggle(t_Fantasma_PvP,"Kill Aura",false,function(v) HubState.KillAura=v end)
     Hub:AddSection(t_Fantasma_PvP,"Movement")
-    Hub:AddToggle(t_Fantasma_PvP,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Fantasma_PvP,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Fantasma_PvP,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Fantasma_PvP,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Fantasma_PvP,"Visual & Misc")
@@ -2098,7 +2105,7 @@ if CurrentGame == "MVS Duels" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_MVS_Duels,"Kill Aura",false,function(v) HubState.KillAura=v end)
     Hub:AddToggle(t_MVS_Duels,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_MVS_Duels,"Movement")
-    Hub:AddToggle(t_MVS_Duels,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_MVS_Duels,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_MVS_Duels,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_MVS_Duels,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_MVS_Duels,"Visual & Misc")
@@ -2116,7 +2123,7 @@ if CurrentGame == "Project Viltrumites" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Project_Viltrumites,"Kill Aura",false,function(v) HubState.KillAura=v end)
     Hub:AddToggle(t_Project_Viltrumites,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Project_Viltrumites,"Movement")
-    Hub:AddToggle(t_Project_Viltrumites,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Project_Viltrumites,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Project_Viltrumites,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Project_Viltrumites,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Project_Viltrumites,"Visual & Misc")
@@ -2137,7 +2144,7 @@ if CurrentGame == "QZ Shootout" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_QZ_Shootout,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
     Hub:AddToggle(t_QZ_Shootout,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddSection(t_QZ_Shootout,"Movement")
-    Hub:AddToggle(t_QZ_Shootout,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_QZ_Shootout,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_QZ_Shootout,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_QZ_Shootout,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_QZ_Shootout,"Visual & Misc")
@@ -2158,7 +2165,7 @@ if CurrentGame == "Outwest Chicago 2" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Outwest_Chicago_2,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
     Hub:AddToggle(t_Outwest_Chicago_2,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddSection(t_Outwest_Chicago_2,"Movement")
-    Hub:AddToggle(t_Outwest_Chicago_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Outwest_Chicago_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Outwest_Chicago_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Outwest_Chicago_2,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Outwest_Chicago_2,"Visual & Misc")
@@ -2178,7 +2185,7 @@ if CurrentGame == "Street Life Remastered" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Street_Life_Remastered,"Weapon")
     Hub:AddToggle(t_Street_Life_Remastered,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddSection(t_Street_Life_Remastered,"Movement")
-    Hub:AddToggle(t_Street_Life_Remastered,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Street_Life_Remastered,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Street_Life_Remastered,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Street_Life_Remastered,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Street_Life_Remastered,"Visual & Misc")
@@ -2197,7 +2204,7 @@ if CurrentGame == "Westbound" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Westbound,"Weapon")
     Hub:AddToggle(t_Westbound,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddSection(t_Westbound,"Movement")
-    Hub:AddToggle(t_Westbound,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Westbound,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Westbound,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Westbound,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Westbound,"Visual & Misc")
@@ -2213,7 +2220,7 @@ if CurrentGame == "Dark Divers" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Dark_Divers,"Combat")
     Hub:AddToggle(t_Dark_Divers,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Dark_Divers,"Movement")
-    Hub:AddToggle(t_Dark_Divers,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Dark_Divers,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Dark_Divers,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Dark_Divers,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddToggle(t_Dark_Divers,"God Mode",false,function(v) HubState.GodMode=v end)
@@ -2233,7 +2240,7 @@ if CurrentGame == "Frontlines" or CurrentGame == "Unknown" then
     Hub:AddToggle(t_Frontlines,"No Recoil",false,function(v) HubState.NoRecoil=v end)
     Hub:AddToggle(t_Frontlines,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
     Hub:AddSection(t_Frontlines,"Movement")
-    Hub:AddToggle(t_Frontlines,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Frontlines,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Frontlines,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Frontlines,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Frontlines,"Visual & Misc")
@@ -2250,7 +2257,7 @@ if CurrentGame == "Bubblegum Simulator" or CurrentGame == "Unknown" then
     Hub:AddSection(t_Bubblegum_Simulator,"Combat")
     Hub:AddToggle(t_Bubblegum_Simulator,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
     Hub:AddSection(t_Bubblegum_Simulator,"Movement")
-    Hub:AddToggle(t_Bubblegum_Simulator,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and HubState.SpeedValue or 16 end) end)
+    Hub:AddToggle(t_Bubblegum_Simulator,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
     Hub:AddToggle(t_Bubblegum_Simulator,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
     Hub:AddToggle(t_Bubblegum_Simulator,"Noclip",false,function(v) HubState.Noclip=v end)
     Hub:AddSection(t_Bubblegum_Simulator,"Visual & Misc")
@@ -2272,7 +2279,7 @@ local mainLoop = RunService.Heartbeat:Connect(function()
     -- Hitbox refresh
     if HubState.HitboxExpand then ExpandHitboxes() end
     -- Speed
-    if HubState.SpeedHack then pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed = HubState.SpeedValue end) end
+    if HubState.SpeedHack then pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed = HubState.SpeedValue or 100 end) end
 end)
 table.insert(Connections, mainLoop)
 
@@ -2314,7 +2321,7 @@ end
 task.spawn(function()
     while true do
         task.wait(0.3)
-        if CurrentGame == "Da Hood" and HubState.AutoFarm then
+        if CurrentGame == "Da Hood" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 -- Collect cash/money bags dropped in workspace
                 local char = LocalPlayer.Character
@@ -2441,7 +2448,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.15)
-        if CurrentGame == "Murder Mystery 2" and HubState.AutoFarm then
+        if CurrentGame == "Murder Mystery 2" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -2540,7 +2547,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.1)
-        if CurrentGame == "The Strongest Battlegrounds" and HubState.AutoFarm then
+        if CurrentGame == "The Strongest Battlegrounds" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local target = GetClosestPlayer(150)
                 if not target then return end
@@ -2566,7 +2573,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.3)
-        if CurrentGame == "Blox Fruits" and HubState.AutoFarm then
+        if CurrentGame == "Blox Fruits" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -2629,7 +2636,7 @@ local JB_CurrentTarget = "Museum"
 task.spawn(function()
     while true do
         task.wait(1)
-        if CurrentGame == "Jailbreak" and HubState.AutoFarm then
+        if CurrentGame == "Jailbreak" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -2664,7 +2671,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.2)
-        if CurrentGame == "Pet Simulator 99" and HubState.AutoFarm then
+        if CurrentGame == "Pet Simulator 99" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -2707,7 +2714,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.3)
-        if CurrentGame == "Shindo Life" and HubState.AutoFarm then
+        if CurrentGame == "Shindo Life" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -2743,7 +2750,7 @@ local BSS_AtHive = false
 task.spawn(function()
     while true do
         task.wait(0.5)
-        if CurrentGame == "Bee Swarm Simulator" and HubState.AutoFarm then
+        if CurrentGame == "Bee Swarm Simulator" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -2790,7 +2797,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(1)
-        if CurrentGame == "Anime Defenders" and HubState.AutoFarm then
+        if CurrentGame == "Anime Defenders" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 -- Auto start wave
                 for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
@@ -2825,7 +2832,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(2)
-        if CurrentGame == "Grow A Garden" and HubState.AutoFarm then
+        if CurrentGame == "Grow A Garden" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -2855,7 +2862,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.3)
-        if CurrentGame == "Peroxide" and HubState.AutoFarm then
+        if CurrentGame == "Peroxide" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -2889,7 +2896,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.5)
-        if CurrentGame == "Sols RNG" and HubState.AutoFarm then
+        if CurrentGame == "Sols RNG" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
                     if re:IsA("RemoteEvent") and (re.Name:lower():find("roll") or re.Name:lower():find("spin") or re.Name:lower():find("claim") or re.Name:lower():find("aura")) then
@@ -2914,7 +2921,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.2)
-        if CurrentGame == "Blue Lock Rivals" and HubState.AutoFarm then
+        if CurrentGame == "Blue Lock Rivals" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -2941,7 +2948,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.15)
-        if CurrentGame == "Jujutsu Shenanigans" and HubState.AutoFarm then
+        if CurrentGame == "Jujutsu Shenanigans" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local target = GetClosestPlayer(100)
                 if not target then return end
@@ -2966,7 +2973,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(1)
-        if CurrentGame == "Dead Rails" and HubState.AutoFarm then
+        if CurrentGame == "Dead Rails" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -3003,7 +3010,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.5)
-        if CurrentGame == "Pressure" and HubState.AutoFarm then
+        if CurrentGame == "Pressure" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
@@ -3028,7 +3035,7 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.5)
-        if CurrentGame == "Westbound" and HubState.AutoFarm then
+        if CurrentGame == "Westbound" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
             pcall(function()
                 local char = LocalPlayer.Character
                 if not char or not char:FindFirstChild("HumanoidRootPart") then return end
