@@ -759,2351 +759,2530 @@ if CurrentGame == "Tha Bronx 3" or CurrentGame == "Unknown" then
 end
 
 -- GANG WARS TAB
-if CurrentGame == "Gang Wars" or CurrentGame == "Unknown" then
-    local t_Gang_Wars = Hub:AddTab("Gang Wars","🔫")
-    Hub:AddSection(t_Gang_Wars,"Farming")
-    Hub:AddToggle(t_Gang_Wars,"Auto Farm Cash",true,function(v) HubState.AutoFarmCash=v end)
-    Hub:AddToggle(t_Gang_Wars,"Auto Farm Kills",true,function(v) HubState.AutoFarmKills=v end)
-    Hub:AddSection(t_Gang_Wars,"Combat")
-    Hub:AddToggle(t_Gang_Wars,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Gang_Wars,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Gang_Wars,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Gang_Wars,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Gang_Wars,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_Gang_Wars,"Weapon")
-    Hub:AddToggle(t_Gang_Wars,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
-    Hub:AddToggle(t_Gang_Wars,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Gang_Wars,"No Spread",false,function(v) HubState.NoSpread=v end)
-    Hub:AddToggle(t_Gang_Wars,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Gang_Wars,"Movement")
-    Hub:AddToggle(t_Gang_Wars,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Gang_Wars,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Gang_Wars,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddToggle(t_Gang_Wars,"God Mode",false,function(v) HubState.GodMode=v end)
-    Hub:AddSection(t_Gang_Wars,"Visual & Misc")
-    Hub:AddToggle(t_Gang_Wars,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Gang_Wars,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-    Hub:AddSection(t_Gang_Wars,"Teleports")
-    Hub:AddButton(t_Gang_Wars,"Teleport to Safe Zone",function() pcall(function() for _,obj in pairs(workspace:GetDescendants()) do if obj.Name:lower():find("safe") and obj:IsA("BasePart") then LocalPlayer.Character.HumanoidRootPart.CFrame=obj.CFrame+Vector3.new(0,3,0) break end end end) end)
 
-    -- ════════════════════════════════════════════════════
-    -- GANG WARS EXTENDED FEATURES (Merged from HoodOmniHub v2)
-    -- ════════════════════════════════════════════════════
+-- DA HOOD (PlaceId: 2788229376)
+-- Research: Stefanuk12/ROBLOX - MainEvent RemoteEvent confirmed
+-- Workspace.Ignored.Drop for money, Workspace.Cashiers for NPCs
+-- ═══════════════════════════════════════════════════════════════
+if CurrentGame == "Da Hood" then
+    local t_GameTab = Hub:AddTab("Da Hood","🏙️")
 
-    -- AUTOFARM EXTENDED SECTION
-    Hub:AddSection(t_Gang_Wars,"Extended Autofarming")
-
-    -- ── POTATO TRAP FARM ─────────────────────────────────────────────────────
-    -- Potato / Trap farm: searches workspace for harvest/plant/pick proximity prompts
-    Hub:AddToggle(t_Gang_Wars,"🥔 Potato / Trap Farm",false,function(v)
-        HubState.PotatoFarm = v
-        if v then
-            task.spawn(function()
-                while HubState.PotatoFarm do
-                    pcall(function()
-                        -- Step 1: Buy bags (look for bag purchase prompts ~$950)
-                        for _, v2 in ipairs(workspace:GetDescendants()) do
-                            if not HubState.PotatoFarm then break end
-                            if v2:IsA("ProximityPrompt") then
-                                local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                local aText = v2.ActionText:lower()
-                                if pName:find("bag") or pName:find("seed") or pName:find("supply")
-                                    or aText:find("buy bag") or aText:find("purchase") then
-                                    local part = v2.Parent
-                                    if part and part:IsA("BasePart") then
-                                        LocalPlayer.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0,3,0)
-                                        task.wait(0.3)
-                                    end
-                                    -- TODO: Replace with Debug Scanner result for bag purchase remote
-                                    pcall(function()
-                                        for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                                            if remote:IsA("RemoteEvent") then
-                                                local rn = remote.Name:lower()
-                                                if rn:find("buy") or rn:find("purchase") or rn:find("bag") then
-                                                    remote:FireServer("bag", 1)
-                                                    break
-                                                end
-                                            end
-                                        end
-                                    end)
-                                    task.wait(0.5)
-                                end
-                            end
-                        end
-
-                        -- Step 2: Cook / Process
-                        for _, v2 in ipairs(workspace:GetDescendants()) do
-                            if not HubState.PotatoFarm then break end
-                            if v2:IsA("ProximityPrompt") then
-                                local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                local aText = v2.ActionText:lower()
-                                if pName:find("cook") or pName:find("process") or pName:find("stove")
-                                    or aText:find("cook") or aText:find("process") or aText:find("bake") then
-                                    local part = v2.Parent
-                                    if part and part:IsA("BasePart") then
-                                        LocalPlayer.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0,3,0)
-                                        task.wait(0.3)
-                                    end
-                                    -- TODO: Replace with Debug Scanner result for cook remote
-                                    v2.Triggered:Fire(LocalPlayer)
-                                    task.wait(1.5)
-                                end
-                            end
-                        end
-
-                        -- Step 3: Harvest / Pick (random output sizes)
-                        local outputs = {"small", "medium", "large"}
-                        local randOut = outputs[math.random(1, #outputs)]
-                        for _, v2 in ipairs(workspace:GetDescendants()) do
-                            if not HubState.PotatoFarm then break end
-                            if v2:IsA("ProximityPrompt") then
-                                local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                local aText = v2.ActionText:lower()
-                                if pName:find("potato") or pName:find("plant") or pName:find("grow")
-                                    or pName:find("trap") or pName:find("harvest")
-                                    or aText:find("harvest") or aText:find("plant") or aText:find("pick") then
-                                    local part = v2.Parent
-                                    if part and part:IsA("BasePart") then
-                                        LocalPlayer.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0,3,0)
-                                        task.wait(0.3)
-                                    end
-                                    -- TODO: Replace with Debug Scanner result for harvest remote
-                                    pcall(function()
-                                        for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                                            if remote:IsA("RemoteEvent") then
-                                                local rn = remote.Name:lower()
-                                                if rn:find("harvest") or rn:find("pick") or rn:find("collect") then
-                                                    remote:FireServer(randOut)
-                                                    break
-                                                end
-                                            end
-                                        end
-                                    end)
-                                    task.wait(0.5)
-                                end
-                            end
-                        end
-
-                        -- Step 4: Sell
-                        for _, v2 in ipairs(workspace:GetDescendants()) do
-                            if not HubState.PotatoFarm then break end
-                            if v2:IsA("ProximityPrompt") then
-                                local aText = v2.ActionText:lower()
-                                if aText:find("sell") then
-                                    local part = v2.Parent
-                                    if part and part:IsA("BasePart") then
-                                        LocalPlayer.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0,3,0)
-                                        task.wait(0.3)
-                                    end
-                                    -- TODO: Replace with Debug Scanner result for sell remote
-                                    pcall(function()
-                                        for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                                            if remote:IsA("RemoteEvent") then
-                                                local rn = remote.Name:lower()
-                                                if rn:find("sell") or rn:find("trade") then
-                                                    remote:FireServer()
-                                                    break
-                                                end
-                                            end
-                                        end
-                                    end)
-                                    task.wait(0.5)
-                                end
-                            end
-                        end
-                    end)
-                    -- Repeat after short delay
-                    task.wait(math.random(3, 6))
-                end
-            end)
-        end
+    Hub:AddToggle(t_GameTab,"Auto Farm Cash",false,function(v)
+        HubState.DH_AutoCash = v
     end)
 
-    -- ── CAR BREAKING AUTOFARM ─────────────────────────────────────────────────
-    Hub:AddToggle(t_Gang_Wars,"🚗 Car Breaking Autofarm",false,function(v)
-        HubState.CarBreakFarm = v
-        if v then
-            task.spawn(function()
-                while HubState.CarBreakFarm do
-                    pcall(function()
-                        for _, v2 in ipairs(workspace:GetDescendants()) do
-                            if not HubState.CarBreakFarm then break end
-                            if v2:IsA("ProximityPrompt") then
-                                local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                local aText = v2.ActionText:lower()
-                                -- TODO: Replace with Debug Scanner result for car breaking prompt names
-                                if pName:find("car") or pName:find("vehicle") or pName:find("auto")
-                                    or aText:find("break") or aText:find("smash") or aText:find("jack") 
-                                    or aText:find("steal") or aText:find("rob car") then
-                                    local part = v2.Parent
-                                    if part and part:IsA("BasePart") then
-                                        LocalPlayer.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0,3,0)
-                                        task.wait(0.3)
-                                    end
-                                    pcall(function()
-                                        -- TODO: Replace with Debug Scanner result for car break remote
-                                        for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                                            if remote:IsA("RemoteEvent") then
-                                                local rn = remote.Name:lower()
-                                                if rn:find("car") or rn:find("vehicle") or rn:find("break") or rn:find("jack") then
-                                                    remote:FireServer()
-                                                    break
-                                                end
-                                            end
-                                        end
-                                    end)
-                                    task.wait(math.random(1, 2) + math.random() * 0.5)
-                                end
-                            end
-                        end
-                    end)
-                    task.wait(math.random(4, 7))
-                end
-            end)
-        end
+    Hub:AddToggle(t_GameTab,"Auto Stomp Downed",false,function(v)
+        HubState.DH_AutoStomp = v
     end)
 
-    -- ── SCAMMING AUTOFARM ─────────────────────────────────────────────────────
-    Hub:AddToggle(t_Gang_Wars,"🎭 Scamming Autofarm",false,function(v)
-        HubState.ScamFarm = v
-        if v then
-            task.spawn(function()
-                while HubState.ScamFarm do
-                    pcall(function()
-                        -- TODO: Replace with Debug Scanner result for scam trade prompts
-                        for _, v2 in ipairs(workspace:GetDescendants()) do
-                            if not HubState.ScamFarm then break end
-                            if v2:IsA("ProximityPrompt") then
-                                local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                local aText = v2.ActionText:lower()
-                                if pName:find("trade") or pName:find("deal") or pName:find("scam")
-                                    or aText:find("trade") or aText:find("deal") or aText:find("exchange") then
-                                    local part = v2.Parent
-                                    if part and part:IsA("BasePart") then
-                                        LocalPlayer.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0,3,0)
-                                        task.wait(0.3)
-                                    end
-                                    pcall(function()
-                                        -- TODO: Replace with Debug Scanner result for trade/scam remote
-                                        for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                                            if remote:IsA("RemoteEvent") then
-                                                local rn = remote.Name:lower()
-                                                if rn:find("trade") or rn:find("deal") or rn:find("scam") then
-                                                    remote:FireServer()
-                                                    break
-                                                end
-                                            end
-                                        end
-                                    end)
-                                    task.wait(math.random(1, 3))
-                                end
-                            end
-                        end
-                    end)
-                    task.wait(math.random(5, 10))
-                end
-            end)
-        end
+    Hub:AddToggle(t_GameTab,"Auto Pickup Guns",false,function(v)
+        HubState.DH_AutoPickupGun = v
     end)
 
-    -- ── STORE ROBBERY AUTOFARM ────────────────────────────────────────────────
-    Hub:AddToggle(t_Gang_Wars,"🏪 Store Robbery Autofarm",false,function(v)
-        HubState.StoreRobFarm = v
-        if v then
-            task.spawn(function()
-                while HubState.StoreRobFarm do
-                    pcall(function()
-                        for _, v2 in ipairs(workspace:GetDescendants()) do
-                            if not HubState.StoreRobFarm then break end
-                            if v2:IsA("ProximityPrompt") then
-                                local pName = v2.Parent and v2.Parent.Name:lower() or ""
-                                local aText = v2.ActionText:lower()
-                                -- TODO: Replace with Debug Scanner result for store robbery prompt names
-                                if pName:find("store") or pName:find("shop") or pName:find("register")
-                                    or pName:find("rob") or pName:find("cash") or pName:find("vault")
-                                    or aText:find("rob") or aText:find("steal") or aText:find("grab cash")
-                                    or aText:find("open register") or aText:find("break in") then
-                                    local part = v2.Parent
-                                    if part and part:IsA("BasePart") then
-                                        LocalPlayer.Character.HumanoidRootPart.CFrame = part.CFrame + Vector3.new(0,3,0)
-                                        task.wait(0.5)
-                                    end
-                                    pcall(function()
-                                        -- TODO: Replace with Debug Scanner result for store rob remote
-                                        for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                                            if remote:IsA("RemoteEvent") then
-                                                local rn = remote.Name:lower()
-                                                if rn:find("rob") or rn:find("store") or rn:find("steal") then
-                                                    remote:FireServer()
-                                                    break
-                                                end
-                                            end
-                                        end
-                                    end)
-                                    task.wait(math.random(1, 3) + math.random() * 0.5)
-                                end
-                            end
-                        end
-                    end)
-                    task.wait(math.random(5, 8))
-                end
-            end)
-        end
+    Hub:AddToggle(t_GameTab,"Auto Bank Deposit",false,function(v)
+        HubState.DH_AutoBank = v
     end)
 
-    -- ── WEAPONS SPAWNER SECTION ───────────────────────────────────────────────
-    Hub:AddSection(t_Gang_Wars,"Weapons Spawner")
+    Hub:AddToggle(t_GameTab,"Lock Victim (Nearest)",false,function(v)
+        HubState.DH_LockVictim = v
+        if not v then HubState.DH_LockedTarget = nil end
+    end)
 
-    -- Gamepass Guns
-    Hub:AddButton(t_Gang_Wars,"── GAMEPASS GUNS ──",function() end)
-    local gamepPassGuns = {
-        "Glock19X", "Glock19", "Glock26 Switch", "Glock Gold Switch",
-        "P80 Switch", "P80",
-        "AR9 Fully",
-        "150R Easter Fully", "200R Easter Switch",
-        "XMAS Shotgun", "Auto Shotgun", "2026 Shotgun", "OP Shotgun",
-        "100 Round Switch", "100 Round Fully", "50 Round",
-        "300 ARG",
-        "Gold Draco Drum",
-        "Mini Gun",
-        "Mr Beast Uzi", "Mr Beast Fully",
-        "Heart Switch", "Squid Games Switch", "Valentines Switch", "Valentines Fully",
-        "DOA Switch", "200R Money Switch", "Ghost Fully", "Yins Switch", "Skull",
-    }
-    for _, gunName in ipairs(gamepPassGuns) do
-        Hub:AddButton(t_Gang_Wars,"🔫 Spawn "..gunName,function()
-            pcall(function()
-                -- Method 1: Try ReplicatedStorage
-                local gun = game:GetService("ReplicatedStorage"):FindFirstChild(gunName, true)
-                if gun and gun:IsA("Tool") then
-                    gun:Clone().Parent = LocalPlayer.Backpack
-                    return
-                end
-                -- Method 2: Search workspace
-                for _, v in ipairs(workspace:GetDescendants()) do
-                    if v:IsA("Tool") and v.Name == gunName then
-                        v:Clone().Parent = LocalPlayer.Backpack
-                        return
-                    end
-                end
-                -- Method 3: Fire remote (TODO: Replace with Debug Scanner result)
-                for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                    if remote:IsA("RemoteEvent") then
-                        local rn = remote.Name:lower()
-                        if rn:find("give") or rn:find("gun") or rn:find("spawn") or rn:find("weapon") then
-                            remote:FireServer(gunName)
-                            return
+    Hub:AddToggle(t_GameTab,"Auto Collect Drops",false,function(v)
+        HubState.DH_AutoCollectDrops = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Kill All NPCs (Cashiers)",function()
+        pcall(function()
+            local Players = game:GetService("Players")
+            local lp = Players.LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            local cashiers = workspace:FindFirstChild("Cashiers")
+            if cashiers then
+                for _, v in pairs(cashiers:GetChildren()) do
+                    local hum = v:FindFirstChildWhichIsA("Humanoid")
+                    if hum and hum.Health > 0 then
+                        hrp.CFrame = v:GetPivot() * CFrame.new(0, 0, -2)
+                        task.wait(0.1)
+                        local tool = lp.Backpack:FindFirstChildWhichIsA("Tool")
+                            or char:FindFirstChildWhichIsA("Tool")
+                        if tool then
+                            local equipped = char:FindFirstChildWhichIsA("Tool")
+                            if not equipped then hum:EquipTool and hum:EquipTool(tool) end
                         end
                     end
                 end
-            end)
+            end
         end)
-    end
+    end)
 
-    -- Regular Guns
-    Hub:AddButton(t_Gang_Wars,"── REGULAR GUNS ──",function() end)
-    local regularGuns = {
-        "Glock", "Uzi", "Mac10", "AK47", "AR15", "Shotgun",
-        "Draco", "FN", "Deagle", "MP5", "Sniper", "RPG",
-        "Revolver", "Choppa", "SMG",
-    }
-    for _, gunName in ipairs(regularGuns) do
-        Hub:AddButton(t_Gang_Wars,"🔫 Spawn "..gunName,function()
-            pcall(function()
-                local gun = game:GetService("ReplicatedStorage"):FindFirstChild(gunName, true)
-                if gun and gun:IsA("Tool") then
-                    gun:Clone().Parent = LocalPlayer.Backpack
-                    return
-                end
-                for _, v in ipairs(workspace:GetDescendants()) do
-                    if v:IsA("Tool") and v.Name == gunName then
-                        v:Clone().Parent = LocalPlayer.Backpack
-                        return
-                    end
-                end
-                for _, remote in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-                    if remote:IsA("RemoteEvent") then
-                        local rn = remote.Name:lower()
-                        if rn:find("give") or rn:find("gun") or rn:find("spawn") or rn:find("weapon") then
-                            remote:FireServer(gunName)
-                            return
-                        end
-                    end
-                end
-            end)
+    Hub:AddButton(t_GameTab,"Teleport to Bank",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            -- Da Hood bank location (approximate based on map layout)
+            if hrp then
+                hrp.CFrame = CFrame.new(271, 18, -616)
+            end
         end)
-    end
-
-    -- Gun Dupe
-    Hub:AddToggle(t_Gang_Wars,"♻️ Gun Dupe",false,function(v)
-        HubState.GunDupe = v
-        if v then
-            task.spawn(function()
-                while HubState.GunDupe do
-                    pcall(function()
-                        local char = LocalPlayer.Character
-                        if char then
-                            local tool = char:FindFirstChildOfClass("Tool")
-                            if tool then tool:Clone().Parent = LocalPlayer.Backpack end
-                        end
-                    end)
-                    task.wait(1)
-                end
-            end)
-        end
     end)
 
-    -- ── DEBUG SCANNER SECTION ────────────────────────────────────────────────
-    Hub:AddSection(t_Gang_Wars,"Debug Scanner")
+-- ═══════════════════════════════════════════════════════════════
+-- GANG WARS (PlaceId: 137020602493628)
+-- Research: Potato Farm, Car Farm, Store Rob existing + additions
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Gang Wars" then
+    local t_GameTab = Hub:AddTab("Gang Wars","💰")
 
-    -- Scan 1: All RemoteEvents
-    Hub:AddButton(t_Gang_Wars,"🔍 Scan RemoteEvents",function()
-        local count = 0
-        for _, v in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-            if v:IsA("RemoteEvent") then
-                count = count + 1
-                print("[GW Debug] RemoteEvent: " .. v:GetFullName())
-            end
-        end
-        print("[GW Debug] Total RemoteEvents: " .. count)
+    Hub:AddToggle(t_GameTab,"Potato Farm",false,function(v)
+        HubState.GW_PotatoFarm = v
     end)
 
-    -- Scan 2: All RemoteFunctions
-    Hub:AddButton(t_Gang_Wars,"🔍 Scan RemoteFunctions",function()
-        local count = 0
-        for _, v in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-            if v:IsA("RemoteFunction") then
-                count = count + 1
-                print("[GW Debug] RemoteFunction: " .. v:GetFullName())
-            end
-        end
-        print("[GW Debug] Total RemoteFunctions: " .. count)
+    Hub:AddToggle(t_GameTab,"Car Farm",false,function(v)
+        HubState.GW_CarFarm = v
     end)
 
-    -- Scan 3: All ProximityPrompts
-    Hub:AddButton(t_Gang_Wars,"🔍 Scan ProximityPrompts",function()
-        local count = 0
-        for _, v in ipairs(workspace:GetDescendants()) do
-            if v:IsA("ProximityPrompt") then
-                count = count + 1
-                if count <= 100 then
-                    print("[GW Debug] Prompt @ " .. (v.Parent and v.Parent.Name or "?") 
-                        .. " | Action: " .. v.ActionText
-                        .. " | Hold: " .. v.HoldDuration)
+    Hub:AddToggle(t_GameTab,"Store Rob",false,function(v)
+        HubState.GW_StoreRob = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Kill NPC",false,function(v)
+        HubState.GW_AutoKillNPC = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Revive Allies",false,function(v)
+        HubState.GW_AutoRevive = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Buy Ammo",false,function(v)
+        HubState.GW_AutoAmmo = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Collect All Potatoes",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name == "Potato" or v.Name == "potato" then
+                    local pos = v:IsA("BasePart") and v.Position
+                        or (v:IsA("Model") and v:GetPivot().Position)
+                    if pos then
+                        hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                        task.wait(0.3)
+                        local touch = v:FindFirstChildWhichIsA("TouchTransmitter")
+                        if touch then firetouchinterest(hrp, v:IsA("BasePart") and v or v.PrimaryPart, 0) end
+                    end
                 end
             end
-        end
-        print("[GW Debug] Total Prompts: " .. count)
+        end)
     end)
 
-    -- Scan 4: Workspace Structure
-    Hub:AddButton(t_Gang_Wars,"🔍 Scan Workspace Structure",function()
-        print("[GW Debug] === Workspace Children ===")
-        for _, v in ipairs(workspace:GetChildren()) do
-            print("[GW Debug] " .. v.ClassName .. ": " .. v.Name)
-        end
+-- ═══════════════════════════════════════════════════════════════
+-- BLOX FRUITS (PlaceId: 2753915549)
+-- Research: ReplicatedStorage.Remotes.* for fruit/mastery events
+-- Workspace.Map.* for islands, Workspace.SpawnedFruits for fruits
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Blox Fruits" then
+    local t_GameTab = Hub:AddTab("Blox Fruits","🍈")
+
+    Hub:AddToggle(t_GameTab,"Auto Farm Mastery",false,function(v)
+        HubState.BF_AutoMastery = v
     end)
 
-    -- Scan 5: All Tools (RS + Workspace)
-    Hub:AddButton(t_Gang_Wars,"🔍 Scan All Tools",function()
-        local count = 0
-        for _, v in ipairs(game:GetService("ReplicatedStorage"):GetDescendants()) do
-            if v:IsA("Tool") then
-                count = count + 1
-                print("[GW Debug] RS Tool: " .. v.Name .. " @ " .. v:GetFullName())
-            end
-        end
-        for _, v in ipairs(workspace:GetDescendants()) do
-            if v:IsA("Tool") then
-                count = count + 1
-                print("[GW Debug] WS Tool: " .. v.Name)
-            end
-        end
-        print("[GW Debug] Total Tools Found: " .. count)
+    Hub:AddToggle(t_GameTab,"Auto Farm Bounty",false,function(v)
+        HubState.BF_AutoBounty = v
     end)
 
-end
+    Hub:AddToggle(t_GameTab,"Auto Sea Beast",false,function(v)
+        HubState.BF_AutoSeaBeast = v
+    end)
 
--- DA HOOD TAB
-if CurrentGame == "Da Hood" or CurrentGame == "Unknown" then
-    local t_Da_Hood = Hub:AddTab("Gangwars","🏘️")
-    Hub:AddSection(t_Da_Hood,"Farming")
-    Hub:AddToggle(t_Da_Hood,"Auto Farm Cash",true,function(v) HubState.AutoFarmCash=v end)
-    Hub:AddSection(t_Da_Hood,"Combat")
-    Hub:AddToggle(t_Da_Hood,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Da_Hood,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Da_Hood,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Da_Hood,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Da_Hood,"Stomp Aura",false,function(v) HubState.StompAura=v end)
-    Hub:AddToggle(t_Da_Hood,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddToggle(t_Da_Hood,"Lock Victim",false,function(v) HubState.LockVictim=v end)
-    Hub:AddToggle(t_Da_Hood,"Auto Block",false,function(v) HubState.AutoBlock=v end)
-    Hub:AddToggle(t_Da_Hood,"Reach Extend",false,function(v) HubState.ReachExtend=v end)
-    Hub:AddSection(t_Da_Hood,"Weapon")
-    Hub:AddToggle(t_Da_Hood,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
-    Hub:AddToggle(t_Da_Hood,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Da_Hood,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Da_Hood,"Movement")
-    Hub:AddToggle(t_Da_Hood,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Da_Hood,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Da_Hood,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Da_Hood,"Visual & Misc")
-    Hub:AddToggle(t_Da_Hood,"Auto Pickup",false,function(v) HubState.AutoPickup=v end)
-    Hub:AddToggle(t_Da_Hood,"Auto Equip",false,function(v) HubState.AutoEquip=v end)
-    Hub:AddToggle(t_Da_Hood,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Da_Hood,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
+    Hub:AddToggle(t_GameTab,"Auto Raid Farm",false,function(v)
+        HubState.BF_AutoRaid = v
+    end)
 
--- PHILLY STREETZ 2 TAB
-if CurrentGame == "Philly Streetz 2" or CurrentGame == "Unknown" then
-    local t_Philly_Streetz_2 = Hub:AddTab("Philly Streetz 2","🏚️")
-    Hub:AddSection(t_Philly_Streetz_2,"Farming")
-    Hub:AddToggle(t_Philly_Streetz_2,"Auto Farm Cash",true,function(v) HubState.AutoFarmCash=v end)
-    Hub:AddToggle(t_Philly_Streetz_2,"Money Gen",false,function(v) HubState.MoneyGen=v end)
-    Hub:AddToggle(t_Philly_Streetz_2,"Auto Rob",false,function(v) HubState.AutoRob=v end)
-    Hub:AddSection(t_Philly_Streetz_2,"Combat")
-    Hub:AddToggle(t_Philly_Streetz_2,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Philly_Streetz_2,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Philly_Streetz_2,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Philly_Streetz_2,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Philly_Streetz_2,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_Philly_Streetz_2,"Weapon")
-    Hub:AddToggle(t_Philly_Streetz_2,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
-    Hub:AddToggle(t_Philly_Streetz_2,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Philly_Streetz_2,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Philly_Streetz_2,"Movement")
-    Hub:AddToggle(t_Philly_Streetz_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Philly_Streetz_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Philly_Streetz_2,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Philly_Streetz_2,"Visual & Misc")
-    Hub:AddToggle(t_Philly_Streetz_2,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Philly_Streetz_2,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-    Hub:AddSection(t_Philly_Streetz_2,"Teleports")
-    Hub:AddButton(t_Philly_Streetz_2,"Teleport to ATM",function() pcall(function() for _,v in pairs(workspace:GetDescendants()) do if v.Name:lower():find("atm") and v:IsA("BasePart") then LocalPlayer.Character.HumanoidRootPart.CFrame=v.CFrame+Vector3.new(0,3,0) break end end end) end)
-end
+    Hub:AddToggle(t_GameTab,"Auto Chest Farm",false,function(v)
+        HubState.BF_AutoChest = v
+    end)
 
--- CENTRAL STREETS TAB
-if CurrentGame == "Central Streets" or CurrentGame == "Unknown" then
-    local t_Central_Streets = Hub:AddTab("Central Streets","🌆")
-    Hub:AddSection(t_Central_Streets,"Farming")
-    Hub:AddToggle(t_Central_Streets,"Auto Farm Cash",true,function(v) HubState.AutoFarmCash=v end)
-    Hub:AddSection(t_Central_Streets,"Combat")
-    Hub:AddToggle(t_Central_Streets,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Central_Streets,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Central_Streets,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Central_Streets,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Central_Streets,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_Central_Streets,"Weapon")
-    Hub:AddToggle(t_Central_Streets,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
-    Hub:AddToggle(t_Central_Streets,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddSection(t_Central_Streets,"Movement")
-    Hub:AddToggle(t_Central_Streets,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Central_Streets,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Central_Streets,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Central_Streets,"Visual & Misc")
-    Hub:AddToggle(t_Central_Streets,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Central_Streets,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
+    Hub:AddToggle(t_GameTab,"Auto Collect Fruits",false,function(v)
+        HubState.BF_AutoCollectFruit = v
+    end)
 
--- SOUTH LONDON REMASTERED TAB
-if CurrentGame == "South London Remastered" or CurrentGame == "Unknown" then
-    local t_South_London_Remastered = Hub:AddTab("South London Remastered","🇬🇧")
-    Hub:AddSection(t_South_London_Remastered,"Farming")
-    Hub:AddToggle(t_South_London_Remastered,"Auto Farm Cash",true,function(v) HubState.AutoFarmCash=v end)
-    Hub:AddSection(t_South_London_Remastered,"Combat")
-    Hub:AddToggle(t_South_London_Remastered,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_South_London_Remastered,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_South_London_Remastered,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_South_London_Remastered,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_South_London_Remastered,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_South_London_Remastered,"Weapon")
-    Hub:AddToggle(t_South_London_Remastered,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddSection(t_South_London_Remastered,"Movement")
-    Hub:AddToggle(t_South_London_Remastered,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_South_London_Remastered,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_South_London_Remastered,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_South_London_Remastered,"Visual & Misc")
-    Hub:AddToggle(t_South_London_Remastered,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_South_London_Remastered,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- CALI SHOOTOUT TAB
-if CurrentGame == "Cali Shootout" or CurrentGame == "Unknown" then
-    local t_Cali_Shootout = Hub:AddTab("Cali Shootout","☀️")
-    Hub:AddSection(t_Cali_Shootout,"Farming")
-    Hub:AddToggle(t_Cali_Shootout,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Cali_Shootout,"Combat")
-    Hub:AddToggle(t_Cali_Shootout,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Cali_Shootout,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Cali_Shootout,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Cali_Shootout,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Cali_Shootout,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_Cali_Shootout,"Weapon")
-    Hub:AddToggle(t_Cali_Shootout,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
-    Hub:AddToggle(t_Cali_Shootout,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Cali_Shootout,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Cali_Shootout,"Movement")
-    Hub:AddToggle(t_Cali_Shootout,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Cali_Shootout,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Cali_Shootout,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Cali_Shootout,"Visual & Misc")
-    Hub:AddToggle(t_Cali_Shootout,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Cali_Shootout,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- STREETZ WAR 2 TAB
-if CurrentGame == "Streetz War 2" or CurrentGame == "Unknown" then
-    local t_Streetz_War_2 = Hub:AddTab("Streetz War 2","⚔️")
-    Hub:AddSection(t_Streetz_War_2,"Farming")
-    Hub:AddToggle(t_Streetz_War_2,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Streetz_War_2,"Combat")
-    Hub:AddToggle(t_Streetz_War_2,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Streetz_War_2,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Streetz_War_2,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Streetz_War_2,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Streetz_War_2,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_Streetz_War_2,"Weapon")
-    Hub:AddToggle(t_Streetz_War_2,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
-    Hub:AddToggle(t_Streetz_War_2,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddSection(t_Streetz_War_2,"Movement")
-    Hub:AddToggle(t_Streetz_War_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Streetz_War_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Streetz_War_2,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Streetz_War_2,"Visual & Misc")
-    Hub:AddToggle(t_Streetz_War_2,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Streetz_War_2,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- SOUTH BRONX TAB
-if CurrentGame == "South Bronx" or CurrentGame == "Unknown" then
-    local t_South_Bronx = Hub:AddTab("South Bronx","🏙️")
-    Hub:AddSection(t_South_Bronx,"Farming")
-    Hub:AddToggle(t_South_Bronx,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_South_Bronx,"Combat")
-    Hub:AddToggle(t_South_Bronx,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_South_Bronx,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_South_Bronx,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_South_Bronx,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddSection(t_South_Bronx,"Weapon")
-    Hub:AddToggle(t_South_Bronx,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddSection(t_South_Bronx,"Movement")
-    Hub:AddToggle(t_South_Bronx,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_South_Bronx,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_South_Bronx,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_South_Bronx,"Visual & Misc")
-    Hub:AddToggle(t_South_Bronx,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_South_Bronx,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- NO MERCY TAB
-if CurrentGame == "No Mercy" or CurrentGame == "Unknown" then
-    local t_No_Mercy = Hub:AddTab("No Mercy","💀")
-    Hub:AddSection(t_No_Mercy,"Farming")
-    Hub:AddToggle(t_No_Mercy,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_No_Mercy,"Combat")
-    Hub:AddToggle(t_No_Mercy,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_No_Mercy,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_No_Mercy,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_No_Mercy,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddSection(t_No_Mercy,"Weapon")
-    Hub:AddToggle(t_No_Mercy,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddSection(t_No_Mercy,"Movement")
-    Hub:AddToggle(t_No_Mercy,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_No_Mercy,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_No_Mercy,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_No_Mercy,"Visual & Misc")
-    Hub:AddToggle(t_No_Mercy,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_No_Mercy,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- UNDERGROUND WAR 2 TAB
-if CurrentGame == "Underground War 2" or CurrentGame == "Unknown" then
-    local t_Underground_War_2 = Hub:AddTab("Underground War 2","⛏️")
-    Hub:AddSection(t_Underground_War_2,"Farming")
-    Hub:AddToggle(t_Underground_War_2,"Auto Dig",false,function(v) HubState.AutoDig=v end)
-    Hub:AddToggle(t_Underground_War_2,"Auto Upgrade",false,function(v) HubState.AutoUpgrade=v end)
-    Hub:AddSection(t_Underground_War_2,"Combat")
-    Hub:AddToggle(t_Underground_War_2,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Underground_War_2,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Underground_War_2,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Underground_War_2,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Underground_War_2,"Sword Reach",false,function(v) HubState.SwordReach=v end)
-    Hub:AddSection(t_Underground_War_2,"Weapon")
-    Hub:AddToggle(t_Underground_War_2,"Auto Shoot",false,function(v) HubState.AutoShoot=v end)
-    Hub:AddSection(t_Underground_War_2,"Movement")
-    Hub:AddToggle(t_Underground_War_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Underground_War_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Underground_War_2,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Underground_War_2,"Visual & Misc")
-    Hub:AddToggle(t_Underground_War_2,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Underground_War_2,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- RIVALS TAB
-if CurrentGame == "Rivals" or CurrentGame == "Unknown" then
-    local t_Rivals = Hub:AddTab("Rivals","🎯")
-    Hub:AddSection(t_Rivals,"Combat")
-    Hub:AddToggle(t_Rivals,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Rivals,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Rivals,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Rivals,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddToggle(t_Rivals,"Wallbang",false,function(v) HubState.Wallbang=v end)
-    Hub:AddSection(t_Rivals,"Weapon")
-    Hub:AddToggle(t_Rivals,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Rivals,"No Spread",false,function(v) HubState.NoSpread=v end)
-    Hub:AddToggle(t_Rivals,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Rivals,"Movement")
-    Hub:AddToggle(t_Rivals,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Rivals,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Rivals,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Rivals,"Visual & Misc")
-    Hub:AddToggle(t_Rivals,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Rivals,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- PHANTOM FORCES TAB
-if CurrentGame == "Phantom Forces" or CurrentGame == "Unknown" then
-    local t_Phantom_Forces = Hub:AddTab("Phantom Forces","🎖️")
-    Hub:AddSection(t_Phantom_Forces,"Combat")
-    Hub:AddToggle(t_Phantom_Forces,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Phantom_Forces,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Phantom_Forces,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Phantom_Forces,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_Phantom_Forces,"Weapon")
-    Hub:AddToggle(t_Phantom_Forces,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Phantom_Forces,"No Spread",false,function(v) HubState.NoSpread=v end)
-    Hub:AddToggle(t_Phantom_Forces,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Phantom_Forces,"Movement")
-    Hub:AddToggle(t_Phantom_Forces,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Phantom_Forces,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Phantom_Forces,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Phantom_Forces,"Visual & Misc")
-    Hub:AddToggle(t_Phantom_Forces,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Phantom_Forces,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- ARSENAL TAB
-if CurrentGame == "Arsenal" or CurrentGame == "Unknown" then
-    local t_Arsenal = Hub:AddTab("Arsenal","🏹")
-    Hub:AddSection(t_Arsenal,"Combat")
-    Hub:AddToggle(t_Arsenal,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Arsenal,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Arsenal,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Arsenal,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddToggle(t_Arsenal,"Kill All",false,function(v) HubState.KillAll=v end)
-    Hub:AddSection(t_Arsenal,"Weapon")
-    Hub:AddToggle(t_Arsenal,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Arsenal,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Arsenal,"Movement")
-    Hub:AddToggle(t_Arsenal,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Arsenal,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Arsenal,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Arsenal,"Visual & Misc")
-    Hub:AddToggle(t_Arsenal,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Arsenal,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- COUNTER BLOX TAB
-if CurrentGame == "Counter Blox" or CurrentGame == "Unknown" then
-    local t_Counter_Blox = Hub:AddTab("Counter Blox","💣")
-    Hub:AddSection(t_Counter_Blox,"Combat")
-    Hub:AddToggle(t_Counter_Blox,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Counter_Blox,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Counter_Blox,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Counter_Blox,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_Counter_Blox,"Weapon")
-    Hub:AddToggle(t_Counter_Blox,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Counter_Blox,"No Spread",false,function(v) HubState.NoSpread=v end)
-    Hub:AddToggle(t_Counter_Blox,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Counter_Blox,"Movement")
-    Hub:AddToggle(t_Counter_Blox,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Counter_Blox,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Counter_Blox,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Counter_Blox,"Visual & Misc")
-    Hub:AddToggle(t_Counter_Blox,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Counter_Blox,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- BAD BUSINESS TAB
-if CurrentGame == "Bad Business" or CurrentGame == "Unknown" then
-    local t_Bad_Business = Hub:AddTab("Bad Business","🔥")
-    Hub:AddSection(t_Bad_Business,"Combat")
-    Hub:AddToggle(t_Bad_Business,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Bad_Business,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Bad_Business,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Bad_Business,"Weapon")
-    Hub:AddToggle(t_Bad_Business,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Bad_Business,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Bad_Business,"Movement")
-    Hub:AddToggle(t_Bad_Business,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Bad_Business,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Bad_Business,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Bad_Business,"Visual & Misc")
-    Hub:AddToggle(t_Bad_Business,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Bad_Business,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- BLOX FRUITS TAB
-if CurrentGame == "Blox Fruits" or CurrentGame == "Unknown" then
-    local t_Blox_Fruits = Hub:AddTab("Blox Fruits","🍎")
-    Hub:AddSection(t_Blox_Fruits,"Farming")
-    Hub:AddToggle(t_Blox_Fruits,"Auto Farm Lvl",true,function(v) HubState.AutoFarmLvl=v end)
-    Hub:AddToggle(t_Blox_Fruits,"Auto Farm Boss",true,function(v) HubState.AutoFarmBoss=v end)
-    Hub:AddToggle(t_Blox_Fruits,"Auto Farm Fruit",true,function(v) HubState.AutoFarmFruit=v end)
-    Hub:AddToggle(t_Blox_Fruits,"Auto Quest",false,function(v) HubState.AutoQuest=v end)
-    Hub:AddToggle(t_Blox_Fruits,"Auto Raid",false,function(v) HubState.AutoRaid=v end)
-    Hub:AddToggle(t_Blox_Fruits,"Auto Mastery",false,function(v) HubState.AutoMastery=v end)
-    Hub:AddSection(t_Blox_Fruits,"Combat")
-    Hub:AddToggle(t_Blox_Fruits,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Blox_Fruits,"Movement")
-    Hub:AddToggle(t_Blox_Fruits,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Blox_Fruits,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Blox_Fruits,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Blox_Fruits,"Visual & Misc")
-    Hub:AddToggle(t_Blox_Fruits,"Fruit Sniper",false,function(v) HubState.FruitSniper=v end)
-    Hub:AddToggle(t_Blox_Fruits,"Bring Mobs",false,function(v) HubState.BringMobs=v end)
-    Hub:AddToggle(t_Blox_Fruits,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Blox_Fruits,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-    Hub:AddSection(t_Blox_Fruits,"Teleports")
-    Hub:AddButton(t_Blox_Fruits,"Teleport to Island",function() HubState.TpToIsland=v end)
-end
-
--- JAILBREAK TAB
-if CurrentGame == "Jailbreak" or CurrentGame == "Unknown" then
-    local t_Jailbreak = Hub:AddTab("Jailbreak","🚔")
-    Hub:AddSection(t_Jailbreak,"Farming")
-    Hub:AddToggle(t_Jailbreak,"Auto Rob",false,function(v) HubState.AutoRob=v end)
-    Hub:AddToggle(t_Jailbreak,"Auto Farm Cash",true,function(v) HubState.AutoFarmCash=v end)
-    Hub:AddToggle(t_Jailbreak,"Inf Nitro",false,function(v) HubState.InfNitro=v end)
-    Hub:AddToggle(t_Jailbreak,"Auto Arrest",false,function(v) HubState.AutoArrest=v end)
-    Hub:AddSection(t_Jailbreak,"Combat")
-    Hub:AddToggle(t_Jailbreak,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Jailbreak,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddSection(t_Jailbreak,"Movement")
-    Hub:AddToggle(t_Jailbreak,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Jailbreak,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Jailbreak,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Jailbreak,"Visual & Misc")
-    Hub:AddToggle(t_Jailbreak,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Jailbreak,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-    Hub:AddSection(t_Jailbreak,"Teleports")
-    Hub:AddButton(t_Jailbreak,"Teleport to Locations",function() HubState.TpLocations=v end)
-end
-
--- MURDER MYSTERY 2 TAB
-if CurrentGame == "Murder Mystery 2" or CurrentGame == "Unknown" then
-    local t_Murder_Mystery_2 = Hub:AddTab("Murder Mystery 2","🔪")
-    Hub:AddSection(t_Murder_Mystery_2,"Combat")
-    Hub:AddToggle(t_Murder_Mystery_2,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Murder_Mystery_2,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Murder_Mystery_2,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddSection(t_Murder_Mystery_2,"Movement")
-    Hub:AddToggle(t_Murder_Mystery_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Murder_Mystery_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Murder_Mystery_2,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Murder_Mystery_2,"Visual & Misc")
-    Hub:AddToggle(t_Murder_Mystery_2,"Murderer Reveal",false,function(v) HubState.MurdererReveal=v end)
-    Hub:AddToggle(t_Murder_Mystery_2,"Coin Grabber",false,function(v) HubState.CoinGrabber=v end)
-    Hub:AddToggle(t_Murder_Mystery_2,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Murder_Mystery_2,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-    Hub:AddSection(t_Murder_Mystery_2,"Teleports")
-    Hub:AddButton(t_Murder_Mystery_2,"Teleport to Coins",function() HubState.TpToCoins=v end)
-end
-
--- BEDWARS TAB
-if CurrentGame == "BedWars" or CurrentGame == "Unknown" then
-    local t_BedWars = Hub:AddTab("BedWars","🛏️")
-    Hub:AddSection(t_BedWars,"Combat")
-    Hub:AddToggle(t_BedWars,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_BedWars,"Reach Extend",false,function(v) HubState.ReachExtend=v end)
-    Hub:AddToggle(t_BedWars,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_BedWars,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_BedWars,"Movement")
-    Hub:AddToggle(t_BedWars,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_BedWars,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_BedWars,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddToggle(t_BedWars,"Inf Jump",false,function(v) HubState.InfJump=v end)
-    Hub:AddSection(t_BedWars,"Visual & Misc")
-    Hub:AddToggle(t_BedWars,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_BedWars,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- BLADE BALL TAB
-if CurrentGame == "Blade Ball" or CurrentGame == "Unknown" then
-    local t_Blade_Ball = Hub:AddTab("Blade Ball","⚽")
-    Hub:AddSection(t_Blade_Ball,"Combat")
-    Hub:AddToggle(t_Blade_Ball,"Auto Parry",false,function(v) HubState.AutoParry=v end)
-    Hub:AddToggle(t_Blade_Ball,"Auto Dodge",false,function(v) HubState.AutoDodge=v end)
-    Hub:AddToggle(t_Blade_Ball,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Blade_Ball,"Perfect Parry",false,function(v) HubState.PerfectParry=v end)
-    Hub:AddSection(t_Blade_Ball,"Movement")
-    Hub:AddToggle(t_Blade_Ball,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Blade_Ball,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Blade_Ball,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Blade_Ball,"Visual & Misc")
-    Hub:AddToggle(t_Blade_Ball,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Blade_Ball,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- DOORS TAB
-if CurrentGame == "Doors" or CurrentGame == "Unknown" then
-    local t_Doors = Hub:AddTab("Doors","🚪")
-    Hub:AddSection(t_Doors,"Farming")
-    Hub:AddToggle(t_Doors,"Auto Open",false,function(v) HubState.AutoOpen=v end)
-    Hub:AddSection(t_Doors,"Movement")
-    Hub:AddToggle(t_Doors,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Doors,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Doors,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddToggle(t_Doors,"God Mode",false,function(v) HubState.GodMode=v end)
-    Hub:AddToggle(t_Doors,"Inf Stamina",false,function(v) HubState.InfStamina=v end)
-    Hub:AddSection(t_Doors,"Visual & Misc")
-    Hub:AddToggle(t_Doors,"ESP Entity",false,function(v) HubState.ESPEntity=v end)
-    Hub:AddToggle(t_Doors,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Doors,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- SHINDO LIFE TAB
-if CurrentGame == "Shindo Life" or CurrentGame == "Unknown" then
-    local t_Shindo_Life = Hub:AddTab("Shindo Life","🍃")
-    Hub:AddSection(t_Shindo_Life,"Farming")
-    Hub:AddToggle(t_Shindo_Life,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Shindo_Life,"Auto Spin",false,function(v) HubState.AutoSpin=v end)
-    Hub:AddToggle(t_Shindo_Life,"Inf Spins",false,function(v) HubState.InfSpins=v end)
-    Hub:AddToggle(t_Shindo_Life,"Auto Quest",false,function(v) HubState.AutoQuest=v end)
-    Hub:AddSection(t_Shindo_Life,"Combat")
-    Hub:AddToggle(t_Shindo_Life,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Shindo_Life,"Movement")
-    Hub:AddToggle(t_Shindo_Life,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Shindo_Life,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Shindo_Life,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Shindo_Life,"Visual & Misc")
-    Hub:AddToggle(t_Shindo_Life,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Shindo_Life,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- PET SIMULATOR 99 TAB
-if CurrentGame == "Pet Simulator 99" or CurrentGame == "Unknown" then
-    local t_Pet_Simulator_99 = Hub:AddTab("Pet Simulator 99","🐾")
-    Hub:AddSection(t_Pet_Simulator_99,"Farming")
-    Hub:AddToggle(t_Pet_Simulator_99,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Pet_Simulator_99,"Auto Hatch",false,function(v) HubState.AutoHatch=v end)
-    Hub:AddToggle(t_Pet_Simulator_99,"Auto Collect",false,function(v) HubState.AutoCollect=v end)
-    Hub:AddToggle(t_Pet_Simulator_99,"Dupe",false,function(v) HubState.Dupe=v end)
-    Hub:AddSection(t_Pet_Simulator_99,"Combat")
-    Hub:AddToggle(t_Pet_Simulator_99,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Pet_Simulator_99,"Movement")
-    Hub:AddToggle(t_Pet_Simulator_99,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Pet_Simulator_99,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Pet_Simulator_99,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Pet_Simulator_99,"Visual & Misc")
-    Hub:AddToggle(t_Pet_Simulator_99,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Pet_Simulator_99,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- KING LEGACY TAB
-if CurrentGame == "King Legacy" or CurrentGame == "Unknown" then
-    local t_King_Legacy = Hub:AddTab("King Legacy","👑")
-    Hub:AddSection(t_King_Legacy,"Farming")
-    Hub:AddToggle(t_King_Legacy,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_King_Legacy,"Auto Quest",false,function(v) HubState.AutoQuest=v end)
-    Hub:AddSection(t_King_Legacy,"Combat")
-    Hub:AddToggle(t_King_Legacy,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_King_Legacy,"Movement")
-    Hub:AddToggle(t_King_Legacy,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_King_Legacy,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_King_Legacy,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_King_Legacy,"Visual & Misc")
-    Hub:AddToggle(t_King_Legacy,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_King_Legacy,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-    Hub:AddToggle(t_King_Legacy,"Fruit Sniper",false,function(v) HubState.FruitSniper=v end)
-    Hub:AddSection(t_King_Legacy,"Teleports")
-    Hub:AddButton(t_King_Legacy,"Teleport to Island",function() HubState.TpToIsland=v end)
-end
-
--- BEE SWARM SIMULATOR TAB
-if CurrentGame == "Bee Swarm Simulator" or CurrentGame == "Unknown" then
-    local t_Bee_Swarm_Simulator = Hub:AddTab("Bee Swarm Simulator","🐝")
-    Hub:AddSection(t_Bee_Swarm_Simulator,"Farming")
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"Auto Quest",false,function(v) HubState.AutoQuest=v end)
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"Auto Collect",false,function(v) HubState.AutoCollect=v end)
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"Auto Dispense",false,function(v) HubState.AutoDispense=v end)
-    Hub:AddSection(t_Bee_Swarm_Simulator,"Combat")
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Bee_Swarm_Simulator,"Movement")
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Bee_Swarm_Simulator,"Visual & Misc")
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Bee_Swarm_Simulator,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- GRAND PIECE ONLINE TAB
-if CurrentGame == "Grand Piece Online" or CurrentGame == "Unknown" then
-    local t_Grand_Piece_Online = Hub:AddTab("Grand Piece Online","🏴‍☠️")
-    Hub:AddSection(t_Grand_Piece_Online,"Farming")
-    Hub:AddToggle(t_Grand_Piece_Online,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Grand_Piece_Online,"Auto Quest",false,function(v) HubState.AutoQuest=v end)
-    Hub:AddToggle(t_Grand_Piece_Online,"Auto Mastery",false,function(v) HubState.AutoMastery=v end)
-    Hub:AddSection(t_Grand_Piece_Online,"Combat")
-    Hub:AddToggle(t_Grand_Piece_Online,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Grand_Piece_Online,"Movement")
-    Hub:AddToggle(t_Grand_Piece_Online,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Grand_Piece_Online,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Grand_Piece_Online,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Grand_Piece_Online,"Visual & Misc")
-    Hub:AddToggle(t_Grand_Piece_Online,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Grand_Piece_Online,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-    Hub:AddToggle(t_Grand_Piece_Online,"Fruit Sniper",false,function(v) HubState.FruitSniper=v end)
-end
-
--- TOWER DEFENSE SIMULATOR TAB
-if CurrentGame == "Tower Defense Simulator" or CurrentGame == "Unknown" then
-    local t_Tower_Defense_Simulator = Hub:AddTab("Tower Defense Simulator","🗼")
-    Hub:AddSection(t_Tower_Defense_Simulator,"Farming")
-    Hub:AddToggle(t_Tower_Defense_Simulator,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Tower_Defense_Simulator,"Inf Cash",false,function(v) HubState.InfCash=v end)
-    Hub:AddToggle(t_Tower_Defense_Simulator,"Auto Place",false,function(v) HubState.AutoPlace=v end)
-    Hub:AddSection(t_Tower_Defense_Simulator,"Combat")
-    Hub:AddToggle(t_Tower_Defense_Simulator,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Tower_Defense_Simulator,"Movement")
-    Hub:AddToggle(t_Tower_Defense_Simulator,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Tower_Defense_Simulator,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Tower_Defense_Simulator,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Tower_Defense_Simulator,"Visual & Misc")
-    Hub:AddToggle(t_Tower_Defense_Simulator,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Tower_Defense_Simulator,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- FISCH TAB
-if CurrentGame == "Fisch" or CurrentGame == "Unknown" then
-    local t_Fisch = Hub:AddTab("Fisch","🐟")
-    Hub:AddSection(t_Fisch,"Farming")
-    Hub:AddToggle(t_Fisch,"Auto Fish",false,function(v) HubState.AutoFish=v end)
-    Hub:AddToggle(t_Fisch,"Auto Sell",false,function(v) HubState.AutoSell=v end)
-    Hub:AddToggle(t_Fisch,"Auto Shake",false,function(v) HubState.AutoShake=v end)
-    Hub:AddToggle(t_Fisch,"Instant Reel",false,function(v) HubState.InstantReel=v end)
-    Hub:AddSection(t_Fisch,"Combat")
-    Hub:AddToggle(t_Fisch,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Fisch,"Movement")
-    Hub:AddToggle(t_Fisch,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Fisch,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Fisch,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Fisch,"Visual & Misc")
-    Hub:AddToggle(t_Fisch,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Fisch,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- DEEPWOKEN TAB
-if CurrentGame == "Deepwoken" or CurrentGame == "Unknown" then
-    local t_Deepwoken = Hub:AddTab("Deepwoken","🌊")
-    Hub:AddSection(t_Deepwoken,"Farming")
-    Hub:AddToggle(t_Deepwoken,"Inf Mana",false,function(v) HubState.InfMana=v end)
-    Hub:AddSection(t_Deepwoken,"Combat")
-    Hub:AddToggle(t_Deepwoken,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Deepwoken,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Deepwoken,"Auto Parry",false,function(v) HubState.AutoParry=v end)
-    Hub:AddToggle(t_Deepwoken,"Auto Dodge",false,function(v) HubState.AutoDodge=v end)
-    Hub:AddSection(t_Deepwoken,"Movement")
-    Hub:AddToggle(t_Deepwoken,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Deepwoken,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Deepwoken,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Deepwoken,"Visual & Misc")
-    Hub:AddToggle(t_Deepwoken,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Deepwoken,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- BOXING BETA TAB
-if CurrentGame == "Boxing Beta" or CurrentGame == "Unknown" then
-    local t_Boxing_Beta = Hub:AddTab("Boxing Beta","🥊")
-    Hub:AddSection(t_Boxing_Beta,"Farming")
-    Hub:AddToggle(t_Boxing_Beta,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Boxing_Beta,"Combat")
-    Hub:AddToggle(t_Boxing_Beta,"Auto Dodge",false,function(v) HubState.AutoDodge=v end)
-    Hub:AddToggle(t_Boxing_Beta,"Auto Block",false,function(v) HubState.AutoBlock=v end)
-    Hub:AddToggle(t_Boxing_Beta,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Boxing_Beta,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddSection(t_Boxing_Beta,"Movement")
-    Hub:AddToggle(t_Boxing_Beta,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Boxing_Beta,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Boxing_Beta,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Boxing_Beta,"Visual & Misc")
-    Hub:AddToggle(t_Boxing_Beta,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Boxing_Beta,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- BASKETBALL LEGENDS TAB
-if CurrentGame == "Basketball Legends" or CurrentGame == "Unknown" then
-    local t_Basketball_Legends = Hub:AddTab("Basketball Legends","🏀")
-    Hub:AddSection(t_Basketball_Legends,"Farming")
-    Hub:AddToggle(t_Basketball_Legends,"Auto Score",false,function(v) HubState.AutoScore=v end)
-    Hub:AddSection(t_Basketball_Legends,"Combat")
-    Hub:AddToggle(t_Basketball_Legends,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Basketball_Legends,"Movement")
-    Hub:AddToggle(t_Basketball_Legends,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Basketball_Legends,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Basketball_Legends,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Basketball_Legends,"Visual & Misc")
-    Hub:AddToggle(t_Basketball_Legends,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Basketball_Legends,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-    Hub:AddSection(t_Basketball_Legends,"Teleports")
-    Hub:AddButton(t_Basketball_Legends,"Teleport to Ball",function() HubState.TpToBall=v end)
-end
-
--- PLAYGROUND BASKETBALL TAB
-if CurrentGame == "Playground Basketball" or CurrentGame == "Unknown" then
-    local t_Playground_Basketball = Hub:AddTab("Playground Basketball","🏀")
-    Hub:AddSection(t_Playground_Basketball,"Farming")
-    Hub:AddToggle(t_Playground_Basketball,"Auto Score",false,function(v) HubState.AutoScore=v end)
-    Hub:AddSection(t_Playground_Basketball,"Combat")
-    Hub:AddToggle(t_Playground_Basketball,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Playground_Basketball,"Movement")
-    Hub:AddToggle(t_Playground_Basketball,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Playground_Basketball,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Playground_Basketball,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Playground_Basketball,"Visual & Misc")
-    Hub:AddToggle(t_Playground_Basketball,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Playground_Basketball,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- BLUE LOCK RIVALS TAB
-if CurrentGame == "Blue Lock Rivals" or CurrentGame == "Unknown" then
-    local t_Blue_Lock_Rivals = Hub:AddTab("Blue Lock Rivals","⚽")
-    Hub:AddSection(t_Blue_Lock_Rivals,"Farming")
-    Hub:AddToggle(t_Blue_Lock_Rivals,"Auto Score",false,function(v) HubState.AutoScore=v end)
-    Hub:AddToggle(t_Blue_Lock_Rivals,"Auto Dribble",false,function(v) HubState.AutoDribble=v end)
-    Hub:AddSection(t_Blue_Lock_Rivals,"Combat")
-    Hub:AddToggle(t_Blue_Lock_Rivals,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Blue_Lock_Rivals,"Movement")
-    Hub:AddToggle(t_Blue_Lock_Rivals,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Blue_Lock_Rivals,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Blue_Lock_Rivals,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Blue_Lock_Rivals,"Visual & Misc")
-    Hub:AddToggle(t_Blue_Lock_Rivals,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Blue_Lock_Rivals,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- THE STRONGEST BATTLEGROUNDS TAB
-if CurrentGame == "The Strongest Battlegrounds" or CurrentGame == "Unknown" then
-    local t_The_Strongest_Battlegrounds = Hub:AddTab("The Strongest Battlegrounds","💪")
-    Hub:AddSection(t_The_Strongest_Battlegrounds,"Farming")
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_The_Strongest_Battlegrounds,"Combat")
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Auto Block",false,function(v) HubState.AutoBlock=v end)
-    Hub:AddSection(t_The_Strongest_Battlegrounds,"Movement")
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_The_Strongest_Battlegrounds,"Visual & Misc")
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_The_Strongest_Battlegrounds,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- JUJUTSU SHENANIGANS TAB
-if CurrentGame == "Jujutsu Shenanigans" or CurrentGame == "Unknown" then
-    local t_Jujutsu_Shenanigans = Hub:AddTab("Jujutsu Shenanigans","👁️")
-    Hub:AddSection(t_Jujutsu_Shenanigans,"Farming")
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"Inf Domain",false,function(v) HubState.InfDomain=v end)
-    Hub:AddSection(t_Jujutsu_Shenanigans,"Combat")
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Jujutsu_Shenanigans,"Movement")
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Jujutsu_Shenanigans,"Visual & Misc")
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Jujutsu_Shenanigans,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- KNOCKOUT TAB
-if CurrentGame == "Knockout" or CurrentGame == "Unknown" then
-    local t_Knockout = Hub:AddTab("Knockout","🥊")
-    Hub:AddSection(t_Knockout,"Farming")
-    Hub:AddToggle(t_Knockout,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Knockout,"Combat")
-    Hub:AddToggle(t_Knockout,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Knockout,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Knockout,"Movement")
-    Hub:AddToggle(t_Knockout,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Knockout,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Knockout,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Knockout,"Visual & Misc")
-    Hub:AddToggle(t_Knockout,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Knockout,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- DEAD RAILS TAB
-if CurrentGame == "Dead Rails" or CurrentGame == "Unknown" then
-    local t_Dead_Rails = Hub:AddTab("Dead Rails","🚂")
-    Hub:AddSection(t_Dead_Rails,"Farming")
-    Hub:AddToggle(t_Dead_Rails,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Dead_Rails,"Combat")
-    Hub:AddToggle(t_Dead_Rails,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Dead_Rails,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddSection(t_Dead_Rails,"Weapon")
-    Hub:AddToggle(t_Dead_Rails,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
-    Hub:AddSection(t_Dead_Rails,"Movement")
-    Hub:AddToggle(t_Dead_Rails,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Dead_Rails,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Dead_Rails,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Dead_Rails,"Visual & Misc")
-    Hub:AddToggle(t_Dead_Rails,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Dead_Rails,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- PRESSURE TAB
-if CurrentGame == "Pressure" or CurrentGame == "Unknown" then
-    local t_Pressure = Hub:AddTab("Pressure","💨")
-    Hub:AddSection(t_Pressure,"Farming")
-    Hub:AddToggle(t_Pressure,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Pressure,"Combat")
-    Hub:AddToggle(t_Pressure,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Pressure,"Movement")
-    Hub:AddToggle(t_Pressure,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Pressure,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Pressure,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddToggle(t_Pressure,"God Mode",false,function(v) HubState.GodMode=v end)
-    Hub:AddSection(t_Pressure,"Visual & Misc")
-    Hub:AddToggle(t_Pressure,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Pressure,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- SOLS RNG TAB
-if CurrentGame == "Sols RNG" or CurrentGame == "Unknown" then
-    local t_Sols_RNG = Hub:AddTab("Sols RNG","🎲")
-    Hub:AddSection(t_Sols_RNG,"Farming")
-    Hub:AddToggle(t_Sols_RNG,"Auto Roll",false,function(v) HubState.AutoRoll=v end)
-    Hub:AddToggle(t_Sols_RNG,"Auto Craft",false,function(v) HubState.AutoCraft=v end)
-    Hub:AddToggle(t_Sols_RNG,"Auto Biome",false,function(v) HubState.AutoBiome=v end)
-    Hub:AddSection(t_Sols_RNG,"Combat")
-    Hub:AddToggle(t_Sols_RNG,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Sols_RNG,"Movement")
-    Hub:AddToggle(t_Sols_RNG,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Sols_RNG,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Sols_RNG,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Sols_RNG,"Visual & Misc")
-    Hub:AddToggle(t_Sols_RNG,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Sols_RNG,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- ANIME DEFENDERS TAB
-if CurrentGame == "Anime Defenders" or CurrentGame == "Unknown" then
-    local t_Anime_Defenders = Hub:AddTab("Anime Defenders","🛡️")
-    Hub:AddSection(t_Anime_Defenders,"Farming")
-    Hub:AddToggle(t_Anime_Defenders,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Anime_Defenders,"Auto Place",false,function(v) HubState.AutoPlace=v end)
-    Hub:AddToggle(t_Anime_Defenders,"Inf Cash",false,function(v) HubState.InfCash=v end)
-    Hub:AddSection(t_Anime_Defenders,"Combat")
-    Hub:AddToggle(t_Anime_Defenders,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Anime_Defenders,"Movement")
-    Hub:AddToggle(t_Anime_Defenders,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Anime_Defenders,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Anime_Defenders,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Anime_Defenders,"Visual & Misc")
-    Hub:AddToggle(t_Anime_Defenders,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Anime_Defenders,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- GROW A GARDEN TAB
-if CurrentGame == "Grow A Garden" or CurrentGame == "Unknown" then
-    local t_Grow_A_Garden = Hub:AddTab("Grow A Garden","🌱")
-    Hub:AddSection(t_Grow_A_Garden,"Farming")
-    Hub:AddToggle(t_Grow_A_Garden,"Auto Plant",false,function(v) HubState.AutoPlant=v end)
-    Hub:AddToggle(t_Grow_A_Garden,"Auto Harvest",false,function(v) HubState.AutoHarvest=v end)
-    Hub:AddToggle(t_Grow_A_Garden,"Auto Water",false,function(v) HubState.AutoWater=v end)
-    Hub:AddSection(t_Grow_A_Garden,"Combat")
-    Hub:AddToggle(t_Grow_A_Garden,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Grow_A_Garden,"Movement")
-    Hub:AddToggle(t_Grow_A_Garden,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Grow_A_Garden,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Grow_A_Garden,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Grow_A_Garden,"Visual & Misc")
-    Hub:AddToggle(t_Grow_A_Garden,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Grow_A_Garden,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- PEROXIDE TAB
-if CurrentGame == "Peroxide" or CurrentGame == "Unknown" then
-    local t_Peroxide = Hub:AddTab("Peroxide","☠️")
-    Hub:AddSection(t_Peroxide,"Farming")
-    Hub:AddToggle(t_Peroxide,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Peroxide,"Auto Quest",false,function(v) HubState.AutoQuest=v end)
-    Hub:AddSection(t_Peroxide,"Combat")
-    Hub:AddToggle(t_Peroxide,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Peroxide,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Peroxide,"Movement")
-    Hub:AddToggle(t_Peroxide,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Peroxide,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Peroxide,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Peroxide,"Visual & Misc")
-    Hub:AddToggle(t_Peroxide,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Peroxide,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- IRON MAN REIMAGINED TAB
-if CurrentGame == "Iron Man Reimagined" or CurrentGame == "Unknown" then
-    local t_Iron_Man_Reimagined = Hub:AddTab("Iron Man Reimagined","🦾")
-    Hub:AddSection(t_Iron_Man_Reimagined,"Farming")
-    Hub:AddToggle(t_Iron_Man_Reimagined,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Iron_Man_Reimagined,"Inf Energy",false,function(v) HubState.InfEnergy=v end)
-    Hub:AddSection(t_Iron_Man_Reimagined,"Combat")
-    Hub:AddToggle(t_Iron_Man_Reimagined,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Iron_Man_Reimagined,"Movement")
-    Hub:AddToggle(t_Iron_Man_Reimagined,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Iron_Man_Reimagined,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Iron_Man_Reimagined,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Iron_Man_Reimagined,"Visual & Misc")
-    Hub:AddToggle(t_Iron_Man_Reimagined,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Iron_Man_Reimagined,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- ADOPT ME TAB
-if CurrentGame == "Adopt Me" or CurrentGame == "Unknown" then
-    local t_Adopt_Me = Hub:AddTab("Adopt Me","🏡")
-    Hub:AddSection(t_Adopt_Me,"Farming")
-    Hub:AddToggle(t_Adopt_Me,"Auto Accept Trade",false,function(v) HubState.AutoAcceptTrade=v end)
-    Hub:AddSection(t_Adopt_Me,"Combat")
-    Hub:AddToggle(t_Adopt_Me,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Adopt_Me,"Movement")
-    Hub:AddToggle(t_Adopt_Me,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Adopt_Me,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Adopt_Me,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Adopt_Me,"Visual & Misc")
-    Hub:AddToggle(t_Adopt_Me,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Adopt_Me,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- FANTASMA PVP TAB
-if CurrentGame == "Fantasma PvP" or CurrentGame == "Unknown" then
-    local t_Fantasma_PvP = Hub:AddTab("Fantasma PvP","👻")
-    Hub:AddSection(t_Fantasma_PvP,"Combat")
-    Hub:AddToggle(t_Fantasma_PvP,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Fantasma_PvP,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Fantasma_PvP,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Fantasma_PvP,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddSection(t_Fantasma_PvP,"Movement")
-    Hub:AddToggle(t_Fantasma_PvP,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Fantasma_PvP,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Fantasma_PvP,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Fantasma_PvP,"Visual & Misc")
-    Hub:AddToggle(t_Fantasma_PvP,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Fantasma_PvP,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- MVS DUELS TAB
-if CurrentGame == "MVS Duels" or CurrentGame == "Unknown" then
-    local t_MVS_Duels = Hub:AddTab("MVS Duels","🎮")
-    Hub:AddSection(t_MVS_Duels,"Farming")
-    Hub:AddToggle(t_MVS_Duels,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_MVS_Duels,"Combat")
-    Hub:AddToggle(t_MVS_Duels,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_MVS_Duels,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_MVS_Duels,"Movement")
-    Hub:AddToggle(t_MVS_Duels,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_MVS_Duels,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_MVS_Duels,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_MVS_Duels,"Visual & Misc")
-    Hub:AddToggle(t_MVS_Duels,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_MVS_Duels,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- PROJECT VILTRUMITES TAB
-if CurrentGame == "Project Viltrumites" or CurrentGame == "Unknown" then
-    local t_Project_Viltrumites = Hub:AddTab("Project Viltrumites","🦸")
-    Hub:AddSection(t_Project_Viltrumites,"Farming")
-    Hub:AddToggle(t_Project_Viltrumites,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Project_Viltrumites,"Inf Power",false,function(v) HubState.InfPower=v end)
-    Hub:AddSection(t_Project_Viltrumites,"Combat")
-    Hub:AddToggle(t_Project_Viltrumites,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddToggle(t_Project_Viltrumites,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Project_Viltrumites,"Movement")
-    Hub:AddToggle(t_Project_Viltrumites,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Project_Viltrumites,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Project_Viltrumites,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Project_Viltrumites,"Visual & Misc")
-    Hub:AddToggle(t_Project_Viltrumites,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Project_Viltrumites,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- QZ SHOOTOUT TAB
-if CurrentGame == "QZ Shootout" or CurrentGame == "Unknown" then
-    local t_QZ_Shootout = Hub:AddTab("QZ Shootout","🎯")
-    Hub:AddSection(t_QZ_Shootout,"Farming")
-    Hub:AddToggle(t_QZ_Shootout,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_QZ_Shootout,"Combat")
-    Hub:AddToggle(t_QZ_Shootout,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_QZ_Shootout,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_QZ_Shootout,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddSection(t_QZ_Shootout,"Weapon")
-    Hub:AddToggle(t_QZ_Shootout,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
-    Hub:AddToggle(t_QZ_Shootout,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddSection(t_QZ_Shootout,"Movement")
-    Hub:AddToggle(t_QZ_Shootout,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_QZ_Shootout,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_QZ_Shootout,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_QZ_Shootout,"Visual & Misc")
-    Hub:AddToggle(t_QZ_Shootout,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_QZ_Shootout,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- OUTWEST CHICAGO 2 TAB
-if CurrentGame == "Outwest Chicago 2" or CurrentGame == "Unknown" then
-    local t_Outwest_Chicago_2 = Hub:AddTab("Outwest Chicago 2","🤠")
-    Hub:AddSection(t_Outwest_Chicago_2,"Farming")
-    Hub:AddToggle(t_Outwest_Chicago_2,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Outwest_Chicago_2,"Combat")
-    Hub:AddToggle(t_Outwest_Chicago_2,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Outwest_Chicago_2,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Outwest_Chicago_2,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddSection(t_Outwest_Chicago_2,"Weapon")
-    Hub:AddToggle(t_Outwest_Chicago_2,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
-    Hub:AddToggle(t_Outwest_Chicago_2,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddSection(t_Outwest_Chicago_2,"Movement")
-    Hub:AddToggle(t_Outwest_Chicago_2,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Outwest_Chicago_2,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Outwest_Chicago_2,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Outwest_Chicago_2,"Visual & Misc")
-    Hub:AddToggle(t_Outwest_Chicago_2,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Outwest_Chicago_2,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- STREET LIFE REMASTERED TAB
-if CurrentGame == "Street Life Remastered" or CurrentGame == "Unknown" then
-    local t_Street_Life_Remastered = Hub:AddTab("Street Life Remastered","🛣️")
-    Hub:AddSection(t_Street_Life_Remastered,"Farming")
-    Hub:AddToggle(t_Street_Life_Remastered,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Street_Life_Remastered,"Combat")
-    Hub:AddToggle(t_Street_Life_Remastered,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Street_Life_Remastered,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddToggle(t_Street_Life_Remastered,"Kill Aura",false,function(v) HubState.KillAura=v end)
-    Hub:AddSection(t_Street_Life_Remastered,"Weapon")
-    Hub:AddToggle(t_Street_Life_Remastered,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddSection(t_Street_Life_Remastered,"Movement")
-    Hub:AddToggle(t_Street_Life_Remastered,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Street_Life_Remastered,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Street_Life_Remastered,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Street_Life_Remastered,"Visual & Misc")
-    Hub:AddToggle(t_Street_Life_Remastered,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Street_Life_Remastered,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- WESTBOUND TAB
-if CurrentGame == "Westbound" or CurrentGame == "Unknown" then
-    local t_Westbound = Hub:AddTab("Westbound","🏜️")
-    Hub:AddSection(t_Westbound,"Farming")
-    Hub:AddToggle(t_Westbound,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Westbound,"Combat")
-    Hub:AddToggle(t_Westbound,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Westbound,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Westbound,"Weapon")
-    Hub:AddToggle(t_Westbound,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddSection(t_Westbound,"Movement")
-    Hub:AddToggle(t_Westbound,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Westbound,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Westbound,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Westbound,"Visual & Misc")
-    Hub:AddToggle(t_Westbound,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Westbound,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- DARK DIVERS TAB
-if CurrentGame == "Dark Divers" or CurrentGame == "Unknown" then
-    local t_Dark_Divers = Hub:AddTab("Dark Divers","🤿")
-    Hub:AddSection(t_Dark_Divers,"Farming")
-    Hub:AddToggle(t_Dark_Divers,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddSection(t_Dark_Divers,"Combat")
-    Hub:AddToggle(t_Dark_Divers,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Dark_Divers,"Movement")
-    Hub:AddToggle(t_Dark_Divers,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Dark_Divers,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Dark_Divers,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddToggle(t_Dark_Divers,"God Mode",false,function(v) HubState.GodMode=v end)
-    Hub:AddSection(t_Dark_Divers,"Visual & Misc")
-    Hub:AddToggle(t_Dark_Divers,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Dark_Divers,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- FRONTLINES TAB
-if CurrentGame == "Frontlines" or CurrentGame == "Unknown" then
-    local t_Frontlines = Hub:AddTab("Frontlines","⚔️")
-    Hub:AddSection(t_Frontlines,"Combat")
-    Hub:AddToggle(t_Frontlines,"Silent Aim",false,function(v) HubState.SilentAim=v end)
-    Hub:AddToggle(t_Frontlines,"Aimbot",false,function(v) HubState.Aimbot=v end)
-    Hub:AddToggle(t_Frontlines,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Frontlines,"Weapon")
-    Hub:AddToggle(t_Frontlines,"No Recoil",false,function(v) HubState.NoRecoil=v end)
-    Hub:AddToggle(t_Frontlines,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
-    Hub:AddSection(t_Frontlines,"Movement")
-    Hub:AddToggle(t_Frontlines,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Frontlines,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Frontlines,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Frontlines,"Visual & Misc")
-    Hub:AddToggle(t_Frontlines,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Frontlines,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- BUBBLEGUM SIMULATOR TAB
-if CurrentGame == "Bubblegum Simulator" or CurrentGame == "Unknown" then
-    local t_Bubblegum_Simulator = Hub:AddTab("Bubblegum Simulator","🫧")
-    Hub:AddSection(t_Bubblegum_Simulator,"Farming")
-    Hub:AddToggle(t_Bubblegum_Simulator,"Auto Farm",true,function(v) HubState.AutoFarm=v end)
-    Hub:AddToggle(t_Bubblegum_Simulator,"Auto Hatch",false,function(v) HubState.AutoHatch=v end)
-    Hub:AddSection(t_Bubblegum_Simulator,"Combat")
-    Hub:AddToggle(t_Bubblegum_Simulator,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
-    Hub:AddSection(t_Bubblegum_Simulator,"Movement")
-    Hub:AddToggle(t_Bubblegum_Simulator,"Speed Hack",false,function(v) HubState.SpeedHack=v; pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
-    Hub:AddToggle(t_Bubblegum_Simulator,"Fly",false,function(v) HubState.FlyEnabled=v; if v then StartFly() end end)
-    Hub:AddToggle(t_Bubblegum_Simulator,"Noclip",false,function(v) HubState.Noclip=v end)
-    Hub:AddSection(t_Bubblegum_Simulator,"Visual & Misc")
-    Hub:AddToggle(t_Bubblegum_Simulator,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
-    Hub:AddToggle(t_Bubblegum_Simulator,"Anti AFK",true,function(v) HubState.AntiAFK=v end)
-end
-
--- MAIN LOOPS
-local mainLoop = RunService.Heartbeat:Connect(function()
-    -- Aimbot
-    if HubState.Aimbot then
-        local t = GetClosestPlayer(HubState.AimFOV)
-        if t then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, t.Position)
-        end
-    end
-    -- Kill Aura
-    if HubState.KillAura then RunKillAura() end
-    -- Hitbox refresh
-    if HubState.HitboxExpand then ExpandHitboxes() end
-    -- Speed
-    if HubState.SpeedHack then pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed = HubState.SpeedValue or 100 end) end
-end)
-table.insert(Connections, mainLoop)
-
--- ============================================================
--- REAL AUTOFARM LOOPS — Hood Omni Hub MEGA
--- Injected: real game-specific logic for all major games
--- ============================================================
-
--- Utility: get nearest NPC/mob in workspace
-local function GetNearestNPC(maxDist)
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return nil end
-    local root = char.HumanoidRootPart
-    local nearest, dist = nil, maxDist or 100
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and v ~= char then
-            local hum = v:FindFirstChildOfClass("Humanoid")
-            local hrp = v:FindFirstChild("HumanoidRootPart")
-            if hum and hrp and hum.Health > 0 and not Players:GetPlayerFromCharacter(v) then
-                local d = (hrp.Position - root.Position).Magnitude
-                if d < dist then dist = d; nearest = v end
+    Hub:AddButton(t_GameTab,"Teleport to Nearest Chest",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            local nearest, dist = nil, math.huge
+            for _, v in pairs(workspace:GetDescendants()) do
+                if (v.Name == "Chest" or v.Name == "chest") and v:IsA("Model") then
+                    local pivot = v:GetPivot().Position
+                    local d = (pivot - hrp.Position).Magnitude
+                    if d < dist then dist = d; nearest = pivot end
+                end
             end
-        end
-    end
-    return nearest
-end
+            if nearest then
+                hrp.CFrame = CFrame.new(nearest + Vector3.new(0, 4, 0))
+            end
+        end)
+    end)
 
--- Utility: safe teleport
-local function SafeTP(pos)
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = CFrame.new(pos)
-    end
-end
+    Hub:AddButton(t_GameTab,"Enable Buddha (if owned)",function()
+        pcall(function()
+            local RS = game:GetService("ReplicatedStorage")
+            local remote = RS:FindFirstChild("Remotes", true)
+                or RS:FindFirstChild("MainEvent", true)
+            -- Fire fruit activation event
+            local fruitEvent = RS:FindFirstChild("ActivateFruit", true)
+                or RS:FindFirstChild("FruitActivate", true)
+            if fruitEvent then
+                fruitEvent:FireServer("Buddha")
+            end
+        end)
+    end)
 
--- ============================================================
--- DA HOOD AUTOFARM — collect cash drops on ground
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.3)
-        if CurrentGame == "Da Hood" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                -- Collect cash/money bags dropped in workspace
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                local root = char.HumanoidRootPart
-                -- Look for drop models (cash, money)
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") or v:IsA("Model") then
-                        local name = v.Name:lower()
-                        if name:find("cash") or name:find("money") or name:find("drop") or name:find("bag") then
-                            local part = v:IsA("BasePart") and v or v:FindFirstChildOfClass("BasePart")
-                            if part then
-                                local dist = (part.Position - root.Position).Magnitude
-                                if dist < 200 then
-                                    SafeTP(part.Position)
-                                    -- Try click detector
-                                    local cd = v:FindFirstChildOfClass("ClickDetector") or part:FindFirstChildOfClass("ClickDetector")
-                                    if cd then fireclickdetector(cd) end
-                                    -- Try touch
-                                    pcall(function() firetouchinterest(part, char.HumanoidRootPart, 0) task.wait(0.05) firetouchinterest(part, char.HumanoidRootPart, 1) end)
-                                end
-                            end
+-- ═══════════════════════════════════════════════════════════════
+-- JAILBREAK (PlaceId: 606849621)
+-- Research: Sky-Hub jailbreak.lua loaded, ReplicatedStorage.Jailbreak.*
+-- Rob events: "BankRemote", "JewelryRemote", "CasinoRemote"
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Jailbreak" then
+    local t_GameTab = Hub:AddTab("Jailbreak","🔓")
+
+    Hub:AddToggle(t_GameTab,"Auto Rob Bank",false,function(v)
+        HubState.JB_AutoBank = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Rob Jewelry Store",false,function(v)
+        HubState.JB_AutoJewelry = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Rob Casino",false,function(v)
+        HubState.JB_AutoCasino = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Rob Train",false,function(v)
+        HubState.JB_AutoTrain = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Collect Cargo",false,function(v)
+        HubState.JB_AutoCargo = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Infinite Nitro",false,function(v)
+        HubState.JB_InfNitro = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Teleport to Bank",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                -- Jailbreak Bank approximate location
+                hrp.CFrame = CFrame.new(277, 18, -1595)
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"Teleport to Jewelry Store",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                hrp.CFrame = CFrame.new(-602, 18, 131)
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- MURDER MYSTERY 2 (PlaceId: 142823291)
+-- Research: Sky-Hub murdermystery2.lua, MM2 event structure
+-- ReplicatedStorage.GameEvents.* for role events
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Murder Mystery 2" then
+    local t_GameTab = Hub:AddTab("Murder Mystery 2","🔪")
+
+    Hub:AddToggle(t_GameTab,"ESP - Show Murderer",false,function(v)
+        HubState.MM2_ESPMurderer = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Coin Farm",false,function(v)
+        HubState.MM2_AutoCoin = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Knife Throw",false,function(v)
+        HubState.MM2_AutoKnifeThrow = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Sheriff Auto-Win (Follow Murderer)",false,function(v)
+        HubState.MM2_SheriffAutoWin = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Godhand Shoot",false,function(v)
+        HubState.MM2_AutoGodhand = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Collect All Coins Now",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name == "Coin" and v:IsA("BasePart") then
+                    hrp.CFrame = CFrame.new(v.Position + Vector3.new(0, 3, 0))
+                    task.wait(0.15)
+                end
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"ESP All Players",function()
+        pcall(function()
+            for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= game:GetService("Players").LocalPlayer then
+                    local char = player.Character
+                    if char then
+                        local hrp = char:FindFirstChild("HumanoidRootPart")
+                        if hrp then
+                            local bb = Instance.new("BillboardGui")
+                            bb.Name = "MM2_ESP"
+                            bb.AlwaysOnTop = true
+                            bb.Size = UDim2.new(0, 100, 0, 40)
+                            bb.StudsOffset = Vector3.new(0, 3, 0)
+                            bb.Parent = hrp
+                            local lbl = Instance.new("TextLabel")
+                            lbl.BackgroundTransparency = 1
+                            lbl.Size = UDim2.new(1,0,1,0)
+                            lbl.Text = player.Name
+                            lbl.TextColor3 = Color3.fromRGB(255,0,0)
+                            lbl.TextStrokeTransparency = 0
+                            lbl.Font = Enum.Font.GothamBold
+                            lbl.TextScaled = true
+                            lbl.Parent = bb
                         end
                     end
                 end
-            end)
-        end
-    end
-end)
+            end
+        end)
+    end)
 
--- ============================================================
--- DA HOOD — Potato Farm autofarm (Gangwars specific)
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if (CurrentGame == "Da Hood" or CurrentGame == "Gangwars") and HubState.PotatoFarm then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Find potato/plant objects
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("potato") or v.Name:lower():find("plant") or v.Name:lower():find("farm")) then
-                        SafeTP(v.Position)
-                        local cd = v:FindFirstChildOfClass("ClickDetector")
-                        if cd then fireclickdetector(cd) end
-                        pcall(function() firetouchinterest(v, char.HumanoidRootPart, 0) task.wait(0.1) firetouchinterest(v, char.HumanoidRootPart, 1) end)
+-- ═══════════════════════════════════════════════════════════════
+-- PET SIMULATOR 99 (PlaceId: 8737899170)
+-- Research: Sky-Hub petsimulator99.lua loaded
+-- ReplicatedStorage packages contain BuyEgg, HatchEgg, etc.
+-- Eggs in Workspace.EggWorld.*, Coins in Workspace.*
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Pet Simulator 99" then
+    local t_GameTab = Hub:AddTab("Pet Sim 99","🐾")
+
+    Hub:AddToggle(t_GameTab,"Auto Hatch Egg",false,function(v)
+        HubState.PS99_AutoHatch = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Farm Diamonds",false,function(v)
+        HubState.PS99_AutoDiamond = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Collect Coins",false,function(v)
+        HubState.PS99_AutoCoin = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Enchant Pets",false,function(v)
+        HubState.PS99_AutoEnchant = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Fuse Pets",false,function(v)
+        HubState.PS99_AutoFuse = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Open Chests",false,function(v)
+        HubState.PS99_AutoChest = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Collect All Coins Now",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if (v.Name == "Coin" or v.Name == "Diamond") and v:IsA("BasePart") then
+                    hrp.CFrame = CFrame.new(v.Position)
+                    task.wait(0.1)
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- GROW A GARDEN (PlaceId: 126884695634)
+-- Research: Garden game with planting, watering, harvesting
+-- Workspace.Garden.Plots.*, ReplicatedStorage events for farming
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Grow A Garden" then
+    local t_GameTab = Hub:AddTab("Grow A Garden","🌱")
+
+    Hub:AddToggle(t_GameTab,"Auto Plant Seeds",false,function(v)
+        HubState.GAG_AutoPlant = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Harvest Crops",false,function(v)
+        HubState.GAG_AutoHarvest = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Water Plants",false,function(v)
+        HubState.GAG_AutoWater = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Buy Seeds",false,function(v)
+        HubState.GAG_AutoBuySeeds = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Sell Crops",false,function(v)
+        HubState.GAG_AutoSell = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Fertilize",false,function(v)
+        HubState.GAG_AutoFertilize = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Harvest All Now",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            local RS = game:GetService("ReplicatedStorage")
+            -- Look for harvest remote
+            for _, v in pairs(RS:GetDescendants()) do
+                if v:IsA("RemoteEvent") and (v.Name:lower():find("harvest") or v.Name:lower():find("collect")) then
+                    pcall(function() v:FireServer() end)
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- BLADE BALL (PlaceId: 13772394625)
+-- Research: Sky-Hub bladeball.lua - parry system
+-- ReplicatedStorage.Packages.* has parry remotes
+-- Ball object in Workspace, "Parry" RemoteEvent confirmed from community scripts
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Blade Ball" then
+    local t_GameTab = Hub:AddTab("Blade Ball","⚽")
+
+    Hub:AddToggle(t_GameTab,"Auto Parry Ball",false,function(v)
+        HubState.BB_AutoParry = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Deflect Chain",false,function(v)
+        HubState.BB_AutoDeflect = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Use Ability",false,function(v)
+        HubState.BB_AutoAbility = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Teleport to Ball",false,function(v)
+        HubState.BB_TpToBall = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Win Round (Survive)",false,function(v)
+        HubState.BB_AutoWin = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Instant Parry Now",function()
+        pcall(function()
+            local RS = game:GetService("ReplicatedStorage")
+            -- Blade Ball uses "Parry" RemoteEvent in ReplicatedStorage
+            local parryEvent = RS:FindFirstChild("Parry", true)
+                or RS:FindFirstChild("ParryEvent", true)
+                or RS:FindFirstChild("Deflect", true)
+            if parryEvent and parryEvent:IsA("RemoteEvent") then
+                parryEvent:FireServer()
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"Find Ball Location",function()
+        pcall(function()
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name == "Ball" and v:IsA("BasePart") then
+                    print("Ball found at: " .. tostring(v.Position))
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- BEE SWARM SIMULATOR (PlaceId: 1537690962)
+-- Research: ReplicatedStorage.Remotes.* for bee/honey events
+-- Workspace.Honey, Workspace.Pollen, Workspace.Quests
+-- "CollectHoney", "FightBear", "CompleteQuest" remote names
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Bee Swarm Simulator" then
+    local t_GameTab = Hub:AddTab("Bee Swarm Sim","🐝")
+
+    Hub:AddToggle(t_GameTab,"Auto Collect Honey",false,function(v)
+        HubState.BSS_AutoHoney = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Farm Pollen",false,function(v)
+        HubState.BSS_AutoPollen = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Complete Quest",false,function(v)
+        HubState.BSS_AutoQuest = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Buy Gear",false,function(v)
+        HubState.BSS_AutoBuyGear = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Fight Monster",false,function(v)
+        HubState.BSS_AutoFightMonster = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Collect All Honey Now",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            local RS = game:GetService("ReplicatedStorage")
+            local honeyRemote = RS:FindFirstChild("CollectHoney", true)
+                or RS:FindFirstChild("Honey", true)
+            if honeyRemote and honeyRemote:IsA("RemoteEvent") then
+                honeyRemote:FireServer()
+            end
+            -- Also walk through pollen field
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name == "Honey" and v:IsA("BasePart") then
+                    hrp.CFrame = CFrame.new(v.Position + Vector3.new(0, 3, 0))
+                    task.wait(0.2)
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- SHINDO LIFE (PlaceId: 6276433986)
+-- Research: ReplicatedStorage.rei.* event structure
+-- RELL Coins, EXP, elemental spins via "rei" RemoteFunction
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Shindo Life" then
+    local t_GameTab = Hub:AddTab("Shindo Life","⚡")
+
+    Hub:AddToggle(t_GameTab,"Auto Farm EXP",false,function(v)
+        HubState.SL_AutoEXP = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Spin Elements",false,function(v)
+        HubState.SL_AutoSpin = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Sword Farm",false,function(v)
+        HubState.SL_AutoSword = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto RELL Coin Farm",false,function(v)
+        HubState.SL_AutoRELLCoin = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Mode Farm (Sage/Tailed Beast)",false,function(v)
+        HubState.SL_AutoMode = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Auto Spin Once",function()
+        pcall(function()
+            local RS = game:GetService("ReplicatedStorage")
+            -- Shindo Life uses "rei" RemoteFunction
+            local reiFolder = RS:FindFirstChild("rei")
+            if reiFolder then
+                local spinRemote = reiFolder:FindFirstChild("Spin")
+                    or reiFolder:FindFirstChild("SpinElement")
+                if spinRemote and spinRemote:IsA("RemoteFunction") then
+                    pcall(function() spinRemote:InvokeServer("FreeSpins") end)
+                elseif spinRemote and spinRemote:IsA("RemoteEvent") then
+                    spinRemote:FireServer("FreeSpins")
+                end
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"Collect RELL Coins Now",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name == "RELLcoin" or v.Name == "RellCoin" or v.Name == "Coin" then
+                    local pos = v:IsA("BasePart") and v.Position
+                        or (v:IsA("Model") and v:GetPivot().Position)
+                    if pos then
+                        hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                        task.wait(0.2)
                     end
                 end
-                -- Try interact remotes
-                for _, v in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if v:IsA("RemoteEvent") and (v.Name:lower():find("potato") or v.Name:lower():find("farm") or v.Name:lower():find("harvest")) then
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- THE STRONGEST BATTLEGROUNDS (PlaceId: 15532962292)
+-- Research: TSB uses ReplicatedStorage.Remotes.* for combat
+-- "KO", "RankUp", "Block", "Counter", "Combo" remotes
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "The Strongest Battlegrounds" then
+    local t_GameTab = Hub:AddTab("Strongest BG","💪")
+
+    Hub:AddToggle(t_GameTab,"Auto Farm KO",false,function(v)
+        HubState.TSB_AutoKO = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Block Break",false,function(v)
+        HubState.TSB_AutoBlockBreak = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Counter Attack",false,function(v)
+        HubState.TSB_AutoCounter = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Combo",false,function(v)
+        HubState.TSB_AutoCombo = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Rank Up",false,function(v)
+        HubState.TSB_AutoRankUp = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Teleport to Nearest Enemy",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            local nearest, nearDist = nil, math.huge
+            for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+                if player ~= lp and player.Character then
+                    local enemyHRP = player.Character:FindFirstChild("HumanoidRootPart")
+                    local hum = player.Character:FindFirstChild("Humanoid")
+                    if enemyHRP and hum and hum.Health > 0 then
+                        local d = (enemyHRP.Position - hrp.Position).Magnitude
+                        if d < nearDist then
+                            nearDist = d
+                            nearest = enemyHRP.Position
+                        end
+                    end
+                end
+            end
+            if nearest then
+                hrp.CFrame = CFrame.new(nearest + Vector3.new(0, 2, 4))
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"Auto Use All Abilities",function()
+        pcall(function()
+            local RS = game:GetService("ReplicatedStorage")
+            local remotes = RS:FindFirstChild("Remotes")
+            if remotes then
+                for _, v in pairs(remotes:GetChildren()) do
+                    if v:IsA("RemoteEvent") and v.Name:lower():find("ability") then
                         pcall(function() v:FireServer() end)
                     end
                 end
-            end)
-        end
-    end
-end)
+            end
+        end)
+    end)
 
--- ============================================================
--- DA HOOD — Car Breaking autofarm
--- ============================================================
+-- ═══════════════════════════════════════════════════════════════
+-- ANIME DEFENDERS (PlaceId: 101459448310804)
+-- Research: ReplicatedStorage.Remotes.* for stage/summon events
+-- "FarmStage", "CollectGems", "UpgradeUnit", "Summon", "SellUnit"
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Anime Defenders" then
+    local t_GameTab = Hub:AddTab("Anime Defenders","⚔️")
+
+    Hub:AddToggle(t_GameTab,"Auto Farm Stage",false,function(v)
+        HubState.AD_AutoFarm = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Collect Gems",false,function(v)
+        HubState.AD_AutoGems = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Upgrade Units",false,function(v)
+        HubState.AD_AutoUpgrade = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Summon Units",false,function(v)
+        HubState.AD_AutoSummon = v
+    end)
+
+    Hub:AddToggle(t_GameTab,"Auto Sell Excess Units",false,function(v)
+        HubState.AD_AutoSell = v
+    end)
+
+    Hub:AddButton(t_GameTab,"Collect Gems Now",function()
+        pcall(function()
+            local RS = game:GetService("ReplicatedStorage")
+            for _, v in pairs(RS:GetDescendants()) do
+                if v:IsA("RemoteEvent") and (v.Name:lower():find("gem") or v.Name:lower():find("collect")) then
+                    pcall(function() v:FireServer() end)
+                    task.wait(0.1)
+                end
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"Summon Once",function()
+        pcall(function()
+            local RS = game:GetService("ReplicatedStorage")
+            for _, v in pairs(RS:GetDescendants()) do
+                if v:IsA("RemoteEvent") and v.Name:lower():find("summon") then
+                    pcall(function() v:FireServer(1) end) -- 1 = single summon
+                    break
+                end
+            end
+        end)
+    end)
+
+end -- END of game tab elseif chain
+
+
+-- ╔══════════════════════════════════════════════════════════════╗
+
+-- ║                      LOOPS SECTION                           ║
+-- ║  Paste this into your main task.spawn / RunService loop      ║
+-- ╚══════════════════════════════════════════════════════════════╝
+
+--[[
+    LOOPS SECTION
+    These loops should be spawned once at script start.
+    They check HubState flags set by the toggles above.
+    All loops use task.wait(0.5) for efficiency.
+--]]
+
 task.spawn(function()
-    while true do
-        task.wait(0.5)
-        if (CurrentGame == "Da Hood" or CurrentGame == "Gangwars") and HubState.CarBreak then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                local root = char.HumanoidRootPart
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("car") or v.Name:lower():find("vehicle")) then
-                        local dist = (v.Position - root.Position).Magnitude
-                        if dist < 50 then
-                            SafeTP(v.Position)
-                            local cd = v:FindFirstChildOfClass("ClickDetector")
-                            if cd then fireclickdetector(cd) end
-                            for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                                if re:IsA("RemoteEvent") and (re.Name:lower():find("break") or re.Name:lower():find("rob") or re.Name:lower():find("car")) then
-                                    pcall(function() re:FireServer(v) end)
+    local RunService = game:GetService("RunService")
+    local Players = game:GetService("Players")
+    local RS = game:GetService("ReplicatedStorage")
+    local lp = Players.LocalPlayer
+
+    -- ─────────────────────────────────────────────
+    --  DA HOOD LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Farm Cash: Collect money drops in Workspace.Ignored.Drop
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.DH_AutoCash then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local dropFolder = workspace:FindFirstChild("Ignored")
+                        and workspace.Ignored:FindFirstChild("Drop")
+                    if dropFolder then
+                        for _, v in pairs(dropFolder:GetDescendants()) do
+                            if v:IsA("ClickDetector") and v.Parent.Name == "MoneyDrop" then
+                                hrp.CFrame = CFrame.new(v.Parent.Position + Vector3.new(0, 3, 0))
+                                task.wait(0.2)
+                                pcall(function() fireclickdetector(v, 0) end)
+                                task.wait(0.2)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Stomp Downed: Stomp players with ragdoll state
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.DH_AutoStomp then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= lp and player.Character then
+                            local hum = player.Character:FindFirstChild("Humanoid")
+                            local enemyHRP = player.Character:FindFirstChild("HumanoidRootPart")
+                            -- Ragdolled players have < 1 health or are in ragdoll state
+                            if hum and enemyHRP and hum.Health < 1 then
+                                hrp.CFrame = CFrame.new(enemyHRP.Position + Vector3.new(0, 2, 0))
+                                task.wait(0.1)
+                                -- Fire MainEvent stomp
+                                local mainEvent = RS:FindFirstChild("MainEvent")
+                                if mainEvent then
+                                    pcall(function() mainEvent:FireServer("Stomp", player) end)
                                 end
                             end
                         end
                     end
-                end
-            end)
+                end)
+            end
         end
-    end
-end)
+    end)
 
--- ============================================================
--- DA HOOD — Store Robbery autofarm
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if (CurrentGame == "Da Hood" or CurrentGame == "Gangwars") and HubState.StoreRob then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char then return end
-                -- Teleport to store location and fire rob remote
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("store") or v.Name:lower():find("shop") or v.Name:lower():find("register") or v.Name:lower():find("cashier")) then
-                        SafeTP(v.Position)
-                        local cd = v:FindFirstChildOfClass("ClickDetector")
-                        if cd then fireclickdetector(cd) end
-                        pcall(function() firetouchinterest(v, char.HumanoidRootPart, 0) task.wait(0.1) firetouchinterest(v, char.HumanoidRootPart, 1) end)
-                    end
-                end
-                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if re:IsA("RemoteEvent") and (re.Name:lower():find("rob") or re.Name:lower():find("steal") or re.Name:lower():find("store")) then
-                        pcall(function() re:FireServer() end)
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- MURDER MYSTERY 2 — Auto collect coins + Murderer reveal
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.15)
-        if CurrentGame == "Murder Mystery 2" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Collect coins (BaseParts/Models named "Coin")
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v.Name == "Coin" or v.Name == "GoldCoin" then
-                        local part = v:IsA("BasePart") and v or v:FindFirstChildOfClass("BasePart")
-                        if part then
-                            SafeTP(part.Position)
-                            pcall(function() firetouchinterest(part, char.HumanoidRootPart, 0) task.wait(0.05) firetouchinterest(part, char.HumanoidRootPart, 1) end)
-                        end
-                    end
-                end
-            end)
-        end
-        -- Murderer ESP: highlight player with Knife tool
-        if CurrentGame == "Murder Mystery 2" and HubState.ESPEnabled then
-            pcall(function()
-                for _, p in pairs(Players:GetPlayers()) do
-                    if p ~= LocalPlayer and p.Character then
-                        local hasKnife = false
-                        for _, tool in pairs(p.Character:GetChildren()) do
-                            if tool:IsA("Tool") and (tool.Name:lower():find("knife") or tool.Name:lower():find("murder")) then
-                                hasKnife = true
+    -- Auto Pickup Guns: Collect tool drops
+    task.spawn(function()
+        while true do
+            task.wait(0.6)
+            if HubState.DH_AutoPickupGun then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local itemsDrop = workspace:FindFirstChild("Ignored")
+                        and workspace.Ignored:FindFirstChild("ItemsDrop")
+                    if itemsDrop then
+                        for _, v in pairs(itemsDrop:GetDescendants()) do
+                            if v:IsA("Tool") then
+                                local pp = v.Parent
+                                local pos = pp:IsA("BasePart") and pp.Position
+                                    or (pp.PrimaryPart and pp.PrimaryPart.Position)
+                                if pos then
+                                    hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                                    task.wait(0.3)
+                                    local touch = v:FindFirstChildWhichIsA("TouchTransmitter")
+                                    if touch then
+                                        pcall(function() firetouchinterest(hrp, pp:IsA("BasePart") and pp or pp.PrimaryPart, 0) end)
+                                    end
+                                end
                             end
                         end
-                        -- Color murderer red via existing ESP
-                        local highlight = p.Character:FindFirstChild("MM2_Highlight")
-                        if hasKnife then
-                            if not highlight then
-                                local h = Instance.new("SelectionBox")
-                                h.Name = "MM2_Highlight"
-                                h.Color3 = Color3.fromRGB(255, 0, 0)
-                                h.LineThickness = 0.05
-                                h.Adornee = p.Character
-                                h.Parent = p.Character
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Bank Deposit
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if HubState.DH_AutoBank then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Teleport to bank and interact
+                    hrp.CFrame = CFrame.new(271, 18, -616)
+                    task.wait(0.5)
+                    local mainEvent = RS:FindFirstChild("MainEvent")
+                    if mainEvent then
+                        pcall(function() mainEvent:FireServer("DepositAll") end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Lock Victim: Continuously set nearest target
+    task.spawn(function()
+        while true do
+            task.wait(0.3)
+            if HubState.DH_LockVictim then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local nearest, nearDist = nil, math.huge
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= lp and player.Character then
+                            local enemyHRP = player.Character:FindFirstChild("HumanoidRootPart")
+                            local hum = player.Character:FindFirstChild("Humanoid")
+                            if enemyHRP and hum and hum.Health > 0 then
+                                local d = (enemyHRP.Position - hrp.Position).Magnitude
+                                if d < nearDist then
+                                    nearDist = d
+                                    nearest = player
+                                end
                             end
-                        else
-                            if highlight then highlight:Destroy() end
                         end
                     end
-                end
-            end)
+                    HubState.DH_LockedTarget = nearest
+                end)
+            end
         end
-    end
-end)
+    end)
 
--- ============================================================
--- BLADE BALL — Auto Parry
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.05)
-        if CurrentGame == "Blade Ball" and HubState.AutoParry then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                local root = char.HumanoidRootPart
-                -- Find the ball
-                local ball = workspace:FindFirstChild("Ball") or workspace:FindFirstChild("BladeBall")
-                if not ball then
+    -- Auto Collect Drops (shoes, misc items)
+    task.spawn(function()
+        while true do
+            task.wait(0.7)
+            if HubState.DH_AutoCollectDrops then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local dropFolder = workspace:FindFirstChild("Ignored")
+                        and workspace.Ignored:FindFirstChild("Drop")
+                    if dropFolder then
+                        for _, v in pairs(dropFolder:GetDescendants()) do
+                            if v:IsA("ClickDetector") then
+                                hrp.CFrame = CFrame.new(v.Parent.Position + Vector3.new(0, 3, 0))
+                                task.wait(0.15)
+                                pcall(function() fireclickdetector(v, 0) end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  GANG WARS LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Potato Farm
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.GW_PotatoFarm then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
                     for _, v in pairs(workspace:GetDescendants()) do
-                        if v:IsA("BasePart") and (v.Name:lower():find("ball") or v.Name:lower() == "sphere") and v.Size.Magnitude < 5 then
-                            ball = v; break
-                        end
-                    end
-                end
-                if ball then
-                    local dist = (ball.Position - root.Position).Magnitude
-                    if dist < 30 then
-                        -- Fire parry remote
-                        local parryRemote = 
-                            (game.ReplicatedStorage:FindFirstChild("Events") and game.ReplicatedStorage.Events:FindFirstChild("Parry")) or
-                            (game.ReplicatedStorage:FindFirstChild("Remotes") and game.ReplicatedStorage.Remotes:FindFirstChild("Deflect")) or
-                            (game.ReplicatedStorage:FindFirstChild("Remotes") and game.ReplicatedStorage.Remotes:FindFirstChild("Parry")) or
-                            game.ReplicatedStorage:FindFirstChild("Parry")
-                        if parryRemote and parryRemote:IsA("RemoteEvent") then
-                            parryRemote:FireServer()
-                        end
-                        -- Fallback: try all remotes with parry/deflect in name
-                        for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                            if re:IsA("RemoteEvent") and (re.Name:lower():find("parry") or re.Name:lower():find("deflect") or re.Name:lower():find("block")) then
-                                pcall(function() re:FireServer() end)
+                        if v.Name == "Potato" or v.Name == "potato" then
+                            local pos = v:IsA("BasePart") and v.Position
+                                or (v:IsA("Model") and v:GetPivot().Position)
+                            if pos and (pos - hrp.Position).Magnitude < 500 then
+                                hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                                task.wait(0.3)
+                                if v:IsA("BasePart") then
+                                    pcall(function() firetouchinterest(hrp, v, 0) end)
+                                end
                             end
                         end
                     end
-                end
-            end)
+                end)
+            end
         end
-    end
-end)
+    end)
 
--- ============================================================
--- THE STRONGEST BATTLEGROUNDS — Auto Attack nearest player
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-        if CurrentGame == "The Strongest Battlegrounds" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local target = GetClosestPlayer(150)
-                if not target then return end
-                -- Teleport close
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                local tp = target.Position - (target.Position - char.HumanoidRootPart.Position).Unit * 5
-                char.HumanoidRootPart.CFrame = CFrame.new(tp)
-                -- Fire attack remotes
-                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if re:IsA("RemoteEvent") and (re.Name:lower():find("attack") or re.Name:lower():find("punch") or re.Name:lower():find("hit") or re.Name:lower():find("combo")) then
-                        pcall(function() re:FireServer(target.Parent, target) end)
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- BLOX FRUITS — Auto kill nearest mob + auto quest
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.3)
-        if CurrentGame == "Blox Fruits" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Attack nearest NPC/mob
-                local mob = GetNearestNPC(60)
-                if mob then
-                    local hrp = mob:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        SafeTP(hrp.Position - (hrp.Position - char.HumanoidRootPart.Position).Unit * 5)
-                        -- Fire attack
-                        for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                            if re:IsA("RemoteEvent") and (re.Name:lower():find("attack") or re.Name:lower():find("damage") or re.Name:lower():find("hit")) then
-                                pcall(function() re:FireServer(mob, hrp.Position) end)
+    -- Car Farm
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.GW_CarFarm then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Model") and (v.Name:lower():find("car") or v.Name:lower():find("vehicle")) then
+                            local primary = v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
+                            if primary then
+                                hrp.CFrame = CFrame.new(primary.Position + Vector3.new(0, 3, 0))
+                                task.wait(0.5)
+                                -- Look for seat/VehicleSeat
+                                local seat = v:FindFirstChildWhichIsA("VehicleSeat")
+                                    or v:FindFirstChildWhichIsA("Seat")
+                                if seat then
+                                    pcall(function() seat:Sit(char:FindFirstChild("Humanoid")) end)
+                                end
                             end
                         end
-                        -- Equip and use tool
-                        for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-                            if tool:IsA("Tool") then
-                                LocalPlayer.Character.Humanoid:EquipTool(tool)
-                                pcall(function()
-                                    local activate = tool:FindFirstChild("Activated") or tool:FindFirstChildOfClass("RemoteEvent")
-                                    if activate then activate:FireServer() end
-                                end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Store Rob
+    task.spawn(function()
+        while true do
+            task.wait(1.5)
+            if HubState.GW_StoreRob then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Find store/rob objects in workspace
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and (v.ActionText:lower():find("rob") or v.ObjectText:lower():find("store")) then
+                            local att = v.Parent
+                            if att then
+                                local pos = att:IsA("BasePart") and att.Position
+                                    or (att.Parent and att.Parent:IsA("Model") and att.Parent:GetPivot().Position)
+                                if pos then
+                                    hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                                    task.wait(0.3)
+                                    pcall(function() fireproximityprompt(v) end)
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Kill NPC
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.GW_AutoKillNPC then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Humanoid") and v.Parent ~= char and v.Health > 0 then
+                            local npcHRP = v.Parent:FindFirstChild("HumanoidRootPart")
+                            if npcHRP and not Players:GetPlayerFromCharacter(v.Parent) then
+                                hrp.CFrame = CFrame.new(npcHRP.Position + Vector3.new(0, 2, 2))
+                                task.wait(0.2)
+                                local tool = char:FindFirstChildWhichIsA("Tool")
+                                    or lp.Backpack:FindFirstChildWhichIsA("Tool")
+                                if tool and not char:FindFirstChildWhichIsA("Tool") then
+                                    char:FindFirstChild("Humanoid"):EquipTool and char.Humanoid:EquipTool(tool)
+                                end
+                                local handle = tool and tool:FindFirstChild("Handle")
+                                if handle then
+                                    pcall(function() firetouchinterest(handle, npcHRP, 0) end)
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Revive Allies
+    task.spawn(function()
+        while true do
+            task.wait(0.8)
+            if HubState.GW_AutoRevive then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and v.ActionText:lower():find("revive") then
+                            local att = v.Parent
+                            local pos = att and (att:IsA("BasePart") and att.Position
+                                or (att.Parent and att.Parent:IsA("Model") and att.Parent:GetPivot().Position))
+                            if pos then
+                                hrp.CFrame = CFrame.new(pos + Vector3.new(0, 2, 0))
+                                task.wait(0.3)
+                                pcall(function() fireproximityprompt(v) end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Buy Ammo
+    task.spawn(function()
+        while true do
+            task.wait(3)
+            if HubState.GW_AutoAmmo then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and v.ObjectText:lower():find("ammo") then
+                            local att = v.Parent
+                            local pos = att and (att:IsA("BasePart") and att.Position
+                                or (att.Parent and att.Parent:IsA("Model") and att.Parent:GetPivot().Position))
+                            if pos then
+                                hrp.CFrame = CFrame.new(pos + Vector3.new(0, 2, 0))
+                                task.wait(0.3)
+                                pcall(function() fireproximityprompt(v) end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  BLOX FRUITS LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Farm Mastery: Attack nearest mob repeatedly
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.BF_AutoMastery then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    local hum = char and char:FindFirstChild("Humanoid")
+                    if not hrp or not hum then return end
+                    local nearest, nearDist = nil, math.huge
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Humanoid") and v.Parent ~= char and v.Health > 0
+                            and not Players:GetPlayerFromCharacter(v.Parent) then
+                            local mobHRP = v.Parent:FindFirstChild("HumanoidRootPart")
+                            if mobHRP then
+                                local d = (mobHRP.Position - hrp.Position).Magnitude
+                                if d < nearDist then
+                                    nearDist = d
+                                    nearest = mobHRP
+                                end
+                            end
+                        end
+                    end
+                    if nearest and nearDist > 0 then
+                        hrp.CFrame = CFrame.new(nearest.Position + Vector3.new(0, 2, 4))
+                            * CFrame.Angles(0, math.pi, 0)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Farm Bounty: Target players
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.BF_AutoBounty then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local nearest, nearDist = nil, math.huge
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= lp and player.Character then
+                            local enemyHRP = player.Character:FindFirstChild("HumanoidRootPart")
+                            local hum = player.Character:FindFirstChild("Humanoid")
+                            if enemyHRP and hum and hum.Health > 0 then
+                                local d = (enemyHRP.Position - hrp.Position).Magnitude
+                                if d < nearDist then
+                                    nearDist = d
+                                    nearest = enemyHRP
+                                end
+                            end
+                        end
+                    end
+                    if nearest then
+                        hrp.CFrame = CFrame.new(nearest.Position + Vector3.new(0, 2, 4))
+                            * CFrame.Angles(0, math.pi, 0)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Chest Farm
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.BF_AutoChest then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v.Name == "Chest" and v:IsA("Model") then
+                            local pivot = v:GetPivot().Position
+                            hrp.CFrame = CFrame.new(pivot + Vector3.new(0, 3, 0))
+                            task.wait(0.3)
+                            local pp = v:FindFirstChildWhichIsA("ProximityPrompt")
+                            if pp then pcall(function() fireproximityprompt(pp) end) end
+                            -- Also try click detector
+                            local cd = v:FindFirstChildWhichIsA("ClickDetector", true)
+                            if cd then pcall(function() fireclickdetector(cd, 0) end) end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Collect Fruits (from Workspace.SpawnedFruits or similar)
+    task.spawn(function()
+        while true do
+            task.wait(0.8)
+            if HubState.BF_AutoCollectFruit then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Blox Fruits spawns fruits in workspace with Touch detection
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Model") and v:FindFirstChild("Handle") then
+                            local handle = v:FindFirstChild("Handle")
+                            if handle and (handle:FindFirstChild("TouchInterest") or handle:FindFirstChildWhichIsA("TouchTransmitter")) then
+                                hrp.CFrame = CFrame.new(handle.Position + Vector3.new(0, 3, 0))
+                                task.wait(0.2)
+                                pcall(function() firetouchinterest(hrp, handle, 0) end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Sea Beast
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.BF_AutoSeaBeast then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Sea beasts are large NPCs with "SeaBeast" or similar in name
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("seabeast") or v.Name:lower():find("sea beast") or v.Name:lower():find("leviathan"))
+                            and v:IsA("Model") then
+                            local primary = v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
+                            if primary then
+                                hrp.CFrame = CFrame.new(primary.Position + Vector3.new(0, 2, 8))
+                                    * CFrame.Angles(0, math.pi, 0)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Raid Farm: Fire raid remote or teleport to raid zone
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.BF_AutoRaid then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Kill mobs in raid area (typically in Workspace.Map.*)
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Humanoid") and v.Parent ~= char and v.Health > 0
+                            and not Players:GetPlayerFromCharacter(v.Parent)
+                            and v.MaxHealth >= 5000 then -- raid mobs have high HP
+                            local mobHRP = v.Parent:FindFirstChild("HumanoidRootPart")
+                            if mobHRP then
+                                hrp.CFrame = CFrame.new(mobHRP.Position + Vector3.new(0, 2, 5))
+                                    * CFrame.Angles(0, math.pi, 0)
+                                task.wait(0.3)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  JAILBREAK LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Rob Bank
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.JB_AutoBank then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Teleport inside bank vault
+                    hrp.CFrame = CFrame.new(277, 18, -1595)
+                    task.wait(0.5)
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and v.ObjectText:lower():find("bank") then
+                            pcall(function() fireproximityprompt(v) end)
+                        end
+                        if v:IsA("ClickDetector") and v.Parent.Name:lower():find("cash") then
+                            pcall(function() fireclickdetector(v, 0) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Rob Jewelry
+    task.spawn(function()
+        while true do
+            task.wait(1.5)
+            if HubState.JB_AutoJewelry then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    hrp.CFrame = CFrame.new(-602, 18, 131)
+                    task.wait(0.5)
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and (v.ObjectText:lower():find("jewelry") or v.ObjectText:lower():find("gem")) then
+                            pcall(function() fireproximityprompt(v) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Rob Casino
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if HubState.JB_AutoCasino then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and v.ObjectText:lower():find("casino") then
+                            local att = v.Parent
+                            local pos = att:IsA("BasePart") and att.Position
+                                or att:GetPivot().Position
+                            hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 2))
+                            task.wait(0.3)
+                            pcall(function() fireproximityprompt(v) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Rob Train
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.JB_AutoTrain then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Find train in workspace
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Model") and (v.Name:lower():find("train") or v.Name:lower():find("cargo")) then
+                            local primary = v.PrimaryPart or v:FindFirstChildWhichIsA("BasePart")
+                            if primary then
+                                hrp.CFrame = CFrame.new(primary.Position + Vector3.new(0, 4, 0))
+                                task.wait(0.3)
+                            end
+                        end
+                        if v:IsA("ProximityPrompt") and v.ObjectText:lower():find("train") then
+                            pcall(function() fireproximityprompt(v) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Collect Cargo
+    task.spawn(function()
+        while true do
+            task.wait(0.8)
+            if HubState.JB_AutoCargo then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("cargo") or v.Name:lower():find("crate")) then
+                            local pos = v:IsA("BasePart") and v.Position
+                                or (v:IsA("Model") and v:GetPivot().Position)
+                            if pos then
+                                hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                                task.wait(0.2)
+                                local cd = v:FindFirstChildWhichIsA("ClickDetector", true)
+                                if cd then pcall(function() fireclickdetector(cd, 0) end) end
+                                local pp = v:FindFirstChildWhichIsA("ProximityPrompt", true)
+                                if pp then pcall(function() fireproximityprompt(pp) end) end
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Infinite Nitro
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.JB_InfNitro then
+                pcall(function()
+                    local char = lp.Character
+                    if not char then return end
+                    -- Find vehicle the player is in
+                    local seat = char:FindFirstChildWhichIsA("Seat")
+                        or char:FindFirstChildWhichIsA("VehicleSeat")
+                    if seat then
+                        local nitroVal = seat.Parent:FindFirstChild("Nitro")
+                            or seat.Parent:FindFirstChild("NitroAmount")
+                        if nitroVal then
+                            nitroVal.Value = nitroVal.MaxValue or 100
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  MURDER MYSTERY 2 LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- ESP Murderer: Highlight murderer in red
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.MM2_ESPMurderer then
+                pcall(function()
+                    -- Remove old ESP
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player.Character then
+                            for _, v in pairs(player.Character:GetDescendants()) do
+                                if v.Name == "MM2_ESPHighlight" then v:Destroy() end
+                            end
+                        end
+                    end
+                    -- Find murderer: look for knife tool
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= lp and player.Character then
+                            local knife = player.Character:FindFirstChild("Knife")
+                                or player.Character:FindFirstChild("MM2Knife")
+                                or player.Backpack:FindFirstChild("Knife")
+                            if knife then
+                                local highlight = Instance.new("Highlight")
+                                highlight.Name = "MM2_ESPHighlight"
+                                highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                                highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+                                highlight.FillTransparency = 0.5
+                                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                                highlight.Parent = player.Character
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Coin Farm
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.MM2_AutoCoin then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v.Name == "Coin" and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position + Vector3.new(0, 3, 0))
+                            task.wait(0.15)
+                            pcall(function() firetouchinterest(hrp, v, 0) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Knife Throw (murderer tool)
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.MM2_AutoKnifeThrow then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local knife = char:FindFirstChild("Knife") or char:FindFirstChild("MM2Knife")
+                    if not knife then return end
+                    -- Find nearest player
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= lp and player.Character then
+                            local enemyHRP = player.Character:FindFirstChild("HumanoidRootPart")
+                            local hum = player.Character:FindFirstChild("Humanoid")
+                            if enemyHRP and hum and hum.Health > 0 then
+                                local RS2 = game:GetService("ReplicatedStorage")
+                                local throwEvent = RS2:FindFirstChild("ThrowKnife", true)
+                                    or RS2:FindFirstChild("Throw", true)
+                                if throwEvent and throwEvent:IsA("RemoteEvent") then
+                                    pcall(function() throwEvent:FireServer(enemyHRP.Position) end)
+                                end
                                 break
                             end
                         end
                     end
-                end
-                -- Auto accept quests from NPCs
-                for _, npc in pairs(workspace:GetDescendants()) do
-                    if npc:IsA("Model") and (npc.Name:lower():find("quest") or npc.Name:lower():find("missiongiver")) then
-                        local hrp = npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChildOfClass("BasePart")
-                        if hrp then
-                            local dist = (hrp.Position - char.HumanoidRootPart.Position).Magnitude
-                            if dist < 10 then
-                                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                                    if re:IsA("RemoteEvent") and (re.Name:lower():find("quest") or re.Name:lower():find("accept")) then
-                                        pcall(function() re:FireServer(npc, 1) end)
+                end)
+            end
+        end
+    end)
+
+    -- Sheriff Auto Win (follow murderer)
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.MM2_SheriffAutoWin then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local gun = char:FindFirstChild("Sheriff") or char:FindFirstChild("Gun")
+                    if not gun then return end
+                    -- Find murderer (player with knife)
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= lp and player.Character then
+                            local knife = player.Character:FindFirstChild("Knife")
+                                or player.Character:FindFirstChild("MM2Knife")
+                            if knife then
+                                local enemyHRP = player.Character:FindFirstChild("HumanoidRootPart")
+                                if enemyHRP then
+                                    hrp.CFrame = CFrame.new(enemyHRP.Position + Vector3.new(0, 2, 6))
+                                        * CFrame.Angles(0, math.pi, 0)
+                                    task.wait(0.1)
+                                    local shootEvent = game:GetService("ReplicatedStorage"):FindFirstChild("Shoot", true)
+                                        or game:GetService("ReplicatedStorage"):FindFirstChild("ShootGun", true)
+                                    if shootEvent and shootEvent:IsA("RemoteEvent") then
+                                        pcall(function() shootEvent:FireServer(enemyHRP.Position) end)
                                     end
+                                end
+                                break
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Godhand Shoot
+    task.spawn(function()
+        while true do
+            task.wait(0.3)
+            if HubState.MM2_AutoGodhand then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local godhand = char:FindFirstChild("Godhand") or char:FindFirstChild("GodlyGun")
+                    if not godhand then return end
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= lp and player.Character then
+                            local hum = player.Character:FindFirstChild("Humanoid")
+                            local enemyHRP = player.Character:FindFirstChild("HumanoidRootPart")
+                            if hum and hum.Health > 0 and enemyHRP then
+                                local shootEvent = game:GetService("ReplicatedStorage"):FindFirstChild("Shoot", true)
+                                if shootEvent and shootEvent:IsA("RemoteEvent") then
+                                    pcall(function() shootEvent:FireServer(enemyHRP.Position) end)
+                                end
+                                break
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  PET SIMULATOR 99 LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Hatch Egg
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.PS99_AutoHatch then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and (v.ObjectText:lower():find("egg") or v.ActionText:lower():find("hatch")) then
+                            local att = v.Parent
+                            local pos = att:IsA("BasePart") and att.Position
+                                or (att.Parent and att.Parent:IsA("Model") and att.Parent:GetPivot().Position)
+                            if pos then
+                                hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                                task.wait(0.2)
+                                pcall(function() fireproximityprompt(v) end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Farm Diamonds (touch diamond objects)
+    task.spawn(function()
+        while true do
+            task.wait(0.4)
+            if HubState.PS99_AutoDiamond then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v.Name == "Diamond" and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position + Vector3.new(0, 2, 0))
+                            task.wait(0.1)
+                            pcall(function() firetouchinterest(hrp, v, 0) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Collect Coins
+    task.spawn(function()
+        while true do
+            task.wait(0.4)
+            if HubState.PS99_AutoCoin then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v.Name == "Coin" and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position + Vector3.new(0, 2, 0))
+                            task.wait(0.1)
+                            pcall(function() firetouchinterest(hrp, v, 0) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Enchant Pets
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if HubState.PS99_AutoEnchant then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local enchantEvent = RS2:FindFirstChild("Enchant", true)
+                        or RS2:FindFirstChild("EnchantPet", true)
+                    if enchantEvent and enchantEvent:IsA("RemoteEvent") then
+                        pcall(function() enchantEvent:FireServer() end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Fuse Pets
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if HubState.PS99_AutoFuse then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local fuseEvent = RS2:FindFirstChild("FusePets", true)
+                        or RS2:FindFirstChild("Fuse", true)
+                    if fuseEvent and fuseEvent:IsA("RemoteEvent") then
+                        pcall(function() fuseEvent:FireServer() end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Open Chests
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.PS99_AutoChest then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name == "Chest" or v.Name:lower():find("chest")) and v:IsA("Model") then
+                            local pivot = v:GetPivot().Position
+                            hrp.CFrame = CFrame.new(pivot + Vector3.new(0, 3, 0))
+                            task.wait(0.3)
+                            local pp = v:FindFirstChildWhichIsA("ProximityPrompt", true)
+                            if pp then pcall(function() fireproximityprompt(pp) end) end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  GROW A GARDEN LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Plant Seeds
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.GAG_AutoPlant then
+                pcall(function()
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and (v.ActionText:lower():find("plant") or v.ObjectText:lower():find("plot")) then
+                            pcall(function() fireproximityprompt(v) end)
+                            task.wait(0.2)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Harvest
+    task.spawn(function()
+        while true do
+            task.wait(0.8)
+            if HubState.GAG_AutoHarvest then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and (v.ActionText:lower():find("harvest") or v.ActionText:lower():find("pick")) then
+                            local att = v.Parent
+                            local pos = att:IsA("BasePart") and att.Position
+                                or (att.Parent and att.Parent:GetPivot and att.Parent:GetPivot().Position)
+                            if pos then
+                                hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                                task.wait(0.2)
+                                pcall(function() fireproximityprompt(v) end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Water
+    task.spawn(function()
+        while true do
+            task.wait(0.8)
+            if HubState.GAG_AutoWater then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and v.ActionText:lower():find("water") then
+                            local att = v.Parent
+                            local pos = att:IsA("BasePart") and att.Position
+                                or (att.Parent and att.Parent:GetPivot and att.Parent:GetPivot().Position)
+                            if pos then
+                                hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                                task.wait(0.2)
+                                pcall(function() fireproximityprompt(v) end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Buy Seeds
+    task.spawn(function()
+        while true do
+            task.wait(3)
+            if HubState.GAG_AutoBuySeeds then
+                pcall(function()
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and (v.ObjectText:lower():find("seed") or v.ActionText:lower():find("buy")) then
+                            pcall(function() fireproximityprompt(v) end)
+                            task.wait(0.2)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Sell Crops
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if HubState.GAG_AutoSell then
+                pcall(function()
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and v.ActionText:lower():find("sell") then
+                            pcall(function() fireproximityprompt(v) end)
+                            task.wait(0.2)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Fertilize
+    task.spawn(function()
+        while true do
+            task.wait(1.5)
+            if HubState.GAG_AutoFertilize then
+                pcall(function()
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and v.ActionText:lower():find("fertilize") then
+                            pcall(function() fireproximityprompt(v) end)
+                            task.wait(0.2)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  BLADE BALL LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Parry Ball: Fire parry event when ball is nearby
+    task.spawn(function()
+        while true do
+            task.wait(0.05) -- Fast loop needed for parry timing
+            if HubState.BB_AutoParry then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Find the ball
+                    local ball = workspace:FindFirstChild("Ball")
+                        or workspace:FindFirstChild("bb_ball")
+                    if not ball then
+                        for _, v in pairs(workspace:GetDescendants()) do
+                            if v.Name == "Ball" and v:IsA("BasePart") then
+                                ball = v
+                                break
+                            end
+                        end
+                    end
+                    if ball then
+                        local dist = (ball.Position - hrp.Position).Magnitude
+                        if dist < 20 then -- Ball is close enough to parry
+                            local parryEvent = game:GetService("ReplicatedStorage"):FindFirstChild("Parry", true)
+                                or game:GetService("ReplicatedStorage"):FindFirstChild("ParryEvent", true)
+                                or game:GetService("ReplicatedStorage"):FindFirstChild("Deflect", true)
+                            if parryEvent and parryEvent:IsA("RemoteEvent") then
+                                pcall(function() parryEvent:FireServer() end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Deflect Chain (keep deflecting when active)
+    task.spawn(function()
+        while true do
+            task.wait(0.1)
+            if HubState.BB_AutoDeflect then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local deflectEvent = RS2:FindFirstChild("Deflect", true)
+                        or RS2:FindFirstChild("Parry", true)
+                    if deflectEvent and deflectEvent:IsA("RemoteEvent") then
+                        pcall(function() deflectEvent:FireServer() end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Teleport to Ball (constantly track ball)
+    task.spawn(function()
+        while true do
+            task.wait(0.2)
+            if HubState.BB_TpToBall then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local ball = nil
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v.Name == "Ball" and v:IsA("BasePart") then
+                            ball = v
+                            break
+                        end
+                    end
+                    if ball then
+                        hrp.CFrame = CFrame.new(ball.Position + Vector3.new(0, 3, 0))
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Use Ability
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.BB_AutoAbility then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    -- Blade Ball ability events
+                    local abilityEvent = RS2:FindFirstChild("UseAbility", true)
+                        or RS2:FindFirstChild("Ability", true)
+                        or RS2:FindFirstChild("ActivateAbility", true)
+                    if abilityEvent and abilityEvent:IsA("RemoteEvent") then
+                        pcall(function() abilityEvent:FireServer() end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Win (survive by dodging/staying away from ball's target)
+    task.spawn(function()
+        while true do
+            task.wait(0.3)
+            if HubState.BB_AutoWin then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Find ball and dodge if it's coming toward local player
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v.Name == "Ball" and v:IsA("BasePart") then
+                            local dist = (v.Position - hrp.Position).Magnitude
+                            if dist < 15 then
+                                -- Move perpendicular to the ball's velocity
+                                local vel = v:IsA("BasePart") and v.AssemblyLinearVelocity or Vector3.new()
+                                local dodge = hrp.CFrame.RightVector * 20
+                                hrp.CFrame = CFrame.new(hrp.Position + dodge)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  BEE SWARM SIMULATOR LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Collect Honey
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.BSS_AutoHoney then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v.Name == "Honey" and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position + Vector3.new(0, 3, 0))
+                            task.wait(0.15)
+                            pcall(function() firetouchinterest(hrp, v, 0) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Farm Pollen (stand in flower field)
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.BSS_AutoPollen then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("flower") or v.Name:lower():find("pollen")) and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position + Vector3.new(0, 2, 0))
+                            task.wait(0.2)
+                            pcall(function() firetouchinterest(hrp, v, 0) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Complete Quest
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if HubState.BSS_AutoQuest then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local questEvent = RS2:FindFirstChild("CompleteQuest", true)
+                        or RS2:FindFirstChild("Quest", true)
+                        or RS2:FindFirstChild("FinishQuest", true)
+                    if questEvent and questEvent:IsA("RemoteEvent") then
+                        pcall(function() questEvent:FireServer() end)
+                    end
+                    -- Also try to find NPCs with quest complete prompts
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and v.ActionText:lower():find("quest") then
+                            pcall(function() fireproximityprompt(v) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Buy Gear
+    task.spawn(function()
+        while true do
+            task.wait(3)
+            if HubState.BSS_AutoBuyGear then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") and (v.ObjectText:lower():find("shop") or v.ActionText:lower():find("buy")) then
+                            local att = v.Parent
+                            local pos = att:IsA("BasePart") and att.Position
+                                or (att.Parent and att.Parent:GetPivot and att.Parent:GetPivot().Position)
+                            if pos then
+                                hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+                                task.wait(0.3)
+                                pcall(function() fireproximityprompt(v) end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Fight Monster
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.BSS_AutoFightMonster then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Find monster (bears, etc.)
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("bear") or v.Name:lower():find("monster") or v.Name:lower():find("boss"))
+                            and v:IsA("Model") then
+                            local hum = v:FindFirstChildWhichIsA("Humanoid")
+                            local monsterHRP = v:FindFirstChild("HumanoidRootPart")
+                            if hum and hum.Health > 0 and monsterHRP then
+                                hrp.CFrame = CFrame.new(monsterHRP.Position + Vector3.new(0, 2, 5))
+                                    * CFrame.Angles(0, math.pi, 0)
+                                task.wait(0.2)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  SHINDO LIFE LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Farm EXP (attack mobs)
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.SL_AutoEXP then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Humanoid") and v.Parent ~= char and v.Health > 0
+                            and not Players:GetPlayerFromCharacter(v.Parent) then
+                            local mobHRP = v.Parent:FindFirstChild("HumanoidRootPart")
+                            if mobHRP then
+                                hrp.CFrame = CFrame.new(mobHRP.Position + Vector3.new(0, 2, 4))
+                                    * CFrame.Angles(0, math.pi, 0)
+                                task.wait(0.2)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Spin Elements
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.SL_AutoSpin then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local reiFolder = RS2:FindFirstChild("rei")
+                    if reiFolder then
+                        local spinRemote = reiFolder:FindFirstChild("Spin")
+                            or reiFolder:FindFirstChild("SpinElement")
+                            or reiFolder:FindFirstChild("FreeSpins")
+                        if spinRemote then
+                            if spinRemote:IsA("RemoteFunction") then
+                                pcall(function() spinRemote:InvokeServer("FreeSpins") end)
+                            elseif spinRemote:IsA("RemoteEvent") then
+                                pcall(function() spinRemote:FireServer("FreeSpins") end)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Sword Farm
+    task.spawn(function()
+        while true do
+            task.wait(0.4)
+            if HubState.SL_AutoSword then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Find nearest enemy and attack with sword
+                    local nearest, nearDist = nil, math.huge
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Humanoid") and v.Parent ~= char and v.Health > 0
+                            and not Players:GetPlayerFromCharacter(v.Parent) then
+                            local mobHRP = v.Parent:FindFirstChild("HumanoidRootPart")
+                            if mobHRP then
+                                local d = (mobHRP.Position - hrp.Position).Magnitude
+                                if d < nearDist then
+                                    nearDist = d
+                                    nearest = mobHRP
                                 end
                             end
                         end
                     end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- JAILBREAK — Auto rob (Museum, Jewelry, Bank, Train)
--- ============================================================
-local JB_RobTargets = {
-    Museum   = Vector3.new(889, 18, 1158),
-    Jewelry  = Vector3.new(-359, 18, -766),
-    Bank     = Vector3.new(154, 18, -802),
-    PowerPlant = Vector3.new(-1440, 18, 246),
-}
-local JB_CurrentTarget = "Museum"
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if CurrentGame == "Jailbreak" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                local root = char.HumanoidRootPart
-                local targetPos = JB_RobTargets[JB_CurrentTarget]
-                local dist = (root.Position - targetPos).Magnitude
-                if dist > 15 then
-                    SafeTP(targetPos)
-                else
-                    -- Try to interact / fire rob remotes
-                    for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                        if re:IsA("RemoteEvent") and (re.Name:lower():find("rob") or re.Name:lower():find("interact") or re.Name:lower():find("loot")) then
-                            pcall(function() re:FireServer() end)
-                        end
+                    if nearest then
+                        hrp.CFrame = CFrame.new(nearest.Position + Vector3.new(0, 2, 3))
+                            * CFrame.Angles(0, math.pi, 0)
                     end
-                    -- Cycle target
-                    local targets = {"Museum", "Jewelry", "Bank", "PowerPlant"}
-                    for i, t in ipairs(targets) do
-                        if t == JB_CurrentTarget then
-                            JB_CurrentTarget = targets[i % #targets + 1]; break
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- PET SIMULATOR 99 — Auto farm (collect coins/gems, auto hatch)
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.2)
-        if CurrentGame == "Pet Simulator 99" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Collect nearby coins/gems by teleporting and touching
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("coin") or v.Name:lower():find("gem") or v.Name:lower():find("collect") or v.Name:lower():find("diamond")) then
-                        local dist = (v.Position - char.HumanoidRootPart.Position).Magnitude
-                        if dist < 100 then
-                            SafeTP(v.Position)
-                            pcall(function() firetouchinterest(v, char.HumanoidRootPart, 0) task.wait(0.05) firetouchinterest(v, char.HumanoidRootPart, 1) end)
-                        end
-                    end
-                end
-                -- Auto click/break breakable objects
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and v.Name:lower():find("breakable") then
-                        SafeTP(v.Position)
-                        local cd = v:FindFirstChildOfClass("ClickDetector")
-                        if cd then fireclickdetector(cd) end
-                    end
-                end
-            end)
-        end
-        -- Auto hatch
-        if CurrentGame == "Pet Simulator 99" and HubState.AutoHatch then
-            pcall(function()
-                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if re:IsA("RemoteEvent") and (re.Name:lower():find("hatch") or re.Name:lower():find("egg")) then
-                        pcall(function() re:FireServer(1) end)
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- SHINDO LIFE — Auto farm mobs + collect scrolls
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.3)
-        if CurrentGame == "Shindo Life" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Collect scrolls
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("scroll") or v.Name:lower():find("item")) then
-                        SafeTP(v.Position)
-                        pcall(function() firetouchinterest(v, char.HumanoidRootPart, 0) task.wait(0.05) firetouchinterest(v, char.HumanoidRootPart, 1) end)
-                    end
-                end
-                -- Attack nearest mob
-                local mob = GetNearestNPC(80)
-                if mob then
-                    local hrp = mob:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        SafeTP(hrp.Position - (hrp.Position - char.HumanoidRootPart.Position).Unit * 5)
-                        for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                            if re:IsA("RemoteEvent") and (re.Name:lower():find("attack") or re.Name:lower():find("hit") or re.Name:lower():find("damage")) then
-                                pcall(function() re:FireServer(mob.HumanoidRootPart, hrp.Position, 50) end)
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- BEE SWARM SIMULATOR — Auto collect pollen + return to hive
--- ============================================================
-local BSS_AtHive = false
-task.spawn(function()
-    while true do
-        task.wait(0.5)
-        if CurrentGame == "Bee Swarm Simulator" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                local root = char.HumanoidRootPart
-                -- Find flower fields
-                local hivePos = Vector3.new(0, 10, 0) -- approximate hive center
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and v.Name:lower():find("hive") then
-                        hivePos = v.Position; break
-                    end
-                end
-                if BSS_AtHive then
-                    -- Go collect pollen from nearest flower
-                    for _, v in pairs(workspace:GetDescendants()) do
-                        if v:IsA("BasePart") and (v.Name:lower():find("flower") or v.Name:lower():find("pollen") or v.Name:lower():find("field")) then
-                            SafeTP(v.Position)
-                            pcall(function() firetouchinterest(v, char.HumanoidRootPart, 0) task.wait(0.3) firetouchinterest(v, char.HumanoidRootPart, 1) end)
-                            BSS_AtHive = false
-                            break
-                        end
-                    end
-                else
-                    -- Return pollen to hive
-                    SafeTP(hivePos)
-                    pcall(function()
-                        for _, v in pairs(workspace:GetDescendants()) do
-                            if v:IsA("BasePart") and v.Name:lower():find("hive") then
-                                firetouchinterest(v, char.HumanoidRootPart, 0)
-                                task.wait(0.2)
-                                firetouchinterest(v, char.HumanoidRootPart, 1)
-                            end
-                        end
-                    end)
-                    BSS_AtHive = true
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- ANIME DEFENDERS — Auto wave start + auto place units
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if CurrentGame == "Anime Defenders" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                -- Auto start wave
-                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if re:IsA("RemoteEvent") and (re.Name:lower():find("wave") or re.Name:lower():find("start") or re.Name:lower():find("begin")) then
-                        pcall(function() re:FireServer() end)
-                    end
-                end
-                -- Auto place units on map nodes
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("node") or v.Name:lower():find("slot") or v.Name:lower():find("place")) then
-                        for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                            if re:IsA("RemoteEvent") and (re.Name:lower():find("place") or re.Name:lower():find("summon") or re.Name:lower():find("deploy")) then
-                                pcall(function() re:FireServer(v.Position, 1) end)
-                            end
-                        end
-                    end
-                end
-                -- Auto sell overflow units
-                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if re:IsA("RemoteEvent") and re.Name:lower():find("sell") then
-                        pcall(function() re:FireServer() end)
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- GROW A GARDEN — Auto plant + harvest
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(2)
-        if CurrentGame == "Grow A Garden" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Harvest ripe crops
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("crop") or v.Name:lower():find("harvest") or v.Name:lower():find("ripe") or v.Name:lower():find("plant")) then
-                        SafeTP(v.Position)
-                        local cd = v:FindFirstChildOfClass("ClickDetector")
-                        if cd then fireclickdetector(cd) end
-                        pcall(function() firetouchinterest(v, char.HumanoidRootPart, 0) task.wait(0.1) firetouchinterest(v, char.HumanoidRootPart, 1) end)
-                    end
-                end
-                -- Fire plant/harvest remotes
-                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if re:IsA("RemoteEvent") and (re.Name:lower():find("plant") or re.Name:lower():find("harvest") or re.Name:lower():find("grow")) then
-                        pcall(function() re:FireServer() end)
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- PEROXIDE — Auto quest + mob kill loop
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.3)
-        if CurrentGame == "Peroxide" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Accept quest
-                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if re:IsA("RemoteEvent") and (re.Name:lower():find("quest") or re.Name:lower():find("accept") or re.Name:lower():find("mission")) then
-                        pcall(function() re:FireServer(1) end)
-                    end
-                end
-                -- Kill nearest mob
-                local mob = GetNearestNPC(100)
-                if mob then
-                    local hrp = mob:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        SafeTP(hrp.Position - (hrp.Position - char.HumanoidRootPart.Position).Unit * 4)
-                        for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                            if re:IsA("RemoteEvent") and (re.Name:lower():find("attack") or re.Name:lower():find("slash") or re.Name:lower():find("hit") or re.Name:lower():find("damage")) then
-                                pcall(function() re:FireServer(mob, hrp.Position) end)
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- SOLS RNG — Auto roll + auto claim aura
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.5)
-        if CurrentGame == "Sols RNG" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if re:IsA("RemoteEvent") and (re.Name:lower():find("roll") or re.Name:lower():find("spin") or re.Name:lower():find("claim") or re.Name:lower():find("aura")) then
-                        pcall(function() re:FireServer() end)
-                    end
-                end
-                -- Click roll buttons
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("roll") or v.Name:lower():find("spin")) then
-                        local cd = v:FindFirstChildOfClass("ClickDetector")
-                        if cd then fireclickdetector(cd) end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- BLUE LOCK RIVALS — Auto play + auto score
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.2)
-        if CurrentGame == "Blue Lock Rivals" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Find ball and teleport to it
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and v.Name:lower():find("ball") and v.Size.Magnitude < 5 then
-                        SafeTP(v.Position)
-                        for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                            if re:IsA("RemoteEvent") and (re.Name:lower():find("kick") or re.Name:lower():find("shoot") or re.Name:lower():find("goal") or re.Name:lower():find("dribble")) then
-                                pcall(function() re:FireServer(v, Vector3.new(0,0,100)) end)
-                            end
-                        end
-                        break
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- JUJUTSU SHENANIGANS — Auto attack + auto farm cursed energy
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.15)
-        if CurrentGame == "Jujutsu Shenanigans" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local target = GetClosestPlayer(100)
-                if not target then return end
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Teleport behind target
-                local tp = target.Position - (target.Position - char.HumanoidRootPart.Position).Unit * 4
-                char.HumanoidRootPart.CFrame = CFrame.new(tp)
-                for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                    if re:IsA("RemoteEvent") and (re.Name:lower():find("attack") or re.Name:lower():find("punch") or re.Name:lower():find("slash") or re.Name:lower():find("technique")) then
-                        pcall(function() re:FireServer(target.Parent, target) end)
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- DEAD RAILS — Auto survive + collect resources
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if CurrentGame == "Dead Rails" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Collect dropped items/resources
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("loot") or v.Name:lower():find("ammo") or v.Name:lower():find("supply") or v.Name:lower():find("item")) then
-                        local dist = (v.Position - char.HumanoidRootPart.Position).Magnitude
-                        if dist < 150 then
-                            SafeTP(v.Position)
-                            pcall(function() firetouchinterest(v, char.HumanoidRootPart, 0) task.wait(0.05) firetouchinterest(v, char.HumanoidRootPart, 1) end)
-                        end
-                    end
-                end
-                -- Kill nearest zombie/enemy
-                local mob = GetNearestNPC(50)
-                if mob then
-                    local hrp = mob:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                            if re:IsA("RemoteEvent") and (re.Name:lower():find("shoot") or re.Name:lower():find("attack") or re.Name:lower():find("fire")) then
-                                pcall(function() re:FireServer(mob, hrp.Position) end)
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- PRESSURE — Auto evade + auto collect items
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.5)
-        if CurrentGame == "Pressure" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Collect items
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("item") or v.Name:lower():find("key") or v.Name:lower():find("battery") or v.Name:lower():find("supply")) then
-                        local dist = (v.Position - char.HumanoidRootPart.Position).Magnitude
-                        if dist < 100 then
-                            SafeTP(v.Position)
-                            pcall(function() firetouchinterest(v, char.HumanoidRootPart, 0) task.wait(0.05) firetouchinterest(v, char.HumanoidRootPart, 1) end)
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
--- ============================================================
--- WESTBOUND — Auto collect gold/loot + kill outlaws
--- ============================================================
-task.spawn(function()
-    while true do
-        task.wait(0.5)
-        if CurrentGame == "Westbound" and (HubState.AutoFarm or HubState.AutoFarmCash or HubState.AutoFarmKills or HubState.AutoFarmXP) then
-            pcall(function()
-                local char = LocalPlayer.Character
-                if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-                -- Collect gold
-                for _, v in pairs(workspace:GetDescendants()) do
-                    if v:IsA("BasePart") and (v.Name:lower():find("gold") or v.Name:lower():find("nugget") or v.Name:lower():find("loot")) then
-                        SafeTP(v.Position)
-                        pcall(function() firetouchinterest(v, char.HumanoidRootPart, 0) task.wait(0.05) firetouchinterest(v, char.HumanoidRootPart, 1) end)
-                    end
-                end
-                -- Kill nearest NPC
-                local mob = GetNearestNPC(80)
-                if mob then
-                    local hrp = mob:FindFirstChild("HumanoidRootPart")
-                    if hrp then
-                        SafeTP(hrp.Position - (hrp.Position - char.HumanoidRootPart.Position).Unit * 5)
-                        for _, re in pairs(game.ReplicatedStorage:GetDescendants()) do
-                            if re:IsA("RemoteEvent") and (re.Name:lower():find("shoot") or re.Name:lower():find("attack") or re.Name:lower():find("fire")) then
-                                pcall(function() re:FireServer(mob, hrp.Position) end)
-                            end
-                        end
-                    end
-                end
-            end)
-        end
-    end
-end)
-
-print("[Hood Omni Hub] All autofarm loops initialized!")
-
-
--- Silent Aim Hook
-local oldNamecall
-oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-    local args = {...}
-    if HubState.SilentAim and (method == "FireServer" or method == "InvokeServer") then
-        local t = GetClosestPlayer(HubState.AimFOV)
-        if t then
-            for i, v in pairs(args) do
-                if typeof(v) == "Vector3" then args[i] = t.Position
-                elseif typeof(v) == "CFrame" then args[i] = CFrame.new(t.Position) end
+                end)
             end
-            return oldNamecall(self, unpack(args))
         end
-    end
-    if HubState.InfAmmo and method == "FireServer" then
-        if typeof(self) == "Instance" and (self.Name:lower():find("ammo") or self.Name:lower():find("reload")) then return end
-    end
-    if HubState.NoRecoil and method == "FireServer" then
-        for i, v in pairs(args) do
-            if typeof(v) == "Vector3" and v.Magnitude < 5 then args[i] = Vector3.zero end
+    end)
+
+    -- Auto RELL Coin Farm
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.SL_AutoRELLCoin then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name == "RELLcoin" or v.Name == "RellCoin" or v.Name == "RELLCoin")
+                            and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position + Vector3.new(0, 3, 0))
+                            task.wait(0.15)
+                            pcall(function() firetouchinterest(hrp, v, 0) end)
+                        end
+                    end
+                end)
+            end
         end
-        return oldNamecall(self, unpack(args))
-    end
-    return oldNamecall(self, ...)
-end))
+    end)
 
--- ESP Refresh on Player Join
-Players.PlayerAdded:Connect(function(p)
-    p.CharacterAdded:Connect(function() task.wait(1) if HubState.ESPEnabled then CreateESP(p) end end)
-end)
-Players.PlayerRemoving:Connect(function(p) pcall(function() for _,v in pairs(ESPFolder:GetChildren()) do if v.Name:find(p.Name) then v:Destroy() end end end) end)
-for _,p in pairs(Players:GetPlayers()) do if p.Character then CreateESP(p) end p.CharacterAdded:Connect(function() task.wait(1) if HubState.ESPEnabled then CreateESP(p) end end) end
+    -- Auto Mode Farm (activate sage/tailed beast mode)
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if HubState.SL_AutoMode then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local reiFolder = RS2:FindFirstChild("rei")
+                    if reiFolder then
+                        -- Activate mode remote in Shindo Life
+                        local modeEvent = reiFolder:FindFirstChild("ActivateMode")
+                            or reiFolder:FindFirstChild("Mode")
+                        if modeEvent and modeEvent:IsA("RemoteEvent") then
+                            pcall(function() modeEvent:FireServer() end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
 
--- Status notification
-pcall(function()
-    local msg = Instance.new("Message") msg.Text = "Hood Omni Hub MEGA | " .. CurrentGame .. " | " .. tostring(#Hub.Tabs) .. " tabs loaded | RShift to toggle" msg.Parent = workspace
-    task.delay(4, function() msg:Destroy() end)
-end)
-print("[Hood Omni Hub] MEGA Edition loaded! Game: " .. CurrentGame .. " | " .. tostring(#Hub.Tabs) .. " tabs")
+    -- ─────────────────────────────────────────────
+    --  THE STRONGEST BATTLEGROUNDS LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Farm KO (attack nearest player)
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.TSB_AutoKO then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local nearest, nearDist = nil, math.huge
+                    for _, player in pairs(Players:GetPlayers()) do
+                        if player ~= lp and player.Character then
+                            local enemyHRP = player.Character:FindFirstChild("HumanoidRootPart")
+                            local hum = player.Character:FindFirstChild("Humanoid")
+                            if enemyHRP and hum and hum.Health > 0 then
+                                local d = (enemyHRP.Position - hrp.Position).Magnitude
+                                if d < nearDist then
+                                    nearDist = d
+                                    nearest = enemyHRP
+                                end
+                            end
+                        end
+                    end
+                    if nearest then
+                        hrp.CFrame = CFrame.new(nearest.Position + Vector3.new(0, 2, 3))
+                            * CFrame.Angles(0, math.pi, 0)
+                        task.wait(0.1)
+                        local RS2 = game:GetService("ReplicatedStorage")
+                        local attackEvent = RS2:FindFirstChild("Punch", true)
+                            or RS2:FindFirstChild("Attack", true)
+                            or RS2:FindFirstChild("M1", true)
+                        if attackEvent and attackEvent:IsA("RemoteEvent") then
+                            pcall(function() attackEvent:FireServer(nearest.Position) end)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Block Break
+    task.spawn(function()
+        while true do
+            task.wait(0.3)
+            if HubState.TSB_AutoBlockBreak then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local blockBreakEvent = RS2:FindFirstChild("BlockBreak", true)
+                        or RS2:FindFirstChild("BreakBlock", true)
+                    if blockBreakEvent and blockBreakEvent:IsA("RemoteEvent") then
+                        pcall(function() blockBreakEvent:FireServer() end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Counter
+    task.spawn(function()
+        while true do
+            task.wait(0.1)
+            if HubState.TSB_AutoCounter then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local counterEvent = RS2:FindFirstChild("Counter", true)
+                        or RS2:FindFirstChild("CounterAttack", true)
+                    if counterEvent and counterEvent:IsA("RemoteEvent") then
+                        pcall(function() counterEvent:FireServer() end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Combo
+    task.spawn(function()
+        while true do
+            task.wait(0.2)
+            if HubState.TSB_AutoCombo then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    -- Fire M1/punch combo repeatedly
+                    for i = 1, 4 do
+                        local m1Event = RS2:FindFirstChild("M1", true)
+                            or RS2:FindFirstChild("Punch", true)
+                            or RS2:FindFirstChild("Attack", true)
+                        if m1Event and m1Event:IsA("RemoteEvent") then
+                            pcall(function() m1Event:FireServer() end)
+                        end
+                        task.wait(0.15)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Rank Up
+    task.spawn(function()
+        while true do
+            task.wait(5)
+            if HubState.TSB_AutoRankUp then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local rankEvent = RS2:FindFirstChild("RankUp", true)
+                        or RS2:FindFirstChild("Prestige", true)
+                    if rankEvent and rankEvent:IsA("RemoteEvent") then
+                        pcall(function() rankEvent:FireServer() end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────
+    --  ANIME DEFENDERS LOOPS
+    -- ─────────────────────────────────────────────
+
+    -- Auto Farm Stage
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.AD_AutoFarm then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    -- Attack enemies in the stage
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("Humanoid") and v.Parent ~= char and v.Health > 0
+                            and not Players:GetPlayerFromCharacter(v.Parent) then
+                            local mobHRP = v.Parent:FindFirstChild("HumanoidRootPart")
+                            if mobHRP then
+                                local RS2 = game:GetService("ReplicatedStorage")
+                                local attackEvent = RS2:FindFirstChild("AttackEnemy", true)
+                                    or RS2:FindFirstChild("PlaceUnit", true)
+                                if attackEvent and attackEvent:IsA("RemoteEvent") then
+                                    pcall(function() attackEvent:FireServer(mobHRP.Position) end)
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Collect Gems
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.AD_AutoGems then
+                pcall(function()
+                    local char = lp.Character
+                    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name == "Gem" or v.Name:lower():find("gem")) and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position + Vector3.new(0, 3, 0))
+                            task.wait(0.2)
+                            pcall(function() firetouchinterest(hrp, v, 0) end)
+                        end
+                    end
+                    -- Also fire gem collection remote
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local gemEvent = RS2:FindFirstChild("CollectGems", true)
+                        or RS2:FindFirstChild("GemCollect", true)
+                    if gemEvent and gemEvent:IsA("RemoteEvent") then
+                        pcall(function() gemEvent:FireServer() end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Upgrade Units
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if HubState.AD_AutoUpgrade then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local upgradeEvent = RS2:FindFirstChild("UpgradeUnit", true)
+                        or RS2:FindFirstChild("Upgrade", true)
+                    if upgradeEvent and upgradeEvent:IsA("RemoteEvent") then
+                        -- Upgrade all placed units
+                        for _, v in pairs(workspace:GetDescendants()) do
+                            if v:IsA("Model") and v:FindFirstChild("UnitStats") then
+                                pcall(function() upgradeEvent:FireServer(v) end)
+                                task.wait(0.1)
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Summon Units
+    task.spawn(function()
+        while true do
+            task.wait(3)
+            if HubState.AD_AutoSummon then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    for _, v in pairs(RS2:GetDescendants()) do
+                        if v:IsA("RemoteEvent") and v.Name:lower():find("summon") then
+                            pcall(function() v:FireServer(1) end)
+                            task.wait(0.2)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Sell Units
+    task.spawn(function()
+        while true do
+            task.wait(5)
+            if HubState.AD_AutoSell then
+                pcall(function()
+                    local RS2 = game:GetService("ReplicatedStorage")
+                    local sellEvent = RS2:FindFirstChild("SellUnit", true)
+                        or RS2:FindFirstChild("Sell", true)
+                    if sellEvent and sellEvent:IsA("RemoteEvent") then
+                        -- Sell duplicates/lowest rarity units
+                        for _, v in pairs(workspace:GetDescendants()) do
+                            if v:IsA("Model") and v:FindFirstChild("UnitStats") then
+                                local stats = v:FindFirstChild("UnitStats")
+                                local rarity = stats and stats:FindFirstChild("Rarity")
+                                if rarity and (rarity.Value == "Common" or rarity.Value == "Uncommon") then
+                                    pcall(function() sellEvent:FireServer(v) end)
+                                    task.wait(0.1)
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+end) -- END task.spawn for all loops
+
+--[[
+    ╔══════════════════════════════════════════════════════════════╗
+    ║                   HUBSTATE KEY REFERENCE                     ║
+    ╚══════════════════════════════════════════════════════════════╝
+
+    DA HOOD:
+      HubState.DH_AutoCash         - Auto Farm Cash
+      HubState.DH_AutoStomp        - Auto Stomp Downed
+      HubState.DH_AutoPickupGun    - Auto Pickup Guns
+      HubState.DH_AutoBank         - Auto Bank Deposit
+      HubState.DH_LockVictim       - Lock Victim
+      HubState.DH_LockedTarget     - [internal] locked player object
+      HubState.DH_AutoCollectDrops - Auto Collect Drops
+
+    GANG WARS:
+      HubState.GW_PotatoFarm  - Potato Farm
+      HubState.GW_CarFarm     - Car Farm
+      HubState.GW_StoreRob    - Store Rob
+      HubState.GW_AutoKillNPC - Auto Kill NPC
+      HubState.GW_AutoRevive  - Auto Revive Allies
+      HubState.GW_AutoAmmo    - Auto Buy Ammo
+
+    BLOX FRUITS:
+      HubState.BF_AutoMastery     - Auto Farm Mastery
+      HubState.BF_AutoBounty      - Auto Farm Bounty
+      HubState.BF_AutoSeaBeast    - Auto Sea Beast
+      HubState.BF_AutoRaid        - Auto Raid Farm
+      HubState.BF_AutoChest       - Auto Chest Farm
+      HubState.BF_AutoCollectFruit - Auto Collect Fruits
+
+    JAILBREAK:
+      HubState.JB_AutoBank    - Auto Rob Bank
+      HubState.JB_AutoJewelry - Auto Rob Jewelry
+      HubState.JB_AutoCasino  - Auto Rob Casino
+      HubState.JB_AutoTrain   - Auto Rob Train
+      HubState.JB_AutoCargo   - Auto Collect Cargo
+      HubState.JB_InfNitro    - Infinite Nitro
+
+    MURDER MYSTERY 2:
+      HubState.MM2_ESPMurderer   - ESP Murderer
+      HubState.MM2_AutoCoin      - Auto Coin Farm
+      HubState.MM2_AutoKnifeThrow - Auto Knife Throw
+      HubState.MM2_SheriffAutoWin - Sheriff Auto Win
+      HubState.MM2_AutoGodhand   - Auto Godhand Shoot
+
+    PET SIMULATOR 99:
+      HubState.PS99_AutoHatch   - Auto Hatch Egg
+      HubState.PS99_AutoDiamond - Auto Farm Diamonds
+      HubState.PS99_AutoCoin    - Auto Collect Coins
+      HubState.PS99_AutoEnchant - Auto Enchant Pets
+      HubState.PS99_AutoFuse    - Auto Fuse Pets
+      HubState.PS99_AutoChest   - Auto Open Chests
+
+    GROW A GARDEN:
+      HubState.GAG_AutoPlant    - Auto Plant Seeds
+      HubState.GAG_AutoHarvest  - Auto Harvest Crops
+      HubState.GAG_AutoWater    - Auto Water Plants
+      HubState.GAG_AutoBuySeeds - Auto Buy Seeds
+      HubState.GAG_AutoSell     - Auto Sell Crops
+      HubState.GAG_AutoFertilize - Auto Fertilize
+
+    BLADE BALL:
+      HubState.BB_AutoParry    - Auto Parry Ball
+      HubState.BB_AutoDeflect  - Auto Deflect Chain
+      HubState.BB_AutoAbility  - Auto Use Ability
+      HubState.BB_TpToBall     - Teleport to Ball
+      HubState.BB_AutoWin      - Auto Win Round
+
+    BEE SWARM SIMULATOR:
+      HubState.BSS_AutoHoney       - Auto Collect Honey
+      HubState.BSS_AutoPollen      - Auto Farm Pollen
+      HubState.BSS_AutoQuest       - Auto Complete Quest
+      HubState.BSS_AutoBuyGear     - Auto Buy Gear
+      HubState.BSS_AutoFightMonster - Auto Fight Monster
+
+    SHINDO LIFE:
+      HubState.SL_AutoEXP     - Auto Farm EXP
+      HubState.SL_AutoSpin    - Auto Spin Elements
+      HubState.SL_AutoSword   - Auto Sword Farm
+      HubState.SL_AutoRELLCoin - Auto RELL Coin Farm
+      HubState.SL_AutoMode    - Auto Mode Farm
+
+    THE STRONGEST BATTLEGROUNDS:
+      HubState.TSB_AutoKO         - Auto Farm KO
+      HubState.TSB_AutoBlockBreak - Auto Block Break
+      HubState.TSB_AutoCounter    - Auto Counter
+      HubState.TSB_AutoCombo      - Auto Combo
+      HubState.TSB_AutoRankUp     - Auto Rank Up
+
+    ANIME DEFENDERS:
+      HubState.AD_AutoFarm   - Auto Farm Stage
+      HubState.AD_AutoGems   - Auto Collect Gems
+      HubState.AD_AutoUpgrade - Auto Upgrade Units
+      HubState.AD_AutoSummon - Auto Summon Units
+      HubState.AD_AutoSell   - Auto Sell Units
+
+--]]
+
