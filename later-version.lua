@@ -22,7 +22,7 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = Workspace.CurrentCamera
-local CoreGui = (pcall(function() return game:GetService("CoreGui") end) and game:GetService("CoreGui")) or LocalPlayer:WaitForChild("PlayerGui")
+local CoreGui = game:GetService("CoreGui"))
 
 -- STATE
 local HubState = {
@@ -44,11 +44,12 @@ local HubState = {
     SpeedHack=false,SpeedValue=100,KillAura=false,SilentAim=false,
     InfAmmo=false,NoRecoil=false,NoSpread=false,RapidFire=false,
     AntiKick=false,AntiFling=false,AntiKillPart=false,AntiVoid=true,
-    Godmode=false,BlockAC=true,AntiTeleport=true,ExecSpoof=true,
+    Godmode=false,BlockAC=true,AntiTeleport=true,ExecSpoof=false,
     AntiStomp=true,AntiRagdoll=true,AntiGrab=true,GravityMod=false
 }
 local Connections = {}
-local ESPFolder = Instance.new("Folder",CoreGui)
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Parent = CoreGui
 ESPFolder.Name = "OmniESP"
 
 -- ============================================================
