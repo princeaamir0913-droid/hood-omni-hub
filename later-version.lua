@@ -448,7 +448,31 @@ function OmniUI:Create()
         B.MouseButton1Click:Connect(function() idx=idx%#opts+1 B.Text=opts[idx] pcall(cb,opts[idx]) end)
     end
     task.defer(function() if #self.Tabs>0 then self.Tabs[1].Button.BackgroundColor3=Color3.fromRGB(60,20,120) self.Tabs[1].Button.TextColor3=Color3.fromRGB(220,180,255) self.Tabs[1].Frame.Visible=true end end)
-    UserInputService.InputBegan:Connect(function(i,g) if g then return end if i.KeyCode==Enum.KeyCode.RightShift then M.Visible=not M.Visible end end)
+    UserInputService.InputBegan:Connect(function(i,g) if i.KeyCode==Enum.KeyCode.RightShift or i.KeyCode==Enum.KeyCode.Semicolon then M.Visible=not M.Visible end end)
+    -- Startup toast notification
+    task.delay(1.5, function()
+        local toast = Instance.new("ScreenGui")
+        toast.Name = "HoodHubToast"
+        toast.ResetOnSpawn = false
+        pcall(function() toast.Parent = game:GetService("CoreGui") end)
+        if not toast.Parent then toast.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui") end
+        local f = Instance.new("Frame")
+        f.Size = UDim2.new(0,340,0,50)
+        f.Position = UDim2.new(0.5,-170,0,20)
+        f.BackgroundColor3 = Color3.fromRGB(20,20,30)
+        f.BorderSizePixel = 0
+        f.Parent = toast
+        Instance.new("UICorner",f).CornerRadius = UDim.new(0,8)
+        local s = Instance.new("UIStroke",f) s.Color=Color3.fromRGB(128,0,255) s.Thickness=2
+        local l = Instance.new("TextLabel",f)
+        l.Size = UDim2.new(1,0,1,0)
+        l.BackgroundTransparency = 1
+        l.Text = "✅ Hood Omni Hub Loaded! Press ; or RightShift to toggle"
+        l.TextColor3 = Color3.fromRGB(200,150,255)
+        l.TextSize = 13
+        l.Font = Enum.Font.GothamBold
+        task.delay(4, function() pcall(function() toast:Destroy() end) end)
+    end)
     return self
 end
 
