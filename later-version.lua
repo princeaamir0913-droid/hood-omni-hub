@@ -456,6 +456,7 @@ end
 local GameDB = {
     [16472538603] = "Tha Bronx 3",
     [137020602493628] = "Gang Wars",
+    [84866901748045] = "Bronx Hood",
     [130700367963690] = "Philly Streetz 2",
     [2788229376] = "Da Hood",
     [17625359962] = "Rivals",
@@ -518,6 +519,7 @@ if not CurrentGame then
     local gameName = ok and info and info.Name and string.lower(info.Name) or ""
     if string.find(gameName, "tha") then CurrentGame = "Tha Bronx 3" end
     if string.find(gameName, "gang") then CurrentGame = "Gang Wars" end
+    if string.find(gameName, "bronx hood") then CurrentGame = "Bronx Hood" end
     if string.find(gameName, "central") then CurrentGame = "Central Streets" end
     if string.find(gameName, "philly") then CurrentGame = "Philly Streetz 2" end
     if string.find(gameName, "da") then CurrentGame = "Da Hood" end
@@ -834,7 +836,7 @@ if CurrentGame == "Da Hood" then
 -- GANG WARS (PlaceId: 137020602493628)
 -- Research: Potato Farm, Car Farm, Store Rob existing + additions
 -- ═══════════════════════════════════════════════════════════════
-elseif CurrentGame == "Gang Wars" then
+elseif CurrentGame == "Gang Wars" or CurrentGame == "Bronx Hood" then
     local t_GameTab = Hub:AddTab("Gang Wars","💰")
 
     Hub:AddToggle(t_GameTab,"Potato Farm",false,function(v)
