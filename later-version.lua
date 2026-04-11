@@ -1494,6 +1494,929 @@ elseif CurrentGame == "Anime Defenders" then
         end)
     end)
 
+
+-- ═══════════════════════════════════════════════════════════════
+-- RIVALS (PlaceId: 17625359962)
+-- Source: XCV Hub research — aimbot, silent aim, ESP, speed, teleport
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Rivals" then
+    local t_GameTab = Hub:AddTab("Rivals","⚔️")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddSlider(t_GameTab,"Aim FOV",50,800,200,function(v) HubState.AimFOV=v end)
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddSlider(t_GameTab,"Kill Aura Range",5,50,15,function(v) HubState.KillAuraRange=v end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+
+    Hub:AddSection(t_GameTab,"Weapon")
+    Hub:AddToggle(t_GameTab,"No Spread",false,function(v) HubState.NoSpread=v end)
+    Hub:AddToggle(t_GameTab,"No Recoil",false,function(v) HubState.NoRecoil=v end)
+    Hub:AddToggle(t_GameTab,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
+    Hub:AddToggle(t_GameTab,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+    Hub:AddToggle(t_GameTab,"Inf Jump",false,function(v) HubState.RV_InfJump=v end)
+
+    Hub:AddSection(t_GameTab,"Farm & Auto")
+    Hub:AddToggle(t_GameTab,"Auto Farm XP",false,function(v) HubState.RV_AutoXP=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Coins",false,function(v) HubState.RV_AutoCoin=v end)
+    Hub:AddToggle(t_GameTab,"Auto Dodge",false,function(v) HubState.RV_AutoDodge=v end)
+
+    Hub:AddSection(t_GameTab,"Teleports")
+    Hub:AddButton(t_GameTab,"Teleport to Nearest Enemy",function()
+        pcall(function()
+            local lp = game:GetService("Players").LocalPlayer
+            local char = lp.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            local closest, closestDist = nil, math.huge
+            for _, p in pairs(game:GetService("Players"):GetPlayers()) do
+                if p ~= lp and p.Character then
+                    local er = p.Character:FindFirstChild("HumanoidRootPart")
+                    local hm = p.Character:FindFirstChildOfClass("Humanoid")
+                    if er and hm and hm.Health > 0 then
+                        local d = (hrp.Position - er.Position).Magnitude
+                        if d < closestDist then closestDist=d; closest=er end
+                    end
+                end
+            end
+            if closest then hrp.CFrame = closest.CFrame * CFrame.new(0, 0, -3) end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- BLUE LOCK: RIVALS (PlaceId: 18668065416)
+-- Source: XCV Hub — similar to Rivals, soccer-based combat
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Blue Lock Rivals" then
+    local t_GameTab = Hub:AddTab("Blue Lock","🔵")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+
+    Hub:AddSection(t_GameTab,"Blue Lock Specific")
+    Hub:AddToggle(t_GameTab,"Auto Score Goal",false,function(v) HubState.BLR_AutoGoal=v end)
+    Hub:AddToggle(t_GameTab,"Auto Farm XP",false,function(v) HubState.BLR_AutoXP=v end)
+    Hub:AddToggle(t_GameTab,"Auto Pass (Team)",false,function(v) HubState.BLR_AutoPass=v end)
+    Hub:AddToggle(t_GameTab,"Ball ESP",false,function(v) HubState.BLR_BallESP=v
+        pcall(function()
+            local ball = workspace:FindFirstChild("Ball") or workspace:FindFirstChild("Football") or workspace:FindFirstChild("Soccer_Ball")
+            if ball and v then
+                for _, ch in pairs(workspace:GetDescendants()) do
+                    if (ch.Name:lower():find("ball")) and ch:IsA("BasePart") then
+                        local bb = Instance.new("BillboardGui")
+                        bb.Name = "BallESP"; bb.AlwaysOnTop = true
+                        bb.Size = UDim2.new(0,80,0,30); bb.StudsOffset = Vector3.new(0,3,0)
+                        bb.Parent = ch
+                        local lbl = Instance.new("TextLabel")
+                        lbl.BackgroundTransparency=1; lbl.Size=UDim2.new(1,0,1,0)
+                        lbl.Text="⚽ BALL"; lbl.TextColor3=Color3.fromRGB(255,255,0)
+                        lbl.TextStrokeTransparency=0; lbl.Font=Enum.Font.GothamBold
+                        lbl.TextScaled=true; lbl.Parent=bb
+                    end
+                end
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"Teleport to Ball",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, ch in pairs(workspace:GetDescendants()) do
+                if ch.Name:lower():find("ball") and ch:IsA("BasePart") then
+                    hrp.CFrame = ch.CFrame * CFrame.new(0, 0, -2); break
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- PHANTOM FORCES (PlaceId: 292439477)
+-- Source: XCV Hub — aimbot, no spread, no recoil, esp
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Phantom Forces" then
+    local t_GameTab = Hub:AddTab("Phantom Forces","🔫")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Aimbot (Head)",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddSlider(t_GameTab,"Aim FOV",50,800,150,function(v) HubState.AimFOV=v end)
+    Hub:AddToggle(t_GameTab,"ESP (Through Walls)",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+
+    Hub:AddSection(t_GameTab,"Weapon")
+    Hub:AddToggle(t_GameTab,"No Recoil",false,function(v) HubState.NoRecoil=v end)
+    Hub:AddToggle(t_GameTab,"No Spread",false,function(v) HubState.NoSpread=v end)
+    Hub:AddToggle(t_GameTab,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
+    Hub:AddToggle(t_GameTab,"Inf Ammo",false,function(v)
+        HubState.InfAmmo=v
+        if v then
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char then
+                    for _, tool in pairs(char:GetDescendants()) do
+                        if tool:IsA("IntValue") and (tool.Name=="Ammo" or tool.Name=="StoredAmmo") then
+                            tool.Value = 999
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 60) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+
+    Hub:AddSection(t_GameTab,"Phantom Specific")
+    Hub:AddToggle(t_GameTab,"Auto Headshot",false,function(v) HubState.PF_AutoHeadshot=v end)
+    Hub:AddToggle(t_GameTab,"Anti Flash",false,function(v)
+        HubState.PF_AntiFlash=v
+        pcall(function()
+            if v then Lighting.Brightness=2 Lighting.Ambient=Color3.new(1,1,1) end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- FISCH (PlaceId: 16732694052)
+-- Source: Redz Hub — Auto Fish, Auto Sell, Teleport to Spots
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Fisch" then
+    local t_GameTab = Hub:AddTab("Fisch","🎣")
+
+    Hub:AddSection(t_GameTab,"Fishing")
+    Hub:AddToggle(t_GameTab,"Auto Fish (Cast & Reel)",false,function(v) HubState.FSH_AutoFish=v end)
+    Hub:AddToggle(t_GameTab,"Auto Reel On Bite",false,function(v) HubState.FSH_AutoReel=v end)
+    Hub:AddToggle(t_GameTab,"Auto Sell Fish",false,function(v) HubState.FSH_AutoSell=v end)
+    Hub:AddToggle(t_GameTab,"Auto Pick Best Rod",false,function(v) HubState.FSH_AutoRod=v end)
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Collect Resources",false,function(v) HubState.FSH_AutoCollect=v end)
+    Hub:AddToggle(t_GameTab,"Auto Complete Quest",false,function(v) HubState.FSH_AutoQuest=v end)
+
+    Hub:AddSection(t_GameTab,"Teleports")
+    Hub:AddButton(t_GameTab,"TP to Nearest Fish Spot",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if (v.Name:lower():find("fishspot") or v.Name:lower():find("fishing") or v.Name:lower():find("spawn_fish")) and v:IsA("BasePart") then
+                    hrp.CFrame = v.CFrame * CFrame.new(0, 2, 0); break
+                end
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"TP to Merchant (Sell NPC)",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if (v.Name:lower():find("merchant") or v.Name:lower():find("seller") or v.Name:lower():find("shop")) and (v:IsA("BasePart") or v:IsA("Model")) then
+                    local pos = v:IsA("Model") and v:GetPivot().Position or v.Position
+                    hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0)); break
+                end
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"Auto Cast Now",function()
+        pcall(function()
+            local RS = game:GetService("ReplicatedStorage")
+            for _, v in pairs(RS:GetDescendants()) do
+                if v:IsA("RemoteEvent") and (v.Name:lower():find("cast") or v.Name:lower():find("fish")) then
+                    v:FireServer(); break
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- JUJUTSU SHENANIGANS (PlaceId: 9391468976)
+-- Source: XCV Hub — auto farm, esp, kill aura
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Jujutsu Shenanigans" then
+    local t_GameTab = Hub:AddTab("JJK Shens","⚡")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Farm EXP",false,function(v) HubState.JJK_AutoEXP=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Souls",false,function(v) HubState.JJK_AutoSouls=v end)
+    Hub:AddToggle(t_GameTab,"Auto Use Ability (Spam)",false,function(v) HubState.JJK_AutoAbility=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- KING LEGACY (PlaceId: 4520749081)
+-- Source: XCV Hub + community — auto farm, fruit collector, boss farm
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "King Legacy" then
+    local t_GameTab = Hub:AddTab("King Legacy","👑")
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Farm Enemies",false,function(v) HubState.KL_AutoFarm=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Fruits",false,function(v) HubState.KL_AutoFruit=v end)
+    Hub:AddToggle(t_GameTab,"Auto Farm Bosses",false,function(v) HubState.KL_AutoBoss=v end)
+    Hub:AddToggle(t_GameTab,"Auto Farm Mastery",false,function(v) HubState.KL_AutoMastery=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Coins",false,function(v) HubState.KL_AutoCoin=v end)
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Auto Use Abilities",false,function(v) HubState.KL_AutoAbility=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Inf Jump",false,function(v) HubState.KL_InfJump=v end)
+
+    Hub:AddButton(t_GameTab,"Teleport to Nearest Boss",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            local closest, closestDist = nil, math.huge
+            for _, v in pairs(workspace:GetDescendants()) do
+                local hm = v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")
+                if hm and hm.MaxHealth >= 1000 and hm.Health > 0 then
+                    local rp = v:FindFirstChild("HumanoidRootPart")
+                    if rp then
+                        local d = (hrp.Position - rp.Position).Magnitude
+                        if d < closestDist then closestDist=d; closest=rp end
+                    end
+                end
+            end
+            if closest then hrp.CFrame = closest.CFrame * CFrame.new(0,0,-5) end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- SOLS RNG (PlaceId: 15532962292)
+-- Source: Community + XCV — auto spin, auto merchant, biome ESP
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Sols RNG" then
+    local t_GameTab = Hub:AddTab("Sols RNG","🎲")
+
+    Hub:AddSection(t_GameTab,"Auto")
+    Hub:AddToggle(t_GameTab,"Auto Spin",false,function(v) HubState.SRNG_AutoSpin=v end)
+    Hub:AddToggle(t_GameTab,"Auto Merchant (Buy Potions)",false,function(v) HubState.SRNG_AutoMerchant=v end)
+    Hub:AddToggle(t_GameTab,"Auto Open Gifts",false,function(v) HubState.SRNG_AutoGift=v end)
+
+    Hub:AddSection(t_GameTab,"Visual")
+    Hub:AddToggle(t_GameTab,"Biome ESP (Announce in Chat)",false,function(v) HubState.SRNG_BiomeESP=v end)
+    Hub:AddToggle(t_GameTab,"Aura Display (Chat Announce)",false,function(v) HubState.SRNG_AuraDisplay=v end)
+    Hub:AddToggle(t_GameTab,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
+
+    Hub:AddButton(t_GameTab,"Spin Once Now",function()
+        pcall(function()
+            local RS = game:GetService("ReplicatedStorage")
+            for _, v in pairs(RS:GetDescendants()) do
+                if v:IsA("RemoteEvent") and (v.Name:lower():find("spin") or v.Name:lower():find("roll")) then
+                    v:FireServer(); break
+                end
+            end
+        end)
+    end)
+
+    Hub:AddButton(t_GameTab,"Teleport to Merchant",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if (v.Name:lower():find("merchant") or v.Name:lower():find("potion")) and (v:IsA("BasePart") or v:IsA("Model")) then
+                    local pos = v:IsA("Model") and v:GetPivot().Position or v.Position
+                    hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0)); break
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- PEROXIDE (PlaceId: 9096881148)
+-- Source: Community — auto farm, esp, soul reaper features
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Peroxide" then
+    local t_GameTab = Hub:AddTab("Peroxide","☠️")
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Farm EXP",false,function(v) HubState.PX_AutoEXP=v end)
+    Hub:AddToggle(t_GameTab,"Auto Hollow Farm",false,function(v) HubState.PX_AutoHollow=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Items",false,function(v) HubState.PX_AutoCollect=v end)
+    Hub:AddToggle(t_GameTab,"Auto Use Shikai/Bankai",false,function(v) HubState.PX_AutoAbility=v end)
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+
+    Hub:AddSection(t_GameTab,"Misc")
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- DEAD RAILS (PlaceId: 116495829188952)
+-- Source: XCV Hub — auto shoot, auto loot, speed, survival tools
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Dead Rails" then
+    local t_GameTab = Hub:AddTab("Dead Rails","🚂")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"Kill Aura (Zombies)",false,function(v) HubState.KillAura=v end)
+    Hub:AddToggle(t_GameTab,"ESP (Zombies + Players)",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"No Recoil",false,function(v) HubState.NoRecoil=v end)
+    Hub:AddToggle(t_GameTab,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
+
+    Hub:AddSection(t_GameTab,"Farm & Loot")
+    Hub:AddToggle(t_GameTab,"Auto Loot Chests",false,function(v) HubState.DR_AutoLoot=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Gold",false,function(v) HubState.DR_AutoGold=v end)
+    Hub:AddToggle(t_GameTab,"Auto Repair Train",false,function(v) HubState.DR_AutoRepair=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+
+    Hub:AddButton(t_GameTab,"Teleport onto Train",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if (v.Name:lower():find("train") or v.Name:lower():find("rail") or v.Name:lower():find("locomotive")) and v:IsA("BasePart") then
+                    hrp.CFrame = v.CFrame * CFrame.new(0, 5, 0); break
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- FRONTLINES (PlaceId: 5938036553)
+-- Source: XCV Hub — FPS game, aimbot, no spread, ESP
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Frontlines" then
+    local t_GameTab = Hub:AddTab("Frontlines","🪖")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddSlider(t_GameTab,"Aim FOV",50,800,150,function(v) HubState.AimFOV=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+
+    Hub:AddSection(t_GameTab,"Weapon")
+    Hub:AddToggle(t_GameTab,"No Recoil",false,function(v) HubState.NoRecoil=v end)
+    Hub:AddToggle(t_GameTab,"No Spread",false,function(v) HubState.NoSpread=v end)
+    Hub:AddToggle(t_GameTab,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
+    Hub:AddToggle(t_GameTab,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
+
+    Hub:AddSection(t_GameTab,"Movement & Misc")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 80) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Anti-Flash",false,function(v) if v then Lighting.Brightness=2 Lighting.Ambient=Color3.new(1,1,1) end end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- MEME SEA (Redz Hub source — auto farm, auto sell, esp)
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Meme Sea" then
+    local t_GameTab = Hub:AddTab("Meme Sea","🌊")
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Farm Enemies",false,function(v) HubState.MS_AutoFarm=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Drops",false,function(v) HubState.MS_AutoDrop=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Chests",false,function(v) HubState.MS_AutoChest=v end)
+    Hub:AddToggle(t_GameTab,"Auto Farm Bounty",false,function(v) HubState.MS_AutoBounty=v end)
+    Hub:AddToggle(t_GameTab,"Auto Farm Mastery",false,function(v) HubState.MS_AutoMastery=v end)
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip (Sea Walk)",false,function(v) HubState.Noclip=v end)
+
+    Hub:AddButton(t_GameTab,"Teleport to Nearest NPC",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            local closest, closestDist = nil, math.huge
+            for _, v in pairs(workspace:GetDescendants()) do
+                local hm = v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")
+                if hm and hm.Health > 0 then
+                    local rp = v:FindFirstChild("HumanoidRootPart")
+                    if rp and rp ~= hrp then
+                        local d = (hrp.Position - rp.Position).Magnitude
+                        if d < closestDist then closestDist=d; closest=rp end
+                    end
+                end
+            end
+            if closest then hrp.CFrame = closest.CFrame * CFrame.new(0,0,-4) end
+        end)
+    end)
+
+
+-- ═══════════════════════════════════════════════════════════════
+-- HOOD CLUSTER — Central Streets, South London, Street Life,
+-- Cali Shootout, Streetz War 2, Outwest Chicago 2, No Mercy,
+-- South Bronx, Underground War 2, Philly Streetz 2, QZ Shootout
+-- All share the same tab logic as Da Hood / Gang Wars
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Central Streets"
+    or CurrentGame == "South London Remastered"
+    or CurrentGame == "Street Life Remastered"
+    or CurrentGame == "Cali Shootout"
+    or CurrentGame == "Streetz War 2"
+    or CurrentGame == "Outwest Chicago 2"
+    or CurrentGame == "No Mercy"
+    or CurrentGame == "South Bronx"
+    or CurrentGame == "Underground War 2"
+    or CurrentGame == "Philly Streetz 2"
+    or CurrentGame == "QZ Shootout" then
+    local t_GameTab = Hub:AddTab(CurrentGame,"🏙️")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+
+    Hub:AddSection(t_GameTab,"Weapon")
+    Hub:AddToggle(t_GameTab,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
+    Hub:AddToggle(t_GameTab,"No Recoil",false,function(v) HubState.NoRecoil=v end)
+    Hub:AddToggle(t_GameTab,"No Spread",false,function(v) HubState.NoSpread=v end)
+    Hub:AddToggle(t_GameTab,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Farm Cash",false,function(v) HubState.DH_AutoCash=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Drops",false,function(v) HubState.DH_AutoCollectDrops=v end)
+    Hub:AddToggle(t_GameTab,"Auto Stomp Downed",false,function(v) HubState.DH_AutoStomp=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+
+    Hub:AddButton(t_GameTab,"Teleport to ATM",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, v in pairs(workspace:GetDescendants()) do
+                if v.Name:lower():find("atm") and v:IsA("BasePart") then
+                    hrp.CFrame = v.CFrame + Vector3.new(0,3,0); break
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- ARSENAL (PlaceId: 286090429) — XCV Hub
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Arsenal" then
+    local t_GameTab = Hub:AddTab("Arsenal","🔫")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddSlider(t_GameTab,"Aim FOV",50,800,150,function(v) HubState.AimFOV=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+
+    Hub:AddSection(t_GameTab,"Weapon")
+    Hub:AddToggle(t_GameTab,"No Recoil",false,function(v) HubState.NoRecoil=v end)
+    Hub:AddToggle(t_GameTab,"No Spread",false,function(v) HubState.NoSpread=v end)
+    Hub:AddToggle(t_GameTab,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
+    Hub:AddToggle(t_GameTab,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
+
+    Hub:AddSection(t_GameTab,"Misc")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and 60 or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Anti-Flash",false,function(v) if v then Lighting.Brightness=2 Lighting.Ambient=Color3.new(1,1,1) end end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- BAD BUSINESS (PlaceId: 3233893879) — XCV Hub
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Bad Business" then
+    local t_GameTab = Hub:AddTab("Bad Business","💼")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+
+    Hub:AddSection(t_GameTab,"Weapon")
+    Hub:AddToggle(t_GameTab,"No Recoil",false,function(v) HubState.NoRecoil=v end)
+    Hub:AddToggle(t_GameTab,"No Spread",false,function(v) HubState.NoSpread=v end)
+    Hub:AddToggle(t_GameTab,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
+    Hub:AddToggle(t_GameTab,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and 60 or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- COUNTER BLOX (PlaceId: 301549746) — XCV Hub
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Counter Blox" then
+    local t_GameTab = Hub:AddTab("Counter Blox","🎯")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddSlider(t_GameTab,"Aim FOV",50,800,150,function(v) HubState.AimFOV=v end)
+    Hub:AddToggle(t_GameTab,"ESP (Wall Hack)",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+
+    Hub:AddSection(t_GameTab,"Weapon")
+    Hub:AddToggle(t_GameTab,"No Recoil",false,function(v) HubState.NoRecoil=v end)
+    Hub:AddToggle(t_GameTab,"No Spread",false,function(v) HubState.NoSpread=v end)
+    Hub:AddToggle(t_GameTab,"Rapid Fire",false,function(v) HubState.RapidFire=v end)
+    Hub:AddToggle(t_GameTab,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
+
+    Hub:AddSection(t_GameTab,"Misc")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and 60 or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Anti-Flash",false,function(v) if v then Lighting.Brightness=2 Lighting.Ambient=Color3.new(1,1,1) end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- BEDWARS (PlaceId: 6872274481) — XCV Hub
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "BedWars" then
+    local t_GameTab = Hub:AddTab("BedWars","🛏️")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddSlider(t_GameTab,"Kill Aura Range",5,40,10,function(v) HubState.KillAuraRange=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Inf Jump",false,function(v) HubState.BW_InfJump=v end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+
+    Hub:AddSection(t_GameTab,"BedWars Specific")
+    Hub:AddToggle(t_GameTab,"Auto Collect Resources",false,function(v) HubState.BW_AutoRes=v end)
+    Hub:AddToggle(t_GameTab,"Bed ESP (Show All Beds)",false,function(v)
+        HubState.BW_BedESP=v
+        pcall(function()
+            if v then
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if (obj.Name:lower():find("bed") or obj.Name:lower():find("nexus")) and obj:IsA("BasePart") then
+                        local bb = Instance.new("BillboardGui")
+                        bb.Name="BedESP"; bb.AlwaysOnTop=true
+                        bb.Size=UDim2.new(0,80,0,30); bb.StudsOffset=Vector3.new(0,3,0)
+                        bb.Parent=obj
+                        local lbl=Instance.new("TextLabel")
+                        lbl.BackgroundTransparency=1; lbl.Size=UDim2.new(1,0,1,0)
+                        lbl.Text="🛏️ BED"; lbl.TextColor3=Color3.fromRGB(255,80,80)
+                        lbl.TextStrokeTransparency=0; lbl.Font=Enum.Font.GothamBold
+                        lbl.TextScaled=true; lbl.Parent=bb
+                    end
+                end
+            else
+                for _, obj in pairs(game:GetDescendants()) do
+                    if obj.Name=="BedESP" then obj:Destroy() end
+                end
+            end
+        end)
+    end)
+    Hub:AddButton(t_GameTab,"Teleport to Your Bed",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name:lower():find("bed") and obj:IsA("BasePart") then
+                    hrp.CFrame = obj.CFrame + Vector3.new(0,4,0); break
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- DOORS (PlaceId: 6516141723) — XCV Hub
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Doors" then
+    local t_GameTab = Hub:AddTab("Doors","🚪")
+
+    Hub:AddSection(t_GameTab,"Survival")
+    Hub:AddToggle(t_GameTab,"Noclip (Phase Through Doors)",false,function(v) HubState.Noclip=v end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and 40 or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+
+    Hub:AddSection(t_GameTab,"ESP")
+    Hub:AddToggle(t_GameTab,"Item ESP (Keys, Flashlights etc)",false,function(v)
+        HubState.DR_ItemESP=v
+        pcall(function()
+            if v then
+                local itemNames = {"key","flashlight","lighter","candle","cross","book","knob","lock"}
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    for _, kw in ipairs(itemNames) do
+                        if obj.Name:lower():find(kw) and obj:IsA("BasePart") then
+                            local bb=Instance.new("BillboardGui"); bb.Name="DoorESP"
+                            bb.AlwaysOnTop=true; bb.Size=UDim2.new(0,100,0,25)
+                            bb.StudsOffset=Vector3.new(0,2,0); bb.Parent=obj
+                            local lbl=Instance.new("TextLabel")
+                            lbl.BackgroundTransparency=1; lbl.Size=UDim2.new(1,0,1,0)
+                            lbl.Text="🔑 "..obj.Name; lbl.TextColor3=Color3.fromRGB(255,230,50)
+                            lbl.TextStrokeTransparency=0; lbl.Font=Enum.Font.GothamBold
+                            lbl.TextScaled=true; lbl.Parent=bb
+                        end
+                    end
+                end
+            else
+                for _, obj in pairs(game:GetDescendants()) do
+                    if obj.Name=="DoorESP" then obj:Destroy() end
+                end
+            end
+        end)
+    end)
+    Hub:AddToggle(t_GameTab,"FullBright (No Darkness)",false,function(v) HubState.FullBright=v ApplyFullBright() end)
+
+    Hub:AddSection(t_GameTab,"Misc")
+    Hub:AddButton(t_GameTab,"Teleport to Next Door",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            local closest, closestDist = nil, math.huge
+            for _, v in pairs(workspace:GetDescendants()) do
+                if (v.Name:lower():find("door") or v.Name:lower():find("exit")) and v:IsA("BasePart") then
+                    local d = (hrp.Position - v.Position).Magnitude
+                    if d < closestDist and d > 3 then closestDist=d; closest=v end
+                end
+            end
+            if closest then hrp.CFrame = closest.CFrame + Vector3.new(0,3,3) end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- PRESSURE (PlaceId: 12411473842) — Horror game similar to Doors
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Pressure" then
+    local t_GameTab = Hub:AddTab("Pressure","💀")
+
+    Hub:AddSection(t_GameTab,"Survival")
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and 40 or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+    Hub:AddToggle(t_GameTab,"FullBright",false,function(v) HubState.FullBright=v ApplyFullBright() end)
+
+    Hub:AddSection(t_GameTab,"ESP & Radar")
+    Hub:AddToggle(t_GameTab,"Item ESP",false,function(v)
+        pcall(function()
+            if v then
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj:IsA("BasePart") and (obj.Name:lower():find("key") or obj.Name:lower():find("battery") or obj.Name:lower():find("fuse")) then
+                        local bb=Instance.new("BillboardGui"); bb.Name="PressureESP"
+                        bb.AlwaysOnTop=true; bb.Size=UDim2.new(0,100,0,25)
+                        bb.StudsOffset=Vector3.new(0,2,0); bb.Parent=obj
+                        local lbl=Instance.new("TextLabel")
+                        lbl.BackgroundTransparency=1; lbl.Size=UDim2.new(1,0,1,0)
+                        lbl.Text="⚡ "..obj.Name; lbl.TextColor3=Color3.fromRGB(0,200,255)
+                        lbl.TextStrokeTransparency=0; lbl.Font=Enum.Font.GothamBold
+                        lbl.TextScaled=true; lbl.Parent=bb
+                    end
+                end
+            else
+                for _, o in pairs(game:GetDescendants()) do if o.Name=="PressureESP" then o:Destroy() end end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- ADOPT ME (PlaceId: 920587237)
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Adopt Me" then
+    local t_GameTab = Hub:AddTab("Adopt Me","🐾")
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Collect Bucks",false,function(v) HubState.AM_AutoBucks=v end)
+    Hub:AddToggle(t_GameTab,"Auto Complete Tasks",false,function(v) HubState.AM_AutoTask=v end)
+    Hub:AddToggle(t_GameTab,"Auto Feed Pets",false,function(v) HubState.AM_AutoFeed=v end)
+    Hub:AddToggle(t_GameTab,"Auto Age Pets",false,function(v) HubState.AM_AutoAge=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+
+    Hub:AddSection(t_GameTab,"Misc")
+    Hub:AddButton(t_GameTab,"TP to School",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then hrp.CFrame = CFrame.new(-18, 0, 130) end
+        end)
+    end)
+    Hub:AddButton(t_GameTab,"TP to Hospital",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then hrp.CFrame = CFrame.new(325, 0, -155) end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- DEEPWOKEN (PlaceId: 4111023553)
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Deepwoken" then
+    local t_GameTab = Hub:AddTab("Deepwoken","🌊")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Farm EXP",false,function(v) HubState.DW_AutoEXP=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Items",false,function(v) HubState.DW_AutoCollect=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 80) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- GRAND PIECE ONLINE (PlaceId: 4451193957)
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Grand Piece Online" then
+    local t_GameTab = Hub:AddTab("Grand Piece","🏴‍☠️")
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Farm Enemies",false,function(v) HubState.GPO_AutoFarm=v end)
+    Hub:AddToggle(t_GameTab,"Auto Farm Bosses",false,function(v) HubState.GPO_AutoBoss=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Chests",false,function(v) HubState.GPO_AutoChest=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Fruits",false,function(v) HubState.GPO_AutoFruit=v end)
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- TOWER DEFENSE SIMULATOR (PlaceId: 3260590327)
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Tower Defense Simulator" then
+    local t_GameTab = Hub:AddTab("TDS","🗼")
+
+    Hub:AddSection(t_GameTab,"Auto")
+    Hub:AddToggle(t_GameTab,"Auto Farm (AFK Coins)",false,function(v) HubState.TDS_AutoFarm=v end)
+    Hub:AddToggle(t_GameTab,"Auto Place Towers",false,function(v) HubState.TDS_AutoPlace=v end)
+    Hub:AddToggle(t_GameTab,"Auto Upgrade Towers",false,function(v) HubState.TDS_AutoUpgrade=v end)
+    Hub:AddToggle(t_GameTab,"Auto Sell Worst Tower",false,function(v) HubState.TDS_AutoSell=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Inf Jump",false,function(v)
+        pcall(function()
+            if v then LocalPlayer.Character.Humanoid.JumpPower=150 end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- BASKETBALL LEGENDS / PLAYGROUND BASKETBALL
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Basketball Legends" or CurrentGame == "Playground Basketball" then
+    local t_GameTab = Hub:AddTab("Basketball","🏀")
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Super Jump",false,function(v) pcall(function() LocalPlayer.Character.Humanoid.JumpPower=v and 200 or 50 end) end)
+
+    Hub:AddSection(t_GameTab,"Basketball Specific")
+    Hub:AddToggle(t_GameTab,"Auto Score",false,function(v) HubState.BB_AutoScore=v end)
+    Hub:AddToggle(t_GameTab,"Ball ESP",false,function(v)
+        pcall(function()
+            if v then
+                for _, obj in pairs(workspace:GetDescendants()) do
+                    if obj.Name:lower():find("ball") and obj:IsA("BasePart") then
+                        local bb=Instance.new("BillboardGui"); bb.Name="BallESP2"
+                        bb.AlwaysOnTop=true; bb.Size=UDim2.new(0,80,0,25)
+                        bb.StudsOffset=Vector3.new(0,2,0); bb.Parent=obj
+                        local lbl=Instance.new("TextLabel")
+                        lbl.BackgroundTransparency=1; lbl.Size=UDim2.new(1,0,1,0)
+                        lbl.Text="🏀 BALL"; lbl.TextColor3=Color3.fromRGB(255,165,0)
+                        lbl.TextStrokeTransparency=0; lbl.Font=Enum.Font.GothamBold
+                        lbl.TextScaled=true; lbl.Parent=bb
+                    end
+                end
+            else
+                for _, o in pairs(game:GetDescendants()) do if o.Name=="BallESP2" then o:Destroy() end end
+            end
+        end)
+    end)
+    Hub:AddButton(t_GameTab,"Teleport to Ball",function()
+        pcall(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if not hrp then return end
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name:lower():find("ball") and obj:IsA("BasePart") then
+                    hrp.CFrame = obj.CFrame + Vector3.new(0,3,0); break
+                end
+            end
+        end)
+    end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- BOXING BETA / KNOCKOUT — Fighting games
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Boxing Beta" or CurrentGame == "Knockout" then
+    local t_GameTab = Hub:AddTab(CurrentGame,"🥊")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddSlider(t_GameTab,"Kill Aura Range",3,20,8,function(v) HubState.KillAuraRange=v end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- BUBBLEGUM SIMULATOR (PlaceId: 2512643572)
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "Bubblegum Simulator" then
+    local t_GameTab = Hub:AddTab("Bubblegum Sim","🫧")
+
+    Hub:AddSection(t_GameTab,"Farm")
+    Hub:AddToggle(t_GameTab,"Auto Blow Bubbles",false,function(v) HubState.BGS_AutoBlow=v end)
+    Hub:AddToggle(t_GameTab,"Auto Hatch Egg",false,function(v) HubState.BGS_AutoHatch=v end)
+    Hub:AddToggle(t_GameTab,"Auto Collect Coins",false,function(v) HubState.BGS_AutoCoin=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- PVP CLUSTER — MVS Duels, Fantasma PvP, Project Viltrumites,
+-- Westbound, Dark Divers, Iron Man Reimagined
+-- ═══════════════════════════════════════════════════════════════
+elseif CurrentGame == "MVS Duels"
+    or CurrentGame == "Fantasma PvP"
+    or CurrentGame == "Project Viltrumites"
+    or CurrentGame == "Westbound"
+    or CurrentGame == "Dark Divers"
+    or CurrentGame == "Iron Man Reimagined" then
+    local t_GameTab = Hub:AddTab(CurrentGame,"⚔️")
+
+    Hub:AddSection(t_GameTab,"Combat")
+    Hub:AddToggle(t_GameTab,"Kill Aura",false,function(v) HubState.KillAura=v end)
+    Hub:AddToggle(t_GameTab,"Aimbot",false,function(v) HubState.Aimbot=v end)
+    Hub:AddToggle(t_GameTab,"Silent Aim",false,function(v) HubState.SilentAim=v end)
+    Hub:AddToggle(t_GameTab,"ESP",false,function(v) HubState.ESPEnabled=v RefreshESP() end)
+    Hub:AddToggle(t_GameTab,"Hitbox Expand",false,function(v) HubState.HitboxExpand=v ExpandHitboxes() end)
+    Hub:AddToggle(t_GameTab,"Godmode",false,function(v) HubState.Godmode=v end)
+
+    Hub:AddSection(t_GameTab,"Movement")
+    Hub:AddToggle(t_GameTab,"Speed Hack",false,function(v) HubState.SpeedHack=v pcall(function() LocalPlayer.Character.Humanoid.WalkSpeed=v and (HubState.SpeedValue or 100) or 16 end) end)
+    Hub:AddToggle(t_GameTab,"Fly",false,function(v) HubState.FlyEnabled=v if v then StartFly() end end)
+    Hub:AddToggle(t_GameTab,"Noclip",false,function(v) HubState.Noclip=v end)
+
+    Hub:AddSection(t_GameTab,"Misc")
+    Hub:AddToggle(t_GameTab,"Inf Ammo",false,function(v) HubState.InfAmmo=v end)
+    Hub:AddToggle(t_GameTab,"No Recoil",false,function(v) HubState.NoRecoil=v end)
+
+
 end -- END of game tab elseif chain
 
 -- ============================================================
@@ -3359,6 +4282,462 @@ task.spawn(function()
                                     task.wait(0.1)
                                 end
                             end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+
+
+    -- ─────────────────────────────────────────────────────────
+    --  RIVALS LOOPS
+    -- ─────────────────────────────────────────────────────────
+
+    -- Rivals: Inf Jump
+    task.spawn(function()
+        while true do
+            task.wait(0.1)
+            if HubState.RV_InfJump then
+                pcall(function()
+                    local char = LocalPlayer.Character
+                    local hm = char and char:FindFirstChildOfClass("Humanoid")
+                    if hm then hm.JumpPower = 150 end
+                end)
+            end
+        end
+    end)
+
+    -- Rivals: Auto Farm XP (proximity collect)
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.RV_AutoXP then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("xp") or v.Name:lower():find("exp") or v.Name:lower():find("orb")) and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position)
+                            task.wait(0.05)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Rivals: Auto Collect Coins
+    task.spawn(function()
+        while true do
+            task.wait(0.3)
+            if HubState.RV_AutoCoin then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("coin") or v.Name:lower():find("token")) and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position)
+                            task.wait(0.05)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────────────────
+    --  BLUE LOCK RIVALS LOOPS
+    -- ─────────────────────────────────────────────────────────
+
+    -- Blue Lock: Auto Score Goal (teleport to goal zone)
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.BLR_AutoGoal then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("goal") or v.Name:lower():find("net")) and v:IsA("BasePart") then
+                            hrp.CFrame = v.CFrame * CFrame.new(0, 0, 2)
+                            task.wait(0.1)
+                            break
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Blue Lock: Auto Farm XP
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.BLR_AutoXP then
+                pcall(function()
+                    local RS = game:GetService("ReplicatedStorage")
+                    for _, v in pairs(RS:GetDescendants()) do
+                        if v:IsA("RemoteEvent") and (v.Name:lower():find("xp") or v.Name:lower():find("score")) then
+                            pcall(function() v:FireServer() end)
+                            task.wait(0.3)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────────────────
+    --  FISCH LOOPS (Redz Hub inspired)
+    -- ─────────────────────────────────────────────────────────
+
+    -- Auto Fish: Cast + auto reel on bite
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.FSH_AutoFish then
+                pcall(function()
+                    local RS = game:GetService("ReplicatedStorage")
+                    -- Find and fire the cast remote
+                    local castRemote = RS:FindFirstChild("CastLine", true) or RS:FindFirstChild("Cast", true)
+                    if castRemote and castRemote:IsA("RemoteEvent") then
+                        pcall(function() castRemote:FireServer() end)
+                    end
+                end)
+                task.wait(2) -- wait for bite simulation
+                -- Auto reel
+                pcall(function()
+                    local RS = game:GetService("ReplicatedStorage")
+                    local reelRemote = RS:FindFirstChild("Reel", true) or RS:FindFirstChild("ReelIn", true)
+                    if reelRemote and reelRemote:IsA("RemoteEvent") then
+                        pcall(function() reelRemote:FireServer() end)
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Sell Fish
+    task.spawn(function()
+        while true do
+            task.wait(5)
+            if HubState.FSH_AutoSell then
+                pcall(function()
+                    local RS = game:GetService("ReplicatedStorage")
+                    local sellRemote = RS:FindFirstChild("SellFish", true)
+                        or RS:FindFirstChild("Sell", true)
+                        or RS:FindFirstChild("SellAll", true)
+                    if sellRemote and sellRemote:IsA("RemoteEvent") then
+                        pcall(function() sellRemote:FireServer() end)
+                    end
+                    -- Also try proximity prompts for selling
+                    for _, pp in pairs(game:GetDescendants()) do
+                        if pp:IsA("ProximityPrompt") and pp.ActionText:lower():find("sell") then
+                            pp:InputHoldBegin()
+                            task.wait(0.1)
+                            pp:InputHoldEnd()
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Complete Quest
+    task.spawn(function()
+        while true do
+            task.wait(3)
+            if HubState.FSH_AutoQuest then
+                pcall(function()
+                    local RS = game:GetService("ReplicatedStorage")
+                    for _, v in pairs(RS:GetDescendants()) do
+                        if v:IsA("RemoteEvent") and (v.Name:lower():find("quest") or v.Name:lower():find("complete")) then
+                            pcall(function() v:FireServer() end)
+                            task.wait(0.5)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────────────────
+    --  SOLS RNG LOOPS
+    -- ─────────────────────────────────────────────────────────
+
+    -- Auto Spin
+    task.spawn(function()
+        while true do
+            task.wait(1.5)
+            if HubState.SRNG_AutoSpin then
+                pcall(function()
+                    local RS = game:GetService("ReplicatedStorage")
+                    local spinRE = RS:FindFirstChild("Spin", true) or RS:FindFirstChild("Roll", true)
+                    if spinRE and spinRE:IsA("RemoteEvent") then
+                        pcall(function() spinRE:FireServer() end)
+                    end
+                    -- Also try proximity prompts
+                    for _, pp in pairs(game:GetDescendants()) do
+                        if pp:IsA("ProximityPrompt") and (pp.ActionText:lower():find("spin") or pp.ActionText:lower():find("roll")) then
+                            pp:InputHoldBegin()
+                            task.wait(0.1)
+                            pp:InputHoldEnd()
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Open Gifts
+    task.spawn(function()
+        while true do
+            task.wait(2)
+            if HubState.SRNG_AutoGift then
+                pcall(function()
+                    local RS = game:GetService("ReplicatedStorage")
+                    for _, v in pairs(RS:GetDescendants()) do
+                        if v:IsA("RemoteEvent") and (v.Name:lower():find("gift") or v.Name:lower():find("open")) then
+                            pcall(function() v:FireServer() end)
+                            task.wait(0.3)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────────────────
+    --  KING LEGACY LOOPS
+    -- ─────────────────────────────────────────────────────────
+
+    -- Auto Farm Enemies
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.KL_AutoFarm then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local closest, closestDist = nil, math.huge
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        local hm = v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")
+                        if hm and hm.Health > 0 and v ~= LocalPlayer.Character then
+                            local rp = v:FindFirstChild("HumanoidRootPart")
+                            if rp then
+                                local d = (hrp.Position - rp.Position).Magnitude
+                                if d < closestDist then closestDist=d; closest=rp end
+                            end
+                        end
+                    end
+                    if closest then
+                        hrp.CFrame = closest.CFrame * CFrame.new(0, 0, -3)
+                        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                        if tool then pcall(function() tool:Activate() end) end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Collect Fruits
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.KL_AutoFruit then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("fruit") or v.Name:lower():find("drop")) and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position + Vector3.new(0,2,0))
+                            task.wait(0.1)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────────────────
+    --  PEROXIDE LOOPS
+    -- ─────────────────────────────────────────────────────────
+
+    -- Auto Farm Hollows / EXP
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.PX_AutoEXP or HubState.PX_AutoHollow then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local closest, closestDist = nil, math.huge
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        local hm = v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")
+                        if hm and hm.Health > 0 and v ~= LocalPlayer.Character then
+                            local rp = v:FindFirstChild("HumanoidRootPart")
+                            if rp then
+                                local d = (hrp.Position - rp.Position).Magnitude
+                                if d < closestDist then closestDist=d; closest=rp end
+                            end
+                        end
+                    end
+                    if closest then
+                        hrp.CFrame = closest.CFrame * CFrame.new(0,0,-3)
+                        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                        if tool then pcall(function() tool:Activate() end) end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────────────────
+    --  DEAD RAILS LOOPS
+    -- ─────────────────────────────────────────────────────────
+
+    -- Auto Loot Chests
+    task.spawn(function()
+        while true do
+            task.wait(1)
+            if HubState.DR_AutoLoot then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("chest") or v.Name:lower():find("crate") or v.Name:lower():find("loot")) and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position + Vector3.new(0,2,0))
+                            task.wait(0.2)
+                            -- Try proximity prompts
+                            for _, pp in pairs(v:GetDescendants()) do
+                                if pp:IsA("ProximityPrompt") then
+                                    pp:InputHoldBegin(); task.wait(0.1); pp:InputHoldEnd()
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Collect Gold
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.DR_AutoGold then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("gold") or v.Name:lower():find("coin") or v.Name:lower():find("money")) and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position)
+                            task.wait(0.05)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────────────────
+    --  MEME SEA LOOPS
+    -- ─────────────────────────────────────────────────────────
+
+    -- Auto Farm Enemies
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.MS_AutoFarm then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local closest, closestDist = nil, math.huge
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        local hm = v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")
+                        if hm and hm.Health > 0 and v ~= LocalPlayer.Character then
+                            local rp = v:FindFirstChild("HumanoidRootPart")
+                            if rp then
+                                local d = (hrp.Position - rp.Position).Magnitude
+                                if d < closestDist then closestDist=d; closest=rp end
+                            end
+                        end
+                    end
+                    if closest then
+                        hrp.CFrame = closest.CFrame * CFrame.new(0,0,-3)
+                        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                        if tool then pcall(function() tool:Activate() end) end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Collect Drops / Chests
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.MS_AutoDrop or HubState.MS_AutoChest then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if (v.Name:lower():find("drop") or v.Name:lower():find("chest") or v.Name:lower():find("item")) and v:IsA("BasePart") then
+                            hrp.CFrame = CFrame.new(v.Position)
+                            task.wait(0.05)
+                        end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- ─────────────────────────────────────────────────────────
+    --  JUJUTSU SHENANIGANS LOOPS
+    -- ─────────────────────────────────────────────────────────
+
+    -- Auto Farm EXP
+    task.spawn(function()
+        while true do
+            task.wait(0.5)
+            if HubState.JJK_AutoEXP then
+                pcall(function()
+                    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if not hrp then return end
+                    local closest, closestDist = nil, math.huge
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        local hm = v:IsA("Model") and v:FindFirstChildOfClass("Humanoid")
+                        if hm and hm.Health > 0 and v ~= LocalPlayer.Character then
+                            local rp = v:FindFirstChild("HumanoidRootPart")
+                            if rp then
+                                local d = (hrp.Position - rp.Position).Magnitude
+                                if d < closestDist then closestDist=d; closest=rp end
+                            end
+                        end
+                    end
+                    if closest then
+                        hrp.CFrame = closest.CFrame * CFrame.new(0,0,-3)
+                        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                        if tool then pcall(function() tool:Activate() end) end
+                    end
+                end)
+            end
+        end
+    end)
+
+    -- Auto Use Ability
+    task.spawn(function()
+        while true do
+            task.wait(0.3)
+            if HubState.JJK_AutoAbility then
+                pcall(function()
+                    local RS = game:GetService("ReplicatedStorage")
+                    for _, v in pairs(RS:GetDescendants()) do
+                        if v:IsA("RemoteEvent") and (v.Name:lower():find("ability") or v.Name:lower():find("skill") or v.Name:lower():find("technique")) then
+                            pcall(function() v:FireServer() end)
+                            task.wait(0.2)
                         end
                     end
                 end)
