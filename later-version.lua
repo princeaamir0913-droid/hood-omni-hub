@@ -1463,6 +1463,151 @@ elseif CurrentGame == "Anime Defenders" then
 
 end -- END of game tab elseif chain
 
+-- ============================================================
+-- UNIVERSAL INSTANCE SPY TAB (safe, no namecall hooks)
+-- ============================================================
+local spyTab = Hub:AddTab("Spy","🔍")
+Hub:AddSection(spyTab,"Instance Scanner — results print to F9 console")
+
+Hub:AddButton(spyTab,"🔔 Scan Proximity Prompts", function()
+    print("\n===== PROXIMITY PROMPTS =====")
+    local found = 0
+    for _, v in ipairs(game:GetDescendants()) do
+        if v:IsA("ProximityPrompt") then
+            found = found + 1
+            print(found..". ["..v.ActionText.."] | KeyCode: "..tostring(v.KeyboardKeyCode).." | Parent: "..v.Parent:GetFullName())
+        end
+    end
+    print("Total found: "..found)
+    print("=============================\n")
+end)
+
+Hub:AddButton(spyTab,"📡 Scan RemoteEvents", function()
+    print("\n===== REMOTE EVENTS =====")
+    local found = 0
+    for _, v in ipairs(game:GetDescendants()) do
+        if v:IsA("RemoteEvent") then
+            found = found + 1
+            print(found..". "..v:GetFullName())
+        end
+    end
+    print("Total found: "..found)
+    print("=========================\n")
+end)
+
+Hub:AddButton(spyTab,"📡 Scan RemoteFunctions", function()
+    print("\n===== REMOTE FUNCTIONS =====")
+    local found = 0
+    for _, v in ipairs(game:GetDescendants()) do
+        if v:IsA("RemoteFunction") then
+            found = found + 1
+            print(found..". "..v:GetFullName())
+        end
+    end
+    print("Total found: "..found)
+    print("============================\n")
+end)
+
+Hub:AddButton(spyTab,"🧩 Scan BindableEvents", function()
+    print("\n===== BINDABLE EVENTS =====")
+    local found = 0
+    for _, v in ipairs(game:GetDescendants()) do
+        if v:IsA("BindableEvent") then
+            found = found + 1
+            print(found..". "..v:GetFullName())
+        end
+    end
+    print("Total found: "..found)
+    print("===========================\n")
+end)
+
+Hub:AddButton(spyTab,"💰 Scan Cash/Money Values", function()
+    print("\n===== CASH / MONEY VALUES =====")
+    local found = 0
+    local keywords = {"cash","money","coin","dollar","bux","buck","credit","balance","wallet"}
+    for _, v in ipairs(game:GetDescendants()) do
+        if v:IsA("IntValue") or v:IsA("NumberValue") or v:IsA("StringValue") then
+            local n = v.Name:lower()
+            for _, kw in ipairs(keywords) do
+                if string.find(n, kw) then
+                    found = found + 1
+                    print(found..". "..v:GetFullName().." = "..tostring(v.Value))
+                    break
+                end
+            end
+        end
+    end
+    print("Total found: "..found)
+    print("================================\n")
+end)
+
+Hub:AddButton(spyTab,"🗣️ Scan NPC / Character Models", function()
+    print("\n===== NPC / CHARACTERS =====")
+    local found = 0
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("Model") and v:FindFirstChildWhichIsA("Humanoid") then
+            found = found + 1
+            local hp = v:FindFirstChildWhichIsA("Humanoid").Health
+            print(found..". "..v.Name.." | HP: "..tostring(math.floor(hp)).." | Pos: "..tostring(v:GetPivot().Position))
+        end
+    end
+    print("Total found: "..found)
+    print("============================\n")
+end)
+
+Hub:AddButton(spyTab,"🚪 Scan Teleport Parts (Doors/Zones)", function()
+    print("\n===== TELEPORT PARTS =====")
+    local found = 0
+    local keywords = {"door","teleport","zone","exit","enter","warp","spawn","tp"}
+    for _, v in ipairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") or v:IsA("Model") then
+            local n = v.Name:lower()
+            for _, kw in ipairs(keywords) do
+                if string.find(n, kw) then
+                    found = found + 1
+                    print(found..". "..v:GetFullName())
+                    break
+                end
+            end
+        end
+    end
+    print("Total found: "..found)
+    print("==========================\n")
+end)
+
+Hub:AddButton(spyTab,"🔫 Scan Tools / Weapons in Workspace", function()
+    print("\n===== TOOLS / WEAPONS =====")
+    local found = 0
+    for _, v in ipairs(game:GetDescendants()) do
+        if v:IsA("Tool") then
+            found = found + 1
+            print(found..". "..v:GetFullName())
+        end
+    end
+    print("Total found: "..found)
+    print("===========================\n")
+end)
+
+Hub:AddButton(spyTab,"🏷️ Scan All Scripts (Server/Local)", function()
+    print("\n===== SCRIPTS =====")
+    local found = 0
+    for _, v in ipairs(game:GetDescendants()) do
+        if v:IsA("Script") or v:IsA("LocalScript") or v:IsA("ModuleScript") then
+            found = found + 1
+            print(found..". ["..v.ClassName.."] "..v:GetFullName())
+        end
+    end
+    print("Total found: "..found)
+    print("===================\n")
+end)
+
+Hub:AddButton(spyTab,"🧹 Clear Console", function()
+    for i = 1, 80 do print("") end
+    print("Console cleared.")
+end)
+
+
+
 
 -- ╔══════════════════════════════════════════════════════════════╗
 
