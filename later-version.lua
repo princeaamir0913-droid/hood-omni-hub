@@ -2,7 +2,7 @@
 ================================================================================
   Hood Omni Hub -- Mega Edition v3.0
   55+ Game Support | Universal Features | Auto-Detection
-  Toggle UI: RightShift
+  Toggle UI: ☰ button (mobile-friendly, draggable)
 ================================================================================
 --]]
 
@@ -389,10 +389,10 @@ end
 local OmniUI = {}
 function OmniUI:Create()
     pcall(function() for _,v in pairs(CoreGui:GetChildren()) do if v.Name=="HoodOmniHub" then v:Destroy() end end end)
-    local SG=Instance.new("ScreenGui") SG.Name="HoodOmniHub" SG.ResetOnSpawn=false SG.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+    local SG=Instance.new("ScreenGui") SG.Name="HoodOmniHub" SG.ResetOnSpawn=false SG.ZIndexBehavior=Enum.ZIndexBehavior.Sibling SG.DisplayOrder=999 SG.IgnoreGuiInset=true
     pcall(function() SG.Parent=CoreGui end) if not SG.Parent then SG.Parent=LocalPlayer:WaitForChild("PlayerGui") end
-    local M=Instance.new("Frame") M.Name="Main" M.Size=UDim2.new(0,620,0,420) M.Position=UDim2.new(0.5,-310,0.5,-210)
-    M.BackgroundColor3=Color3.fromRGB(15,15,20) M.BorderSizePixel=0 M.ClipsDescendants=true M.Parent=SG
+    local M=Instance.new("Frame") M.Name="Main" M.Size=UDim2.new(0,480,0,360) M.Position=UDim2.new(0.5,-240,0.5,-180)
+    M.BackgroundColor3=Color3.fromRGB(15,15,20) M.BorderSizePixel=0 M.ClipsDescendants=true M.Visible=false M.Parent=SG
     Instance.new("UICorner",M).CornerRadius=UDim.new(0,8)
     local MS=Instance.new("UIStroke",M) MS.Color=Color3.fromRGB(128,0,255) MS.Thickness=2
     local TB=Instance.new("Frame") TB.Size=UDim2.new(1,0,0,36) TB.BackgroundColor3=Color3.fromRGB(20,20,30) TB.BorderSizePixel=0 TB.Parent=M
@@ -448,7 +448,16 @@ function OmniUI:Create()
         B.MouseButton1Click:Connect(function() idx=idx%#opts+1 B.Text=opts[idx] pcall(cb,opts[idx]) end)
     end
     task.defer(function() if #self.Tabs>0 then self.Tabs[1].Button.BackgroundColor3=Color3.fromRGB(60,20,120) self.Tabs[1].Button.TextColor3=Color3.fromRGB(220,180,255) self.Tabs[1].Frame.Visible=true end end)
-    UserInputService.InputBegan:Connect(function(i,g) if i.KeyCode==Enum.KeyCode.RightShift or i.KeyCode==Enum.KeyCode.Semicolon then M.Visible=not M.Visible end end)
+    -- Mobile toggle button (draggable, no keyboard needed)
+    local TSG=Instance.new("ScreenGui") TSG.Name="HoodHubToggleBtn" TSG.ResetOnSpawn=false TSG.DisplayOrder=1000 TSG.IgnoreGuiInset=true
+    pcall(function() TSG.Parent=CoreGui end) if not TSG.Parent then TSG.Parent=LocalPlayer:WaitForChild("PlayerGui") end
+    local TBtn=Instance.new("TextButton") TBtn.Size=UDim2.new(0,54,0,54) TBtn.Position=UDim2.new(0,10,0.5,-27) TBtn.BackgroundColor3=Color3.fromRGB(80,0,200) TBtn.BorderSizePixel=0 TBtn.Text="\u2630" TBtn.TextColor3=Color3.new(1,1,1) TBtn.TextSize=24 TBtn.Font=Enum.Font.GothamBold TBtn.Parent=TSG
+    Instance.new("UICorner",TBtn).CornerRadius=UDim.new(0,10)
+    local MS2=Instance.new("UIStroke",TBtn) MS2.Color=Color3.fromRGB(160,80,255) MS2.Thickness=2
+    local tbDrag,tbDragStart,tbStartPos=false,nil,nil
+    TBtn.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then tbDrag=true tbDragStart=i.Position tbStartPos=TBtn.Position i.Changed:Connect(function() if i.UserInputState==Enum.UserInputState.End then tbDrag=false end end) end end)
+    UserInputService.InputChanged:Connect(function(i) if tbDrag and (i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseMovement) then local d=i.Position-tbDragStart TBtn.Position=UDim2.new(tbStartPos.X.Scale,tbStartPos.X.Offset+d.X,tbStartPos.Y.Scale,tbStartPos.Y.Offset+d.Y) end end)
+    TBtn.MouseButton1Click:Connect(function() M.Visible=not M.Visible end)
     -- Startup toast notification
     task.delay(1.5, function()
         local toast = Instance.new("ScreenGui")
@@ -467,7 +476,7 @@ function OmniUI:Create()
         local l = Instance.new("TextLabel",f)
         l.Size = UDim2.new(1,0,1,0)
         l.BackgroundTransparency = 1
-        l.Text = "✅ Hood Omni Hub Loaded! Press ; or RightShift to toggle"
+        l.Text = "✅ Hood Omni Hub Loaded! Tap ☰ button to open"
         l.TextColor3 = Color3.fromRGB(200,150,255)
         l.TextSize = 13
         l.Font = Enum.Font.GothamBold
